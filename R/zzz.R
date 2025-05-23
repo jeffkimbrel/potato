@@ -4,6 +4,7 @@
   reticulate::py_require("jakomics")
   jakomics <<- reticulate::import("jakomics", delay_load = TRUE)
 
-  gator <<- reticulate::import_from_path("metadata", file.path("inst", "python"))
+  potato.m <<- reticulate::import_from_path("metadata", file.path("inst", "python"))
+  potato.p <<- reticulate::import_from_path("pathway", file.path("inst", "python"))
 
 }

@@ -22,15 +22,24 @@ get_files = function(file_path) {
 #'
 #' @param file_path
 #'
-#' @returns A formatted gator DB
+#' @returns A formatted potato DB
 #' @export
 
-get_gator_db = function(file_path = "potato") {
+get_potato_db = function(file_path = "potato") {
 
-  # if file_path is not "internal", then use the file_path to create a gator_db
+  # if file_path is not "internal", then use the file_path to create a potato_db
   if (file_path == "potato") {
-    gator_db = gator$Metadata(system.file("extdata", "gator_db.xlsx", package = "potato"))
-    gator_db$summary()
-    return(gator_db)
+    potato_db = potato.m$Metadata(system.file("extdata", "potato_db.xlsx", package = "potato"))
+    potato_db$summary()
+    return(potato_db)
+  } else {
+
+    if (!file.exists(file_path)) {
+      stop("File does not exist at ", file_path, call.= FALSE)
+    }
+
+    potato_db = potato.m$Metadata(file_path)
+    potato_db$summary()
+    return(potato_db)
   }
 }

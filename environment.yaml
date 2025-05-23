@@ -85,7 +85,7 @@ dependencies:
   - pip:
       - biopython==1.85
       - et-xmlfile==2.0.0
-      - jakomics @ git+https://github.com/jeffkimbrel/jakomics.git@b10c9b4f9046d4a05db479807744e0f413133754
+      - jakomics @ git+https://github.com/jeffkimbrel/jakomics.git@2179bc49ce8f78b45ee41d689070dbb48ff32538
       - natsort==8.4.0
       - numpy==2.2.5
       - openpyxl==3.1.5
