@@ -1,0 +1,107 @@
+{
+  "id": "nitrogen_fixation",
+  "name": "Nitrogen Fixation",
+  "source": "GATOR v1 database",
+  "tags": ["nitrogen_metabolism", "energy_metabolism"],
+  "notes": "Nitrogen fixation via nitrogenase enzyme complex. Two alternative systems: Mo-nitrogenase (nif) and V-nitrogenase (vnf). Both reduce N2 to NH3.",
+
+  "nodes": [
+    {
+      "id": "nifD",
+      "type": "enzyme",
+      "name": "nitrogenase molybdenum-iron protein alpha chain",
+      "ko": ["K02586"],
+      "ec": ["1.18.6.1"],
+      "required": true,
+      "notes": "Alpha chain of Mo-nitrogenase MoFe protein"
+    },
+    {
+      "id": "nifK",
+      "type": "enzyme",
+      "name": "nitrogenase molybdenum-iron protein beta chain",
+      "ko": ["K02591"],
+      "ec": ["1.18.6.1"],
+      "required": true,
+      "notes": "Beta chain of Mo-nitrogenase MoFe protein"
+    },
+    {
+      "id": "nifH",
+      "type": "enzyme",
+      "name": "nitrogenase iron protein",
+      "ko": ["K02588"],
+      "required": true,
+      "notes": "Fe protein, electron donor to MoFe protein"
+    },
+    {
+      "id": "vnfD",
+      "type": "enzyme",
+      "name": "vanadium-dependent nitrogenase alpha chain",
+      "ko": ["K22896"],
+      "required": false,
+      "notes": "Alpha chain of V-nitrogenase VFe protein (alternative to Mo-nitrogenase)"
+    },
+    {
+      "id": "vnfK",
+      "type": "enzyme",
+      "name": "vanadium-dependent nitrogenase beta chain",
+      "ko": ["K22897"],
+      "required": false,
+      "notes": "Beta chain of V-nitrogenase VFe protein"
+    },
+    {
+      "id": "vnfG",
+      "type": "enzyme",
+      "name": "vanadium nitrogenase delta subunit",
+      "ko": ["K22898"],
+      "required": false,
+      "notes": "Delta subunit unique to V-nitrogenase"
+    },
+    {
+      "id": "vnfH",
+      "type": "enzyme",
+      "name": "vanadium nitrogenase iron protein",
+      "ko": ["K22899"],
+      "required": false,
+      "notes": "Fe protein for V-nitrogenase (alternative to nifH)"
+    }
+  ],
+
+  "edges": [
+    {
+      "from": "nifD",
+      "to": "nifK",
+      "compound": "MoFe protein complex formation",
+      "notes": "nifD and nifK form heterotetramer (α2β2)"
+    },
+    {
+      "from": "nifK",
+      "to": "nifH",
+      "compound": "electron transfer",
+      "notes": "nifH donates electrons to nifDK complex"
+    },
+    {
+      "from": "vnfD",
+      "to": "vnfK",
+      "compound": "VFe protein complex formation",
+      "notes": "vnfD and vnfK form alternative nitrogenase complex"
+    },
+    {
+      "from": "vnfK",
+      "to": "vnfG",
+      "compound": "complex stabilization",
+      "notes": "vnfG is unique to V-nitrogenase"
+    },
+    {
+      "from": "vnfG",
+      "to": "vnfH",
+      "compound": "electron transfer",
+      "notes": "vnfH donates electrons to vnfDKG complex"
+    }
+  ],
+
+  "scoring": {
+    "min_fraction": 0.67,
+    "required_nodes": ["nifH"],
+    "notes": "Organism has N2 fixation if: (nifD + nifK + nifH) OR (vnfD + vnfK + vnfG + vnfH). nifH is key diagnostic gene."
+  }
+}

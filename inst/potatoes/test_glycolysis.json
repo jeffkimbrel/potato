@@ -1,0 +1,53 @@
+{
+  "id": "test_glycolysis",
+  "name": "Test Glycolysis (3 steps)",
+  "source": "Manual test pathway",
+  "tags": ["test", "central_metabolism"],
+  "notes": "Simple 3-gene linear pathway for testing potato infrastructure",
+
+  "nodes": [
+    {
+      "id": "gapA",
+      "type": "enzyme",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase",
+      "ko": ["K00134"],
+      "ec": ["1.2.1.12"],
+      "required": true
+    },
+    {
+      "id": "pgk",
+      "type": "enzyme",
+      "name": "phosphoglycerate kinase",
+      "ko": ["K00927"],
+      "ec": ["2.7.2.3"],
+      "required": true
+    },
+    {
+      "id": "eno",
+      "type": "enzyme",
+      "name": "enolase",
+      "ko": ["K01689", "K15633", "K15634"],
+      "ec": ["4.2.1.11"],
+      "required": true
+    }
+  ],
+
+  "edges": [
+    {
+      "from": "gapA",
+      "to": "pgk",
+      "compound": "1,3-bisphosphoglycerate",
+      "kegg_compound": "C00236"
+    },
+    {
+      "from": "pgk",
+      "to": "eno",
+      "compound": "3-phosphoglycerate",
+      "kegg_compound": "C00197"
+    }
+  ],
+
+  "scoring": {
+    "min_fraction": 1.0
+  }
+}
