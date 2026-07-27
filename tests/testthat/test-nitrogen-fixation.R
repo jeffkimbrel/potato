@@ -36,7 +36,7 @@ test_that("nitrogen fixation has expected KO terms", {
   skip_if(nif_path == "", "Nitrogen fixation potato not found")
 
   nif <- load_potato(nif_path)
-  ko_terms <- get_detection_terms(nif, "ko")
+  ko_terms <- get_detection_terms(nif, tool_type = "ko")
 
   expect_type(ko_terms, "character")
   expect_equal(length(ko_terms), 7)

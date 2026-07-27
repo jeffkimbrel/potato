@@ -2,18 +2,21 @@
 % Please edit documentation in R/potato_class.R
 \name{get_detection_terms}
 \alias{get_detection_terms}
-\title{Get detection terms for a tool type}
+\title{Get detection terms for a database}
 \usage{
-get_detection_terms(potato, tool_type)
+get_detection_terms(potato, database_name = NULL, tool_type = NULL)
 }
 \arguments{
 \item{potato}{Potato object}
 
-\item{tool_type}{Tool type ("ko", "pfam", "ec", "hmm", "blast_db")}
+\item{database_name}{Name of database in config (e.g., "kofam113", "gator_blast")}
+
+\item{tool_type}{Legacy parameter for backward compatibility ("ko", "pfam", "ec", "hmm", "blast_db", "blast_terms")}
 }
 \value{
 Character vector of unique terms
 }
 \description{
-Get detection terms for a tool type
+Extracts all terms (KO IDs, gene names, etc.) for a specific database from
+a potato's enzyme nodes. Supports both new 'databases' field and legacy fields.
 }

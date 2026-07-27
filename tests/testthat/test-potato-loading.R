@@ -35,12 +35,12 @@ test_that("get_enzyme_nodes returns only enzyme nodes", {
 test_that("get_detection_terms extracts KO and EC terms", {
   potato <- load_test_potato()
 
-  ko_terms <- get_detection_terms(potato, "ko")
+  ko_terms <- get_detection_terms(potato, tool_type = "ko")
   expect_type(ko_terms, "character")
   expect_true(length(ko_terms) > 0)
   expect_true("K00134" %in% ko_terms)  # gapA
 
-  ec_terms <- get_detection_terms(potato, "ec")
+  ec_terms <- get_detection_terms(potato, tool_type = "ec")
   expect_type(ec_terms, "character")
   expect_true("1.2.1.12" %in% ec_terms)  # gapA EC
 })

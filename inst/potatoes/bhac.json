@@ -1,0 +1,83 @@
+{
+  "id": "glyoxylate_bhac",
+  "type": "pathway",
+  "name": "Glyoxylate - BHAC pathway",
+  "tags": ["glyoxylate", "carbon", "test"],
+  "source": "GATOR v1 database",
+  "notes": "Beta-hydroxyaspartate cycle for glyoxylate metabolism. Converts glyoxylate to aspartate via beta-hydroxyaspartate intermediate.",
+  "nodes": [
+    {
+      "id": "bhcA",
+      "type": "enzyme",
+      "name": "Aspartate-Glyoxylate Aminotransferase",
+      "marker": true,
+      "required": true,
+      "ec": ["2.6.1.35"],
+      "databases": {
+        "kofam113": ["K28179"],
+        "gator_blast": ["bhaA_BLT64_RS06510"]
+      }
+    },
+    {
+      "id": "bhcC",
+      "type": "enzyme",
+      "name": "Beta-hydroxyaspartate aldolase",
+      "required": true,
+      "ec": ["4.1.3.41"],
+      "databases": {
+        "kofam113": ["K18425"],
+        "gator_blast": ["bhcC_BLT64_RS06500"]
+      }
+    },
+    {
+      "id": "bhcB",
+      "type": "enzyme",
+      "name": "serine/threonine dehydratase",
+      "required": true,
+      "databases": {
+        "kofam113": ["K28180"],
+        "gator_blast": ["bhcB_BLT64_RS06505"]
+      }
+    },
+    {
+      "id": "bhcD",
+      "type": "enzyme",
+      "name": "ornithine cyclodeaminase",
+      "required": true,
+      "databases": {
+        "kofam113": ["K28178"],
+        "gator_blast": ["bhcD_BLT64_RS06495"]
+      }
+    },
+    {
+      "id": "bhcR",
+      "type": "enzyme",
+      "name": "bhc operon transcriptional regulator",
+      "required": false,
+      "databases": {
+        "gator_blast": ["bhcR_BLT64_RS06515"]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "bhcA",
+      "to": "bhcC",
+      "compound": "glyoxylate + aspartate -> glycine + glyoxylate + oxaloacetate"
+    },
+    {
+      "from": "bhcC",
+      "to": "bhcB",
+      "compound": "beta-hydroxyaspartate"
+    },
+    {
+      "from": "bhcB",
+      "to": "bhcD",
+      "compound": "iminosuccinate"
+    }
+  ],
+  "scoring": {
+    "min_fraction": 1.0,
+    "marker_mode": "any"
+  }
+}

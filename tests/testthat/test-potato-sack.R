@@ -112,9 +112,10 @@ test_that("potato_config.yaml has expected structure", {
 
   # Check for expected sections
   expect_true(any(grepl("project_name:", config_lines)))
-  expect_true(any(grepl("tools:", config_lines)))
-  expect_true(any(grepl("kofam:", config_lines)))
-  expect_true(any(grepl("blast:", config_lines)))
+  expect_true(any(grepl("databases:", config_lines)))
+  expect_true(any(grepl("kofam113:", config_lines)))
+  expect_true(any(grepl("type: kofam", config_lines)))
+  expect_true(any(grepl("type: blast", config_lines)))
 
   # Cleanup
   unlink(project_path, recursive = TRUE)
