@@ -41,12 +41,13 @@ initialize_annotation_table <- function(genomes, config = NULL,
     stop("No genomes provided", call. = FALSE)
   }
 
-  # Infer tool types from config databases
+  # Infer database names from config
   if (!is.null(config)) {
     if (!is.null(config$databases)) {
-      db_types <- unique(sapply(config$databases, function(db) db$type))
-      tools <- db_types
-      message("Initializing annotation table with tools from config: ", paste(tools, collapse = ", "))
+      # Use database names, not types
+      db_names <- names(config$databases)
+      tools <- db_names
+      message("Initializing annotation table with databases from config: ", paste(tools, collapse = ", "))
     }
   }
 
@@ -59,9 +60,9 @@ initialize_annotation_table <- function(genomes, config = NULL,
     file_object = genomes
   )
 
-  # Add empty list columns for each tool
-  for (tool in tools) {
-    anno_table[[tool]] <- vector("list", length(genomes))
+  # Add empty list columns for each database
+  for (db_name in tools) {
+    anno_table[[db_name]] <- vector("list", length(genomes))
   }
 
   structure(anno_table, class = c("potato_annotation_table", class(anno_table)))
@@ -180,5 +181,19 @@ unnest_all_annotations <- function(anno_table, tools = NULL) {
     return(data.frame())
   }
 
-  do.call(rbind, result_list)
+  # Use dplyr::bind_rows to handle different column structures from different tools
+  if (!requireNamespace("dplyr", quietly = TRUE)) {
+    # Fallback: find common columns
+    all_cols <- unique(unlist(lapply(result_list, names)))
+    result_list <- lapply(result_list, function(df) {
+      missing_cols <- setdiff(all_cols, names(df))
+      for (col in missing_cols) {
+        df[[col]] <- NA
+      }
+      df[, all_cols]
+    })
+    do.call(rbind, result_list)
+  } else {
+    dplyr::bind_rows(result_list)
+  }
 }

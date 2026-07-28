@@ -727,6 +727,70 @@ When building a potato, agent asks:
 9. **Embedded database data**: Should this be Phase 5 or earlier? KEGG licensing resolved: do not redistribute KEGG HMMs.
 10. **File size limits**: Max potato JSON size with embedded HMMs? Should we compress by default?
 11. **Licensing enforcement**: Should builder agent prevent KEGG embedding, or just warn?
+12. **Database consensus/agreement**: How to track and report when multiple databases agree or disagree on gene function assignments?
+
+---
+
+## Future Enhancements (Post v1.0)
+
+### Database Agreement & Consensus Tracking
+
+**Problem**: When a potato gene can be detected by multiple databases (e.g., KOfam + BLAST), it's valuable to know:
+1. **Agreement** - Multiple databases confirm the same gene has the expected function (high confidence)
+2. **Conflict** - Different genes in the genome are assigned the same function by different databases (ambiguity)
+3. **Complementarity** - One database finds the gene, others don't (need to investigate why)
+
+**Use Cases**:
+- "KOfam says gene A is nifH (K02588), BLAST confirms gene A hits nifH reference → HIGH CONFIDENCE"
+- "KOfam says gene A is aceA, but BLAST says gene B is aceA → CONFLICT/AMBIGUITY"
+- "Only BLAST found this gene, KOfam missed it → Check HMM quality or score threshold"
+
+**Current Status**: 
+- v1.0 stores results by database but doesn't analyze cross-database agreement
+- No current potatoes use multiple databases for the same gene (roadmapped for future)
+
+**Proposed Implementation (v1.5+)**:
+
+1. **Potato schema extension**: Allow genes to specify multiple databases
+   ```json
+   {
+     "id": "nifH",
+     "databases": {
+       "kofam113": ["K02588"],
+       "gator_blast": ["nifH_ref1", "nifH_ref2"]
+     },
+     "consensus_required": "any"  // or "all", "majority"
+   }
+   ```
+
+2. **Scoring enhancements**: Track which databases contributed to detection
+   ```r
+   sack@scores:
+     detected_genes: ["nifH"]
+     detected_by_database: list(nifH = c("kofam113", "gator_blast"))  # consensus
+     consensus_level: "high"  # high/medium/low based on agreement
+   ```
+
+3. **Conflict detection**: Flag when different genes match different databases
+   ```r
+   get_conflicts(sack) %>%
+     filter(potato == "glyoxylate_cycle", gene == "aceA")
+   # Shows: gene_X from kofam, gene_Y from blast → investigate
+   ```
+
+4. **Summary functions**: 
+   ```r
+   summarize_database_agreement(sack)
+   # Returns: % of genes with multi-DB confirmation, conflicts found, etc.
+   ```
+
+**Design Considerations**:
+- Should consensus be **required** (all DBs must agree) or **additive** (any DB finding counts)?
+- How to weight databases? (BLAST may be more promiscuous than KOfam)
+- Should conflicts block pathway detection or just flag for review?
+- How to handle DB-specific thresholds? (KOfam has per-KO thresholds, BLAST uses global e-value)
+
+**Priority**: Medium (post-v1.0) - Wait for real use cases with multi-DB potatoes before implementing
 
 ---
 

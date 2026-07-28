@@ -31,8 +31,9 @@ test_that("validate_potato detects invalid edge references", {
 test_that("validate_potato detects cycles", {
   potato <- load_test_potato()
 
-  # Create a cycle
-  potato@edges <- c(potato@edges, list(list(from = "eno", to = "gapA")))
+  # Create a cycle using DAG node IDs (gene_id_step format)
+  # gapA_1 -> pgk_2 -> eno_3, so adding eno_3 -> gapA_1 creates a cycle
+  potato@edges <- c(potato@edges, list(list(from = "eno_3", to = "gapA_1")))
 
   validation <- validate_potato(potato)
 

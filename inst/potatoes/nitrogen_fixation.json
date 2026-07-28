@@ -8,92 +8,113 @@
   "nodes": [
     {
       "id": "nifD",
+      "step": 1,
+      "nodes": ["nifD_1"],
       "type": "enzyme",
       "name": "nitrogenase molybdenum-iron protein alpha chain",
       "ko": ["K02586"],
       "ec": ["1.18.6.1"],
       "required": true,
+      "is_marker": false,
       "notes": "Alpha chain of Mo-nitrogenase MoFe protein"
     },
     {
       "id": "nifK",
+      "step": 2,
+      "nodes": ["nifK_2"],
       "type": "enzyme",
       "name": "nitrogenase molybdenum-iron protein beta chain",
       "ko": ["K02591"],
       "ec": ["1.18.6.1"],
       "required": true,
+      "is_marker": false,
       "notes": "Beta chain of Mo-nitrogenase MoFe protein"
     },
     {
       "id": "nifH",
+      "step": 3,
+      "nodes": ["nifH_3"],
       "type": "enzyme",
       "name": "nitrogenase iron protein",
       "ko": ["K02588"],
       "required": true,
-      "notes": "Fe protein, electron donor to MoFe protein"
+      "is_marker": true,
+      "notes": "Fe protein, electron donor to MoFe protein (DIAGNOSTIC for nitrogen fixation)"
     },
     {
       "id": "vnfD",
+      "step": 4,
+      "nodes": ["vnfD_4"],
       "type": "enzyme",
       "name": "vanadium-dependent nitrogenase alpha chain",
       "ko": ["K22896"],
       "required": false,
+      "is_marker": false,
       "notes": "Alpha chain of V-nitrogenase VFe protein (alternative to Mo-nitrogenase)"
     },
     {
       "id": "vnfK",
+      "step": 5,
+      "nodes": ["vnfK_5"],
       "type": "enzyme",
       "name": "vanadium-dependent nitrogenase beta chain",
       "ko": ["K22897"],
       "required": false,
+      "is_marker": false,
       "notes": "Beta chain of V-nitrogenase VFe protein"
     },
     {
       "id": "vnfG",
+      "step": 6,
+      "nodes": ["vnfG_6"],
       "type": "enzyme",
       "name": "vanadium nitrogenase delta subunit",
       "ko": ["K22898"],
       "required": false,
+      "is_marker": false,
       "notes": "Delta subunit unique to V-nitrogenase"
     },
     {
       "id": "vnfH",
+      "step": 7,
+      "nodes": ["vnfH_7"],
       "type": "enzyme",
       "name": "vanadium nitrogenase iron protein",
       "ko": ["K22899"],
       "required": false,
+      "is_marker": false,
       "notes": "Fe protein for V-nitrogenase (alternative to nifH)"
     }
   ],
 
   "edges": [
     {
-      "from": "nifD",
-      "to": "nifK",
+      "from": "nifD_1",
+      "to": "nifK_2",
       "compound": "MoFe protein complex formation",
       "notes": "nifD and nifK form heterotetramer (α2β2)"
     },
     {
-      "from": "nifK",
-      "to": "nifH",
+      "from": "nifK_2",
+      "to": "nifH_3",
       "compound": "electron transfer",
       "notes": "nifH donates electrons to nifDK complex"
     },
     {
-      "from": "vnfD",
-      "to": "vnfK",
+      "from": "vnfD_4",
+      "to": "vnfK_5",
       "compound": "VFe protein complex formation",
       "notes": "vnfD and vnfK form alternative nitrogenase complex"
     },
     {
-      "from": "vnfK",
-      "to": "vnfG",
+      "from": "vnfK_5",
+      "to": "vnfG_6",
       "compound": "complex stabilization",
       "notes": "vnfG is unique to V-nitrogenase"
     },
     {
-      "from": "vnfG",
-      "to": "vnfH",
+      "from": "vnfG_6",
+      "to": "vnfH_7",
       "compound": "electron transfer",
       "notes": "vnfH donates electrons to vnfDKG complex"
     }

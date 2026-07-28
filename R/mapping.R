@@ -130,34 +130,43 @@ map_hits_to_potatoes <- function(hits, potatoes, tool = "kofam") {
 #'
 #' @param anno_table Annotation table from initialize_annotation_table()
 #' @param potatoes List of Potato objects
-#' @param tools Character vector of which tools to map. NULL = all
+#' @param config Potato config object (to look up database types)
+#' @param databases Character vector of which databases to map. NULL = all
 #'
 #' @returns Modified annotation table with mapped results
 #' @keywords internal
-map_annotation_table <- function(anno_table, potatoes, tools = NULL) {
+map_annotation_table <- function(anno_table, potatoes, config, databases = NULL) {
 
   if (!inherits(anno_table, "potato_annotation_table")) {
     stop("Input must be a potato_annotation_table", call. = FALSE)
   }
 
-  tool_cols <- setdiff(names(anno_table), c("genome", "file_object"))
+  db_cols <- setdiff(names(anno_table), c("genome", "file_object"))
 
-  if (!is.null(tools)) {
-    tool_cols <- intersect(tool_cols, tools)
+  if (!is.null(databases)) {
+    db_cols <- intersect(db_cols, databases)
   }
 
-  # Map each tool column
-  for (tool in tool_cols) {
+  # Map each database column
+  for (db_name in db_cols) {
+    # Look up database type from config
+    if (!db_name %in% names(config$databases)) {
+      warning("Database '", db_name, "' not found in config, skipping mapping")
+      next
+    }
+
+    db_type <- config$databases[[db_name]]$type
+
     for (i in seq_len(nrow(anno_table))) {
-      result <- anno_table[[tool]][[i]]
+      result <- anno_table[[db_name]][[i]]
 
       if (is.null(result) || !is.data.frame(result) || nrow(result) == 0) {
         next
       }
 
-      # Map this genome's results
-      mapped <- map_hits_to_potatoes(result, potatoes, tool = tool)
-      anno_table[[tool]][[i]] <- mapped
+      # Map this genome's results using the database type
+      mapped <- map_hits_to_potatoes(result, potatoes, tool = db_type)
+      anno_table[[db_name]][[i]] <- mapped
     }
   }
 

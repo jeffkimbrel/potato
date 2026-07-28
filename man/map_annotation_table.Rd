@@ -4,14 +4,16 @@
 \alias{map_annotation_table}
 \title{Map annotation table to potatoes}
 \usage{
-map_annotation_table(anno_table, potatoes, tools = NULL)
+map_annotation_table(anno_table, potatoes, config, databases = NULL)
 }
 \arguments{
 \item{anno_table}{Annotation table from initialize_annotation_table()}
 
 \item{potatoes}{List of Potato objects}
 
-\item{tools}{Character vector of which tools to map. NULL = all}
+\item{config}{Potato config object (to look up database types)}
+
+\item{databases}{Character vector of which databases to map. NULL = all}
 }
 \value{
 Modified annotation table with mapped results

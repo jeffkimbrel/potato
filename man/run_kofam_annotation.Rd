@@ -8,7 +8,8 @@ run_kofam_annotation(
   genome_file,
   hal_file,
   config,
-  output_dir = "results/kofam/"
+  output_dir = "results/kofam/",
+  db_name = NULL
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ run_kofam_annotation(
 \item{config}{Potato config object}
 
 \item{output_dir}{Directory for output files (default: "results/kofam/")}
+
+\item{db_name}{Name of database being used (for tracking in results)}
 }
 \value{
 Data frame of KOfam hits with columns: gene_id, ko, score, evalue, etc.

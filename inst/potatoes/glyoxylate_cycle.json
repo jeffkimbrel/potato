@@ -1,0 +1,253 @@
+{
+  "id": "glyoxylate_cycle",
+  "name": "Glyoxylate Cycle",
+  "source": "KEGG M00012",
+  "tags": ["carbon_metabolism", "central_metabolism"],
+  "notes": "Glyoxylate cycle - allows net synthesis of carbohydrates from fatty acids via acetyl-CoA. Bypasses CO2-releasing steps of TCA cycle.",
+
+  "nodes": [
+    {
+      "id": "gltA",
+      "step": 1,
+      "nodes": ["gltA_1"],
+      "type": "enzyme",
+      "name": "citrate synthase",
+      "ko": ["K01647"],
+      "ec": ["2.3.3.1"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Acetyl-CoA + Oxaloacetate -> Citrate"
+    },
+    {
+      "id": "ACLY",
+      "step": 1,
+      "nodes": ["ACLY_1"],
+      "type": "enzyme",
+      "name": "ATP citrate lyase",
+      "ko": ["K01659"],
+      "ec": ["2.3.3.5"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Alternative to gltA for citrate synthesis"
+    },
+    {
+      "id": "acn",
+      "step": 2,
+      "nodes": ["acn_2"],
+      "type": "enzyme",
+      "name": "aconitase",
+      "ko": ["K01681"],
+      "ec": ["4.2.1.3"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Citrate -> Isocitrate"
+    },
+    {
+      "id": "acnA",
+      "step": 2,
+      "nodes": ["acnA_2"],
+      "type": "enzyme",
+      "name": "aconitate hydratase A",
+      "ko": ["K27802"],
+      "ec": ["4.2.1.3"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Alternative aconitase"
+    },
+    {
+      "id": "acnB",
+      "step": 2,
+      "nodes": ["acnB_2"],
+      "type": "enzyme",
+      "name": "aconitate hydratase B",
+      "ko": ["K01682"],
+      "ec": ["4.2.1.3"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Alternative aconitase"
+    },
+    {
+      "id": "aceA",
+      "step": 3,
+      "nodes": ["aceA_3"],
+      "type": "enzyme",
+      "name": "isocitrate lyase",
+      "ko": ["K01637"],
+      "ec": ["4.1.3.1"],
+      "required": true,
+      "is_marker": true,
+      "notes": "Isocitrate -> Succinate + Glyoxylate (DIAGNOSTIC for glyoxylate cycle)"
+    },
+    {
+      "id": "aceB",
+      "step": 4,
+      "nodes": ["aceB_4"],
+      "type": "enzyme",
+      "name": "malate synthase A",
+      "ko": ["K01638"],
+      "ec": ["2.3.3.9"],
+      "required": true,
+      "is_marker": true,
+      "notes": "Glyoxylate + Acetyl-CoA -> Malate (DIAGNOSTIC for glyoxylate cycle)"
+    },
+    {
+      "id": "glcB",
+      "step": 4,
+      "nodes": ["glcB_4"],
+      "type": "enzyme",
+      "name": "malate synthase G",
+      "ko": ["K19282"],
+      "ec": ["4.1.3.24", "3.1.2.30"],
+      "required": true,
+      "is_marker": true,
+      "notes": "Alternative malate synthase (DIAGNOSTIC)"
+    },
+    {
+      "id": "MDH1",
+      "step": 5,
+      "nodes": ["MDH1_5"],
+      "type": "enzyme",
+      "name": "malate dehydrogenase",
+      "ko": ["K00026"],
+      "ec": ["1.1.1.37"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Malate -> Oxaloacetate"
+    },
+    {
+      "id": "MDH2",
+      "step": 5,
+      "nodes": ["MDH2_5"],
+      "type": "enzyme",
+      "name": "malate dehydrogenase (oxaloacetate-decarboxylating)",
+      "ko": ["K00025"],
+      "ec": ["1.1.1.37"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Alternative malate dehydrogenase"
+    },
+    {
+      "id": "mdh",
+      "step": 5,
+      "nodes": ["mdh_5"],
+      "type": "enzyme",
+      "name": "malate dehydrogenase",
+      "ko": ["K00024"],
+      "ec": ["1.1.1.37"],
+      "required": true,
+      "is_marker": false,
+      "notes": "Alternative malate dehydrogenase"
+    }
+  ],
+
+  "edges": [
+    {
+      "from": "gltA_1",
+      "to": "acn_2",
+      "compound": "citrate",
+      "kegg_compound": "C00158"
+    },
+    {
+      "from": "gltA_1",
+      "to": "acnA_2",
+      "compound": "citrate",
+      "kegg_compound": "C00158"
+    },
+    {
+      "from": "gltA_1",
+      "to": "acnB_2",
+      "compound": "citrate",
+      "kegg_compound": "C00158"
+    },
+    {
+      "from": "ACLY_1",
+      "to": "acn_2",
+      "compound": "citrate",
+      "kegg_compound": "C00158"
+    },
+    {
+      "from": "ACLY_1",
+      "to": "acnA_2",
+      "compound": "citrate",
+      "kegg_compound": "C00158"
+    },
+    {
+      "from": "ACLY_1",
+      "to": "acnB_2",
+      "compound": "citrate",
+      "kegg_compound": "C00158"
+    },
+    {
+      "from": "acn_2",
+      "to": "aceA_3",
+      "compound": "isocitrate",
+      "kegg_compound": "C00311"
+    },
+    {
+      "from": "acnA_2",
+      "to": "aceA_3",
+      "compound": "isocitrate",
+      "kegg_compound": "C00311"
+    },
+    {
+      "from": "acnB_2",
+      "to": "aceA_3",
+      "compound": "isocitrate",
+      "kegg_compound": "C00311"
+    },
+    {
+      "from": "aceA_3",
+      "to": "aceB_4",
+      "compound": "glyoxylate",
+      "kegg_compound": "C00048"
+    },
+    {
+      "from": "aceA_3",
+      "to": "glcB_4",
+      "compound": "glyoxylate",
+      "kegg_compound": "C00048"
+    },
+    {
+      "from": "aceB_4",
+      "to": "MDH1_5",
+      "compound": "malate",
+      "kegg_compound": "C00149"
+    },
+    {
+      "from": "aceB_4",
+      "to": "MDH2_5",
+      "compound": "malate",
+      "kegg_compound": "C00149"
+    },
+    {
+      "from": "aceB_4",
+      "to": "mdh_5",
+      "compound": "malate",
+      "kegg_compound": "C00149"
+    },
+    {
+      "from": "glcB_4",
+      "to": "MDH1_5",
+      "compound": "malate",
+      "kegg_compound": "C00149"
+    },
+    {
+      "from": "glcB_4",
+      "to": "MDH2_5",
+      "compound": "malate",
+      "kegg_compound": "C00149"
+    },
+    {
+      "from": "glcB_4",
+      "to": "mdh_5",
+      "compound": "malate",
+      "kegg_compound": "C00149"
+    }
+  ],
+
+  "scoring": {
+    "min_fraction": 1.0,
+    "method": "step_completion",
+    "notes": "Pathway is complete if at least ONE enzyme from each of the 5 steps is present. Step 3 (isocitrate lyase) is the diagnostic enzyme for glyoxylate cycle."
+  }
+}

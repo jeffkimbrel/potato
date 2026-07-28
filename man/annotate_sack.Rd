@@ -4,7 +4,7 @@
 \alias{annotate_sack}
 \title{Annotate all genomes in a sack}
 \usage{
-annotate_sack(sack, tools = NULL, cleanup = TRUE)
+annotate_sack(sack, tools = NULL, cleanup = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{sack}{PotatoSack object from load_potato_sack(), or path to sack directory}
@@ -12,6 +12,8 @@ annotate_sack(sack, tools = NULL, cleanup = TRUE)
 \item{tools}{Character vector of which tools to run. NULL = all configured tools}
 
 \item{cleanup}{Logical. Remove intermediate files after parsing (default TRUE)}
+
+\item{verbose}{Logical. Print progress messages during execution (default TRUE)}
 }
 \value{
 Modified PotatoSack object with results and provenance added

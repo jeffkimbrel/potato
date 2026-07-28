@@ -123,12 +123,14 @@ generate_hal_file <- function(ko_terms, config, output_dir = "results/kofam/",
 #' @param hal_file Path to .hal file (from generate_hal_file())
 #' @param config Potato config object
 #' @param output_dir Directory for output files (default: "results/kofam/")
+#' @param db_name Name of database being used (for tracking in results)
 #'
 #' @returns Data frame of KOfam hits with columns: gene_id, ko, score, evalue, etc.
 #'
 #' @keywords internal
 run_kofam_annotation <- function(genome_file, hal_file, config,
-                                 output_dir = "results/kofam/") {
+                                 output_dir = "results/kofam/",
+                                 db_name = NULL) {
 
   # Check jakomics is available
   if (!exists("jakomics")) {
@@ -163,11 +165,11 @@ run_kofam_annotation <- function(genome_file, hal_file, config,
   ko_list <- kofam_config$ko_list
   score_ratio <- if (is.null(kofam_config$thresholds$score_ratio)) 1.0 else kofam_config$thresholds$score_ratio
 
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    message("Annotating: ", genome_file$short_name)
-  } else {
-    cli::cli_alert_info("Annotating: {genome_file$short_name}")
-  }
+  # if (!requireNamespace("cli", quietly = TRUE)) {
+  #   message("Annotating: ", genome_file$short_name)
+  # } else {
+  #   cli::cli_alert_info("Annotating: {genome_file$short_name}")
+  # }
 
   # Create output file path
   output_file <- file.path(output_dir, paste0(genome_file$short_name, "_kofam.tsv"))
@@ -203,14 +205,25 @@ run_kofam_annotation <- function(genome_file, hal_file, config,
   Sys.setenv(PATH = old_path)
 
   if (exit_code != 0) {
-    warning("KOfam annotation failed for ", genome_file$short_name)
-    return(NULL)
+    # Store as attribute for collection
+    result <- data.frame()
+    attr(result, "message") <- list(
+      level = "error",
+      genome = genome_file$short_name,
+      message = paste("KOfam annotation failed (exit code", exit_code, ")")
+    )
+    return(result)
   }
 
   # Parse output file
   if (!file.exists(output_file)) {
-    warning("KOfam output file not created: ", output_file)
-    return(NULL)
+    result <- data.frame()
+    attr(result, "message") <- list(
+      level = "error",
+      genome = genome_file$short_name,
+      message = paste("KOfam output file not created:", output_file)
+    )
+    return(result)
   }
 
   # Read and parse results
@@ -221,8 +234,13 @@ run_kofam_annotation <- function(genome_file, hal_file, config,
     data_lines <- lines[!grepl("^\\s*#", lines) & nzchar(lines)]
 
     if (length(data_lines) == 0) {
-      message("  No KO hits found")
-      return(data.frame())
+      result <- data.frame()
+      attr(result, "message") <- list(
+        level = "info",
+        genome = genome_file$short_name,
+        message = "No KO hits found"
+      )
+      return(result)
     }
 
     # Parse into data frame
@@ -231,25 +249,42 @@ run_kofam_annotation <- function(genome_file, hal_file, config,
 
       if (length(parts) < 7) return(NULL)
 
+      threshold <- as.numeric(parts[4])
+      score <- as.numeric(parts[5])
+      passed <- grepl("^\\*", parts[1])  # * prefix means passed threshold
+
+      # Generate threshold message if failed
+      threshold_message <- NA_character_
+      if (!passed && !is.na(threshold) && !is.na(score)) {
+        threshold_message <- sprintf("score %.1f < threshold %.1f", score, threshold)
+      }
+
       data.frame(
         genome = genome_file$short_name,
+        database = if (!is.null(db_name)) db_name else NA_character_,
         gene_id = parts[2],
         ko = parts[3],
-        threshold = as.numeric(parts[4]),
-        score = as.numeric(parts[5]),
+        threshold = threshold,
+        score = score,
         evalue = as.numeric(parts[6]),
         description = gsub('^"|"$', '', parts[7]),
-        passed = grepl("^\\*", parts[1]),  # * prefix means passed threshold
+        passed = passed,
+        threshold_message = threshold_message,
         stringsAsFactors = FALSE
       )
     }))
 
-    message("  Found ", nrow(results), " KO hits (", sum(results$passed), " passed threshold)")
+    # message("  Found ", nrow(results), " KO hits (", sum(results$passed), " passed threshold)")
     results
 
   }, error = function(e) {
-    warning("Failed to parse KOfam results: ", e$message)
-    return(NULL)
+    result <- data.frame()
+    attr(result, "message") <- list(
+      level = "error",
+      genome = genome_file$short_name,
+      message = paste("Failed to parse KOfam results:", e$message)
+    )
+    return(result)
   })
 }
 
@@ -315,26 +350,39 @@ annotate_genomes_kofam <- function(genomes, potatoes, config, cleanup = TRUE) {
   # Generate HAL file (shared across all genomes)
   hal_file <- generate_hal_file(all_ko_terms, config)
 
-  # Run annotation on each genome
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    message("Annotating ", length(genomes), " genome(s)...")
-  } else {
-    cli::cli_alert_info("Annotating {length(genomes)} genome{?s}")
+  # Run annotation on each genome with progress bar
+  if (!requireNamespace("purrr", quietly = TRUE)) {
+    stop("Package 'purrr' is required. Install with: install.packages('purrr')", call. = FALSE)
   }
 
   output_files <- character(0)
-  results <- lapply(genomes, function(genome) {
-    result <- run_kofam_annotation(genome, hal_file, config)
+
+  # Collect messages during annotation
+  collected_messages <- list()
+
+  results <- purrr::map(genomes, function(genome) {
+    result <- run_kofam_annotation(genome, hal_file, config, db_name = kofam_db)
+
+    # Collect message if present
+    msg <- attr(result, "message")
+    if (!is.null(msg)) {
+      msg$stage <- "kofam"
+      collected_messages <<- c(collected_messages, list(msg))
+    }
+
     # Track output file for cleanup
     output_file <- file.path("results/kofam", paste0(genome$short_name, "_kofam.tsv"))
     if (file.exists(output_file)) {
       output_files <<- c(output_files, output_file)
     }
     result
-  })
+  }, .progress = paste0("KOfam [", kofam_db, "]"))
 
   # Name results by genome
   names(results) <- sapply(genomes, function(g) g$short_name)
+
+  # Attach messages to results for collection at workflow level
+  attr(results, "messages") <- collected_messages
 
   # Cleanup intermediate files
   if (cleanup) {

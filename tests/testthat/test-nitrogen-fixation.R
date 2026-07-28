@@ -77,11 +77,12 @@ test_that("nitrogen fixation represents two alternative pathways", {
 
   g <- build_potato_graph(nif)
 
-  # Check that nif and vnf pathways are separate
-  expect_true("nifD" %in% igraph::V(g)$name)
-  expect_true("vnfD" %in% igraph::V(g)$name)
+  # Check that nif and vnf pathways are in the graph (as DAG nodes with _step suffix)
+  all_nodes <- igraph::V(g)$name
+  expect_true(any(grepl("^nifD_", all_nodes)))
+  expect_true(any(grepl("^vnfD_", all_nodes)))
 
-  # Both should be in the same connected component (weakly connected)
-  # but represent alternative routes
-  expect_equal(length(igraph::components(g, mode = "weak")$membership), 7)
+  # Graph should have nodes for all genes
+  expect_equal(igraph::vcount(g), 7)
+  expect_equal(igraph::ecount(g), 5)
 })

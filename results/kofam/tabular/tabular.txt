@@ -1,3 +1,53 @@
+K00024
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.2368 -          K00024               -            7.4e-37  124.8   0.1   7.9e-37  124.7   0.1   1.0   1   0   0   1   1   1   1 Malate dehydrogenase (EC 1.1.1.37) [MSM15 | 1819565.6]
+fig|1819565.6.peg.1156 -          K00024               -            0.00012   18.5   0.0   0.00015   18.2   0.0   1.2   1   0   0   1   1   1   1 Aspartate-semialdehyde dehydrogenase (EC 1.2.1.11) [MSM15 | 1819565.6]
+fig|1819565.6.peg.2359 -          K00024               -             0.0027   14.1   0.2    0.0034   13.8   0.2   1.2   1   0   0   1   1   1   1 Ribitol 2-dehydrogenase (EC 1.1.1.56) [MSM15 | 1819565.6]
+fig|1819565.6.peg.1775 -          K00024               -             0.0043   13.4   0.1    0.0067   12.8   0.1   1.3   1   0   0   1   1   1   1 hypothetical protein [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00024.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K00024 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00024.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:49 2026
+# [ok]
+
+K00025
+#                                                               --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00025.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K00025 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00025.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:49 2026
+# [ok]
+
+K00026
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.2368 -          K00026               -            4.1e-07   26.8   0.1   4.8e-07   26.6   0.1   1.0   1   0   0   1   1   1   1 Malate dehydrogenase (EC 1.1.1.37) [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00026.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K00026 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00026.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:49 2026
+# [ok]
+
 K00134
 #                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
 # target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
@@ -16,7 +66,7 @@ fig|1819565.6.peg.37   -          K00134               -             0.0069   12
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K00134 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00134.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:02 2026
+# Date:            Tue Jul 28 13:37:49 2026
 # [ok]
 
 K00927
@@ -32,7 +82,108 @@ fig|1819565.6.peg.2870 -          K00927               -            1.5e-82  275
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K00927 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K00927.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:02 2026
+# Date:            Tue Jul 28 13:37:49 2026
+# [ok]
+
+K01637
+#                                                               --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01637.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K01637 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01637.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:49 2026
+# [ok]
+
+K01638
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.763  -          K01638               -            3.5e-60  201.6   0.2   4.2e-60  201.3   0.2   1.0   1   0   0   1   1   1   1 Malate synthase G (EC 2.3.3.9) [MSM15 | 1819565.6]
+fig|1819565.6.peg.2134 -          K01638               -            6.6e-47  157.7   0.1   7.5e-47  157.5   0.1   1.0   1   0   0   1   1   1   1 Malate synthase G (EC 2.3.3.9) [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01638.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K01638 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01638.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:50 2026
+# [ok]
+
+K01647
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.489  -          K01647               -            1.1e-89  299.3   0.0   1.2e-89  299.2   0.0   1.0   1   0   0   1   1   1   1 Citrate synthase (si) (EC 2.3.3.1) [MSM15 | 1819565.6]
+fig|1819565.6.peg.1330 -          K01647               -              2e-39  133.4   0.0   2.1e-39  133.3   0.0   1.0   1   0   0   1   1   1   1 Citrate synthase (si) (EC 2.3.3.1) [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01647.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K01647 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01647.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:50 2026
+# [ok]
+
+K01659
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.489  -          K01659               -            1.4e-77  258.9   0.0   1.5e-77  258.8   0.0   1.0   1   0   0   1   1   1   1 Citrate synthase (si) (EC 2.3.3.1) [MSM15 | 1819565.6]
+fig|1819565.6.peg.1330 -          K01659               -            3.8e-33  112.3   0.0   3.9e-33  112.3   0.0   1.0   1   0   0   1   1   1   1 Citrate synthase (si) (EC 2.3.3.1) [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01659.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K01659 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01659.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:50 2026
+# [ok]
+
+K01681
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.1182 -          K01681               -           1.2e-241  802.1   0.0  1.4e-241  801.9   0.0   1.0   1   0   0   1   1   1   1 Aconitate hydratase (EC 4.2.1.3) [MSM15 | 1819565.6]
+fig|1819565.6.peg.229  -          K01681               -            3.6e-45  151.6   0.2   4.5e-45  151.3   0.2   1.0   1   0   0   1   1   1   1 3-isopropylmalate dehydratase large subunit (EC 4.2.1.33) [MSM15 | 1819565.6]
+fig|1819565.6.peg.2594 -          K01681               -            1.2e-11   40.7   0.0   1.2e-11   40.6   0.0   1.0   1   0   0   1   1   1   1 3-isopropylmalate dehydratase small subunit (EC 4.2.1.33) [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01681.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K01681 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01681.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:50 2026
+# [ok]
+
+K01682
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.229  -          K01682               -            3.3e-25   85.7   1.0   3.9e-23   78.8   0.0   2.2   2   0   0   2   2   2   2 3-isopropylmalate dehydratase large subunit (EC 4.2.1.33) [MSM15 | 1819565.6]
+fig|1819565.6.peg.1182 -          K01682               -            2.2e-06   23.4   0.3    0.0035   12.8   0.2   2.4   3   0   0   3   3   3   2 Aconitate hydratase (EC 4.2.1.3) [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01682.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K01682 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01682.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K01689
@@ -49,7 +200,7 @@ fig|1819565.6.peg.2352 -          K01689               -             0.0011   15
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K01689 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K01689.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:02 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K02586
@@ -66,7 +217,7 @@ fig|1819565.6.peg.345 -          K02586               -            1.2e-08   31.
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K02586 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K02586.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:02 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K02588
@@ -92,7 +243,7 @@ fig|1819565.6.peg.345  -          K02588               -             0.0013   15
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K02588 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K02588.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K02591
@@ -109,7 +260,7 @@ fig|1819565.6.peg.345 -          K02591               -            6.3e-09   32.
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K02591 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K02591.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K15633
@@ -126,7 +277,7 @@ fig|1819565.6.peg.1167 -          K15633               -            5.2e-05   19
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K15633 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K15633.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K15634
@@ -142,7 +293,25 @@ fig|1819565.6.peg.1735 -          K15634               -            3.3e-34  116
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K15634 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K15634.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:50 2026
+# [ok]
+
+K19282
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.261  -          K19282               -            1.2e-09   34.9   0.0   4.8e-09   32.8   0.0   1.8   2   0   0   2   2   2   1 (3S)-malyl-CoA thioesterase (EC 3.1.2.n2) [MSM15 | 1819565.6]
+fig|1819565.6.peg.3031 -          K19282               -              2e-05   20.9   0.1   2.4e-05   20.7   0.1   1.0   1   0   0   1   1   1   1 L-malyl-CoA/beta-methylmalyl-CoA lyase (EC 4.1.3.24) [MSM15 | 1819565.6]
+fig|1819565.6.peg.2898 -          K19282               -            0.00029   17.1   0.1   0.00045   16.5   0.1   1.3   1   1   0   1   1   1   1 L-malyl-CoA/beta-methylmalyl-CoA lyase (EC 4.1.3.24) [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K19282.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K19282 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K19282.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K22896
@@ -157,7 +326,7 @@ K22896
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K22896 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K22896.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K22897
@@ -173,7 +342,7 @@ fig|1819565.6.peg.346 -          K22897               -            3.4e-12   43.
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K22897 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K22897.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K22898
@@ -188,7 +357,7 @@ K22898
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K22898 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K22898.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:50 2026
 # [ok]
 
 K22899
@@ -207,6 +376,28 @@ fig|1819565.6.peg.97   -          K22899               -            6.7e-08   29
 # Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
 # Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K22899 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K22899.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
 # Current dir:     /Users/kimbrel1/Github/potato
-# Date:            Mon Jul 27 22:42:03 2026
+# Date:            Tue Jul 28 13:37:51 2026
+# [ok]
+
+K27802
+#                                                                 --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name          accession  query name           accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#  ------------------- ---------- -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+fig|1819565.6.peg.1182 -          K27802               -           1.4e-296  984.6   0.0  1.7e-296  984.4   0.0   1.0   1   0   0   1   1   1   1 Aconitate hydratase (EC 4.2.1.3) [MSM15 | 1819565.6]
+fig|1819565.6.peg.229  -          K27802               -            5.5e-57  190.9   1.5   6.3e-57  190.7   1.5   1.0   1   0   0   1   1   1   1 3-isopropylmalate dehydratase large subunit (EC 4.2.1.33) [MSM15 | 1819565.6]
+fig|1819565.6.peg.2611 -          K27802               -            6.7e-13   44.8   0.0   6.9e-13   44.8   0.0   1.0   1   0   0   1   1   1   1 Aconitate hydratase (EC 4.2.1.3) [MSM15 | 1819565.6]
+fig|1819565.6.peg.2594 -          K27802               -            3.5e-12   42.4   0.0   3.9e-12   42.3   0.0   1.0   1   0   0   1   1   1   1 3-isopropylmalate dehydratase small subunit (EC 4.2.1.33) [MSM15 | 1819565.6]
+fig|1819565.6.peg.309  -          K27802               -            2.4e-07   26.4   0.0   2.8e-07   26.2   0.0   1.1   1   0   0   1   1   1   1 OmpA domain protein [MSM15 | 1819565.6]
+fig|1819565.6.peg.2439 -          K27802               -            4.5e-06   22.2   0.0   5.1e-06   22.0   0.0   1.0   1   0   0   1   1   1   1 Outer membrane protein and related peptidoglycan-associated (lipo)proteins [MSM15 | 1819565.6]
+fig|1819565.6.peg.2192 -          K27802               -              0.018   10.3   0.0     0.019   10.2   0.0   1.0   1   0   0   1   1   1   0 hypothetical protein [MSM15 | 1819565.6]
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K27802.hmm
+# Target file:     /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa
+# Option settings: hmmsearch -o /dev/null --tblout results/kofam/tabular/K27802 -T 0 --cpu 1 /Users/kimbrel1/Library/CloudStorage/Dropbox/Lab/Resources/kofam/118/K27802.hmm /Users/kimbrel1/Library/CloudStorage/Dropbox/working/potato/test/genomes/MSM15_Flavimaricola.feature_protein.faa 
+# Current dir:     /Users/kimbrel1/Github/potato
+# Date:            Tue Jul 28 13:37:51 2026
 # [ok]
 

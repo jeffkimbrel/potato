@@ -8,40 +8,49 @@
   "nodes": [
     {
       "id": "gapA",
+      "step": 1,
+      "nodes": ["gapA_1"],
       "type": "enzyme",
       "name": "glyceraldehyde-3-phosphate dehydrogenase",
       "ko": ["K00134"],
       "ec": ["1.2.1.12"],
-      "required": true
+      "required": true,
+      "is_marker": false
     },
     {
       "id": "pgk",
+      "step": 2,
+      "nodes": ["pgk_2"],
       "type": "enzyme",
       "name": "phosphoglycerate kinase",
       "ko": ["K00927"],
       "ec": ["2.7.2.3"],
-      "required": true
+      "required": true,
+      "is_marker": false
     },
     {
       "id": "eno",
+      "step": 3,
+      "nodes": ["eno_3"],
       "type": "enzyme",
       "name": "enolase",
       "ko": ["K01689", "K15633", "K15634"],
       "ec": ["4.2.1.11"],
-      "required": true
+      "required": true,
+      "is_marker": false
     }
   ],
 
   "edges": [
     {
-      "from": "gapA",
-      "to": "pgk",
+      "from": "gapA_1",
+      "to": "pgk_2",
       "compound": "1,3-bisphosphoglycerate",
       "kegg_compound": "C00236"
     },
     {
-      "from": "pgk",
-      "to": "eno",
+      "from": "pgk_2",
+      "to": "eno_3",
       "compound": "3-phosphoglycerate",
       "kegg_compound": "C00197"
     }

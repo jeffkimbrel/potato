@@ -434,19 +434,31 @@ validate_potato <- function(potato, strict = FALSE) {
     }
   }
 
+  # Collect all valid node IDs (both gene IDs and DAG node IDs)
+  all_valid_ids <- node_ids  # Start with gene IDs
+
+  # Add DAG node IDs from nodes array
+  for (node in potato@nodes) {
+    if (!is.null(node$nodes)) {
+      dag_node_ids <- if (is.list(node$nodes)) unlist(node$nodes) else node$nodes
+      all_valid_ids <- c(all_valid_ids, dag_node_ids)
+    }
+  }
+  all_valid_ids <- unique(all_valid_ids)
+
   # Check edges reference valid nodes
   for (i in seq_along(potato@edges)) {
     edge <- potato@edges[[i]]
 
     if (is.null(edge$from)) {
       errors <- c(errors, sprintf("Edge %d: missing 'from' field", i))
-    } else if (!edge$from %in% node_ids) {
+    } else if (!edge$from %in% all_valid_ids) {
       errors <- c(errors, sprintf("Edge %d: 'from' references non-existent node '%s'", i, edge$from))
     }
 
     if (is.null(edge$to)) {
       errors <- c(errors, sprintf("Edge %d: missing 'to' field", i))
-    } else if (!edge$to %in% node_ids) {
+    } else if (!edge$to %in% all_valid_ids) {
       errors <- c(errors, sprintf("Edge %d: 'to' references non-existent node '%s'", i, edge$to))
     }
   }

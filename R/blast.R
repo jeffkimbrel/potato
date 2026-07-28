@@ -61,11 +61,11 @@ run_blast_annotation <- function(genome_file, blast_terms, config,
     1e-7
   }
 
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    message("Running BLAST: ", genome_file$short_name, " vs ", basename(blast_db_path))
-  } else {
-    cli::cli_alert_info("Running BLAST: {genome_file$short_name} vs {.file {basename(blast_db_path)}}")
-  }
+  # if (!requireNamespace("cli", quietly = TRUE)) {
+  #   message("Running BLAST: ", genome_file$short_name, " vs ", basename(blast_db_path))
+  # } else {
+  #   cli::cli_alert_info("Running BLAST: {genome_file$short_name} vs {.file {basename(blast_db_path)}}")
+  # }
 
   # Get conda environment path for PATH
   py_path <- reticulate::py_config()$python
@@ -98,8 +98,13 @@ run_blast_annotation <- function(genome_file, blast_terms, config,
     }
 
     if (length(filtered_results) == 0) {
-      message("  No hits to target BLAST terms")
-      return(data.frame())
+      result <- data.frame()
+      attr(result, "message") <- list(
+        level = "info",
+        genome = genome_file$short_name,
+        message = "No hits to target BLAST terms"
+      )
+      return(result)
     }
 
     # Convert to data frame
@@ -125,8 +130,25 @@ run_blast_annotation <- function(genome_file, blast_terms, config,
                    hit$percent >= pident_thresh &&
                    hit$eval <= evalue_thresh)
 
+        # Generate threshold message if failed
+        threshold_message <- NA_character_
+        if (!passed) {
+          failed_reasons <- character(0)
+          if (hit$bit_score < bitscore_thresh) {
+            failed_reasons <- c(failed_reasons, sprintf("bitscore %.1f < %.1f", hit$bit_score, bitscore_thresh))
+          }
+          if (hit$percent < pident_thresh) {
+            failed_reasons <- c(failed_reasons, sprintf("pident %.1f%% < %.1f%%", hit$percent, pident_thresh))
+          }
+          if (hit$eval > evalue_thresh) {
+            failed_reasons <- c(failed_reasons, sprintf("evalue %.2e > %.2e", hit$eval, evalue_thresh))
+          }
+          threshold_message <- paste(failed_reasons, collapse = "; ")
+        }
+
         rows_list <- c(rows_list, list(data.frame(
           genome = genome_file$short_name,
+          database = if (!is.null(db_name)) db_name else NA_character_,
           query = hit$query,
           subject = hit$subject,
           pident = hit$percent,
@@ -134,20 +156,26 @@ run_blast_annotation <- function(genome_file, blast_terms, config,
           evalue = hit$eval,
           bitscore = hit$bit_score,
           passed = passed,
+          threshold_message = threshold_message,
           stringsAsFactors = FALSE
         )))
       }
     }
 
     result_df <- do.call(rbind, rows_list)
-    message("  Found ", nrow(result_df), " BLAST hits (",
-            sum(result_df$passed), " passed thresholds)")
+    # message("  Found ", nrow(result_df), " BLAST hits (",
+    #         sum(result_df$passed), " passed thresholds)")
     result_df
 
   }, error = function(e) {
     Sys.setenv(PATH = old_path)
-    warning("BLAST annotation failed for ", genome_file$short_name, ": ", e$message)
-    return(NULL)
+    result <- data.frame()  # Empty data frame instead of NULL
+    attr(result, "message") <- list(
+      level = "error",
+      genome = genome_file$short_name,
+      message = paste("BLAST annotation failed:", e$message)
+    )
+    return(result)
   })
 }
 
@@ -256,18 +284,37 @@ annotate_genomes_blast <- function(genomes, potatoes, config, cleanup = TRUE) {
     cli::cli_alert_info("Database: {db_info$db_name %||% basename(db_info$db_path)} ({length(db_info$terms)} term{?s})")
   }
 
-  # Run annotation
-  results <- lapply(genomes, function(genome) {
-    run_blast_annotation(
+  # Run annotation with progress bar
+  if (!requireNamespace("purrr", quietly = TRUE)) {
+    stop("Package 'purrr' is required. Install with: install.packages('purrr')", call. = FALSE)
+  }
+
+  # Collect messages during annotation
+  collected_messages <- list()
+
+  results <- purrr::map(genomes, function(genome) {
+    result <- run_blast_annotation(
       genome,
       blast_terms = db_info$terms,
       config = config,
       db_name = db_info$db_name,
       db_path = db_info$db_path
     )
-  })
+
+    # Collect message if present
+    msg <- attr(result, "message")
+    if (!is.null(msg)) {
+      msg$stage <- "blast"
+      collected_messages <<- c(collected_messages, list(msg))
+    }
+
+    result
+  }, .progress = paste0("BLAST [", db_info$db_name %||% "gator_blast", "]"))
 
   names(results) <- sapply(genomes, function(g) g$short_name)
+
+  # Attach messages to results for collection at workflow level
+  attr(results, "messages") <- collected_messages
 
   # Note: BLAST via jakomics returns results directly, no intermediate files to clean up
 

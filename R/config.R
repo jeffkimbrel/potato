@@ -60,6 +60,13 @@ load_potato_config <- function(config_path = NULL) {
 #' @keywords internal
 validate_database_configs <- function(databases) {
 
+  # Check for duplicate database names
+  db_names <- names(databases)
+  if (length(db_names) != length(unique(db_names))) {
+    duplicates <- db_names[duplicated(db_names)]
+    stop("Config contains duplicate database names: ", paste(duplicates, collapse = ", "), call. = FALSE)
+  }
+
   for (db_name in names(databases)) {
     db <- databases[[db_name]]
 

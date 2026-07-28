@@ -2,3 +2,11 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^\.claude$
+^BRAINSTORM\.md$
+^ROADMAP\.md$
+^CLAUDE\.md$
+^IMPLEMENTATION_NOTES\.md$
+^POTATO_BUILDER_DESIGN\.md$
+^environment\.yaml$
+^results$
+^working\.R$

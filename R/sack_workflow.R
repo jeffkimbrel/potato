@@ -144,10 +144,11 @@ load_potato_sack <- function(path = NULL, genomes_dir = NULL) {
 #' @param sack PotatoSack object from load_potato_sack(), or path to sack directory
 #' @param tools Character vector of which tools to run. NULL = all configured tools
 #' @param cleanup Logical. Remove intermediate files after parsing (default TRUE)
+#' @param verbose Logical. Print progress messages during execution (default TRUE)
 #'
 #' @returns Modified PotatoSack object with results and provenance added
 #' @export
-annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
+annotate_sack <- function(sack, tools = NULL, cleanup = TRUE, verbose = TRUE) {
 
   # Allow passing path directly
   if (is.character(sack)) {
@@ -167,11 +168,8 @@ annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
   }
 
   # Validate potatoes
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    message("\nValidating potatoes...")
-  } else {
-    cli::cli_h2("Validating potatoes")
-  }
+  sack <- sack_msg(sack, "Validating potatoes", level = "header",
+                   stage = "annotation", verbose = verbose)
 
   validation_errors <- character(0)
   validation_warnings <- character(0)
@@ -194,20 +192,13 @@ annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
 
   if (length(validation_warnings) > 0) {
     for (warn in validation_warnings) {
-      if (!requireNamespace("cli", quietly = TRUE)) {
-        message(warn)
-      } else {
-        cli::cli_alert_warning(warn)
-      }
+      sack <- sack_msg(sack, warn, level = "warning", stage = "annotation", verbose = verbose)
     }
   }
 
   # Validate database resources
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    message("\nValidating database resources...")
-  } else {
-    cli::cli_h2("Validating database resources")
-  }
+  sack <- sack_msg(sack, "Validating database resources", level = "header",
+                   stage = "annotation", verbose = verbose)
 
   # Check KOfam profiles
   kofam_dbs <- names(sack@config$databases)[sapply(sack@config$databases, function(db) db$type == "kofam")]
@@ -322,60 +313,87 @@ annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
   # Initialize table
   anno_table <- initialize_annotation_table(sack@genomes, sack@config)
 
-  # Get available tools from config
-  available_tools <- unique(sapply(sack@config$databases, function(db) db$type))
+  # Get available databases from config
+  available_dbs <- names(sack@config$databases)
 
+  # Filter by tool types if specified
   if (!is.null(tools)) {
-    available_tools <- intersect(available_tools, tools)
+    # Filter databases whose types match requested tools
+    available_dbs <- available_dbs[sapply(available_dbs, function(db) {
+      sack@config$databases[[db]]$type %in% tools
+    })]
   }
+
+  db_types <- sapply(available_dbs, function(db) sack@config$databases[[db]]$type)
 
   if (!requireNamespace("cli", quietly = TRUE)) {
-    message("\nRunning annotation with tools: ", paste(available_tools, collapse = ", "))
+    message("\nRunning annotation with databases: ", paste(available_dbs, collapse = ", "))
   } else {
     cli::cli_h2("Running annotation")
-    cli::cli_alert_info("Tools: {paste(available_tools, collapse = ', ')}")
+    cli::cli_alert_info("Databases: {paste(available_dbs, collapse = ', ')}")
   }
 
-  # Run each tool
-  for (tool in available_tools) {
-    if (!requireNamespace("cli", quietly = TRUE)) {
-      message("\n=== ", toupper(tool), " ===")
-    } else {
-      cli::cli_h3(toupper(tool))
-    }
+  # Run each database
+  for (db_name in available_dbs) {
+    db_type <- sack@config$databases[[db_name]]$type
 
-    if (tool == "kofam") {
-      anno_table$kofam <- annotate_genomes_kofam(sack@genomes, sack@potatoes, sack@config, cleanup = cleanup)
-    } else if (tool == "blast") {
-      anno_table$blast <- annotate_genomes_blast(sack@genomes, sack@potatoes, sack@config, cleanup = cleanup)
-    } else if (tool == "hmm") {
+    sack <- sack_msg(sack, paste0(toupper(db_type), " [", db_name, "]"), level = "header",
+                     stage = "annotation", verbose = verbose)
+
+    if (db_type == "kofam") {
+      # Run kofam for this specific database
+      tool_results <- annotate_genomes_kofam(sack@genomes, sack@potatoes, sack@config, cleanup = cleanup)
+      anno_table[[db_name]] <- tool_results
+      # Collect messages
+      msgs <- attr(tool_results, "messages")
+      if (!is.null(msgs) && length(msgs) > 0) {
+        for (msg in msgs) {
+          sack <- add_sack_message(sack, level = msg$level, stage = msg$stage,
+                                  message = msg$message, genome = msg$genome)
+        }
+      }
+    } else if (db_type == "blast") {
+      tool_results <- annotate_genomes_blast(sack@genomes, sack@potatoes, sack@config, cleanup = cleanup)
+      anno_table[[db_name]] <- tool_results
+      # Collect messages
+      msgs <- attr(tool_results, "messages")
+      if (!is.null(msgs) && length(msgs) > 0) {
+        for (msg in msgs) {
+          sack <- add_sack_message(sack, level = msg$level, stage = msg$stage,
+                                  message = msg$message, genome = msg$genome)
+        }
+      }
+    } else if (db_type == "hmm") {
       # TODO: implement annotate_genomes_hmm()
-      if (!requireNamespace("cli", quietly = TRUE)) {
-        warning("HMM annotation not yet implemented")
-      } else {
-        cli::cli_alert_warning("HMM annotation not yet implemented")
-      }
-    } else if (tool == "pfam") {
+      sack <- sack_msg(sack, "HMM annotation not yet implemented",
+                       level = "warning", stage = "annotation", verbose = verbose)
+    } else if (db_type == "pfam") {
       # TODO: implement annotate_genomes_pfam()
-      if (!requireNamespace("cli", quietly = TRUE)) {
-        warning("PFAM annotation not yet implemented")
-      } else {
-        cli::cli_alert_warning("PFAM annotation not yet implemented")
-      }
+      sack <- sack_msg(sack, "PFAM annotation not yet implemented",
+                       level = "warning", stage = "annotation", verbose = verbose)
     }
   }
 
   # Map to potatoes
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    message("\nMapping results to potatoes...")
-  } else {
-    cli::cli_h2("Mapping results to potatoes")
-  }
-  anno_table <- map_annotation_table(anno_table, sack@potatoes)
+  sack <- sack_msg(sack, "Mapping results to potatoes", level = "header",
+                   stage = "annotation", verbose = verbose)
+  anno_table <- map_annotation_table(anno_table, sack@potatoes, sack@config)
 
   # Add results to sack
   sack@results <- anno_table
   sack@completed_stages <- c(sack@completed_stages, "annotation")
+
+  # Add provenance
+  sack@provenance$annotation <- create_provenance(
+    stage_name = "annotation",
+    command = "annotate_sack()",
+    params = list(
+      n_genomes = length(sack@genomes),
+      n_potatoes = length(sack@potatoes),
+      databases = available_dbs,
+      cleanup = cleanup
+    )
+  )
 
   # Mark annotation as completed
   if (!requireNamespace("cli", quietly = TRUE)) {

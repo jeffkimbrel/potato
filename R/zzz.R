@@ -5,11 +5,19 @@
   conda_env <- Sys.getenv("POTATO_CONDA_ENV", unset = "potato")
 
   # Try to load jakomics for tool execution
+  # Suppress errors here - we'll notify in .onAttach if needed
   tryCatch({
-    reticulate::use_condaenv(conda_env)
+    reticulate::use_condaenv(conda_env, required = FALSE)
     reticulate::py_require("jakomics")
     jakomics <<- reticulate::import("jakomics", delay_load = TRUE)
   }, error = function(e) {
+    # Silent - will notify in .onAttach
+  })
+}
+
+.onAttach <- function(libname, pkgname) {
+  # Check if jakomics was loaded successfully
+  if (!exists("jakomics") || is.null(jakomics)) {
     packageStartupMessage("Note: jakomics not loaded. Tool execution will be unavailable.")
     packageStartupMessage("")
     packageStartupMessage("To enable annotation tools:")
@@ -26,5 +34,5 @@
     packageStartupMessage("  2. Set environment variable before loading potato:")
     packageStartupMessage("     Sys.setenv(POTATO_CONDA_ENV = 'my_custom_name')")
     packageStartupMessage("     # Or add to .Renviron: POTATO_CONDA_ENV=my_custom_name")
-  })
+  }
 }
