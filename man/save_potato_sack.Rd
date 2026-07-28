@@ -9,7 +9,7 @@ save_potato_sack(sack, path = NULL, compress = "gzip")
 \arguments{
 \item{sack}{PotatoSack object to save}
 
-\item{path}{Path to save the RDS file (default: "<sack_id>_potato_sack.rds")}
+\item{path}{Path to save the RDS file (default: saves to sack directory as "<sack_id>_potato_sack.rds")}
 
 \item{compress}{Compression method (default: "gzip")}
 }

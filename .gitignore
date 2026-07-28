@@ -6,3 +6,4 @@
 .quarto
 *.pyc
 working.R
+/results

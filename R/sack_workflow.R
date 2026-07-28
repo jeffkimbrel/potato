@@ -112,19 +112,7 @@ load_potato_sack <- function(path = NULL, genomes_dir = NULL) {
     created = Sys.time(),
     potato_version = as.character(packageVersion("potato")),
     databases = lapply(config$databases, function(db) {
-      db_meta <- list(type = db$type)
-
-      # Calculate database hash for change detection
-      if (db$type == "kofam" && !is.null(db$profiles_dir)) {
-        db_meta$profiles_hash <- calculate_dir_hash(db$profiles_dir, pattern = "\\.hmm$")
-        db_meta$ko_list_hash <- calculate_file_hash(db$ko_list)
-      } else if (db$type == "blast" && !is.null(db$path)) {
-        db_meta$db_hash <- calculate_file_hash(db$path)
-      } else if ((db$type == "hmm" || db$type == "pfam") && !is.null(db$path)) {
-        db_meta$hmm_hash <- calculate_file_hash(db$path)
-      }
-
-      db_meta
+      list(type = db$type)
     }),
     potatoes = lapply(potatoes, function(p) {
       list(
@@ -222,10 +210,10 @@ annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
   }
 
   # Check KOfam profiles
-  kofam_dbs <- names(sack$config$databases)[sapply(sack$config$databases, function(db) db$type == "kofam")]
+  kofam_dbs <- names(sack@config$databases)[sapply(sack@config$databases, function(db) db$type == "kofam")]
   if (length(kofam_dbs) > 0) {
     for (db_name in kofam_dbs) {
-      db_config <- sack$config$databases[[db_name]]
+      db_config <- sack@config$databases[[db_name]]
       profiles_dir <- db_config$profiles_dir
 
       # Get all KO terms from potatoes
@@ -268,10 +256,10 @@ annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
   }
 
   # Check BLAST databases
-  blast_dbs <- names(sack$config$databases)[sapply(sack$config$databases, function(db) db$type == "blast")]
+  blast_dbs <- names(sack@config$databases)[sapply(sack@config$databases, function(db) db$type == "blast")]
   if (length(blast_dbs) > 0) {
     for (db_name in blast_dbs) {
-      db_config <- sack$config$databases[[db_name]]
+      db_config <- sack@config$databases[[db_name]]
 
       # Get all BLAST terms from potatoes
       all_blast_terms <- character(0)
@@ -332,10 +320,10 @@ annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
   }
 
   # Initialize table
-  anno_table <- initialize_annotation_table(sack$genomes, sack$config)
+  anno_table <- initialize_annotation_table(sack@genomes, sack@config)
 
   # Get available tools from config
-  available_tools <- unique(sapply(sack$config$databases, function(db) db$type))
+  available_tools <- unique(sapply(sack@config$databases, function(db) db$type))
 
   if (!is.null(tools)) {
     available_tools <- intersect(available_tools, tools)
@@ -357,9 +345,9 @@ annotate_sack <- function(sack, tools = NULL, cleanup = TRUE) {
     }
 
     if (tool == "kofam") {
-      anno_table$kofam <- annotate_genomes_kofam(sack$genomes, sack$potatoes, sack$config, cleanup = cleanup)
+      anno_table$kofam <- annotate_genomes_kofam(sack@genomes, sack@potatoes, sack@config, cleanup = cleanup)
     } else if (tool == "blast") {
-      anno_table$blast <- annotate_genomes_blast(sack$genomes, sack$potatoes, sack$config, cleanup = cleanup)
+      anno_table$blast <- annotate_genomes_blast(sack@genomes, sack@potatoes, sack@config, cleanup = cleanup)
     } else if (tool == "hmm") {
       # TODO: implement annotate_genomes_hmm()
       if (!requireNamespace("cli", quietly = TRUE)) {

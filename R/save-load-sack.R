@@ -4,7 +4,7 @@
 #' provenance information preserved.
 #'
 #' @param sack PotatoSack object to save
-#' @param path Path to save the RDS file (default: "<sack_id>_potato_sack.rds")
+#' @param path Path to save the RDS file (default: saves to sack directory as "<sack_id>_potato_sack.rds")
 #' @param compress Compression method (default: "gzip")
 #'
 #' @return Invisibly returns the file path
@@ -15,10 +15,13 @@ save_potato_sack <- function(sack, path = NULL, compress = "gzip") {
     stop("Input must be a PotatoSack object", call. = FALSE)
   }
 
-  # Generate default path if not provided
+  # Generate default path if not provided (save in sack directory)
   if (is.null(path)) {
-    path <- paste0(sack@sack_id, "_potato_sack.rds")
+    path <- file.path(sack@sack_root, paste0(sack@sack_id, "_potato_sack.rds"))
   }
+
+  # Normalize to full path for display
+  full_path <- normalizePath(path, mustWork = FALSE)
 
   # Update save timestamp in metadata
   sack@metadata$last_saved <- Sys.time()
@@ -27,9 +30,9 @@ save_potato_sack <- function(sack, path = NULL, compress = "gzip") {
   saveRDS(sack, path, compress = compress)
 
   if (!requireNamespace("cli", quietly = TRUE)) {
-    message("Saved PotatoSack to: ", path)
+    message("Saved PotatoSack to: ", full_path)
   } else {
-    cli::cli_alert_success("Saved PotatoSack to: {.path {path}}")
+    cli::cli_alert_success("Saved PotatoSack to: {.path {full_path}}")
   }
 
   invisible(path)
@@ -63,8 +66,12 @@ load_saved_sack <- function(path, validate = TRUE) {
 
   if (!requireNamespace("cli", quietly = TRUE)) {
     message("Loaded PotatoSack from: ", path)
+    message("  Sack root: ", sack@sack_root)
+    message("  Genomes: ", length(sack@genomes), ", Potatoes: ", length(sack@potatoes))
   } else {
-    cli::cli_alert_success("Loaded PotatoSack: {.val {sack@sack_id}}")
+    cli::cli_alert_success("Loaded PotatoSack from {.path {basename(path)}}")
+    cli::cli_text("  Sack root: {.path {sack@sack_root}}")
+    cli::cli_text("  {length(sack@genomes)} genome{?s}, {length(sack@potatoes)} potato{?es}")
   }
 
   sack
