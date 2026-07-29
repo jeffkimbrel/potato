@@ -1,6 +1,6 @@
 Package: potato
 Title: The Pathway annOTATOr
-Version: 0.6.1
+Version: 0.7.0
 Authors@R: 
     person("Jeff", "Kimbrel", , "first.last@example.com", role = c("aut", "cre"))
 Description: POTATO is the R successor to the GATOR (Genome annotATOR) python code.
@@ -26,6 +26,10 @@ Imports:
 Suggests:
     testthat (>= 3.0.0),
     ggplot2,
-    scales
+    ggraph,
+    scales,
+    furrr,
+    future,
+    progressr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
