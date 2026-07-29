@@ -20,7 +20,7 @@ PotatoSack <- S7::new_class(
     #' @field potatoes List of Potato objects
     potatoes = S7::new_property(S7::class_list, default = list()),
 
-    #' @field genomes List of jakomics FILE objects
+    #' @field genomes List of GenomeFile objects
     genomes = S7::new_property(S7::class_list, default = list()),
 
     #' @field results Annotation results table (tibble)

@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** Foundation exists (R package skeleton, reticulate setup, conda env). Starting Phase 1 implementation.
+**Current Status:** v0.6.0 - Foundation complete. Kofam annotation fully implemented with parallel execution, file provenance, and nested tibble results.
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -17,10 +17,11 @@
 ## Important Files
 
 - **[ROADMAP.md](ROADMAP.md)** - Complete implementation plan, phases, file formats, future enhancements
+- **[WORKFLOW.md](WORKFLOW.md)** - Mermaid diagrams of current workflow and architecture
 - **[environment.yaml](environment.yaml)** - Conda environment with bioinformatics tools
 - **R/zzz.R** - Reticulate setup, loads Python backend on package load
 - **inst/python/** - Python backend code (will be rewritten for v1)
-- **inst/potatoes/** - Example potato JSON files
+- **inst/potatoes/** - Example potato JSON files (7 examples)
 - **inst/.claude/commands/build-potato.md** - Agent instructions for building potato JSONs
 
 ---
@@ -349,6 +350,306 @@ sack <- readRDS("sack.rds")  # Standard R load
 **Approach:** Hybrid - LLM-enhanced but deterministic at runtime
 
 ---
+
+## Current Working Functions (v0.6.0)
+
+### User Workflow Functions
+- `initialize_potato_sack(path)` - Create project folder structure
+- `create_sack(path = NULL)` - Construct PotatoSack S7 object from directory
+- `validate_potato(potato)` - Validate potato structure and schema
+- `add_genomes(sack, path)` - Register .faa/.fasta files with sack
+- `run_kofam(sack, potato_names, conda_env, workers, overwrite)` - Run kofam annotation
+- Standard R: `saveRDS(sack, "file.rds")` and `readRDS("file.rds")`
+
+### Potato Functions
+- `load_potato(path)` - Load single potato JSON
+- `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory
+- `load_test_potato()` - Load example test potato
+- `get_enzyme_nodes(potato)` - Extract enzyme nodes
+- `get_detection_terms(potato, database_name)` - Extract KO/blast/hmm terms
+- `get_marker_genes(potato)` - Extract marker gene nodes
+- `build_potato_graph(potato)` - Build igraph DAG
+- `print_validation(validation_result)` - Pretty print validation
+
+### Annotation Functions
+- `run_kofam(sack, ...)` - Run kofam on all or selected genomes
+- `create_kofam_hal(sack, potato_names)` - Create .hal file for kofam
+
+### Config Functions
+- `load_potato_config(config_path = NULL)` - Load and validate config YAML
+- `find_potato_sack(path = NULL)` - Search upward for potato_config.yaml
+
+### Internal Classes
+- `GenomeFile` - S7 class for serialization-safe genome metadata
+- `jakomics_to_genome_file()` - Convert Python FILE objects to R S7 objects
+
+### Test Suite
+- 35 tests covering all core workflows
+- Tests in: test-potato-class.R, test-potato-sack.R, test-save-load.R, test-config.R
+
+---
+
+## Kofam Annotation Implementation (v0.6.0) ✓
+
+Successfully implemented parallel kofam annotation workflow. Key architectural decisions:
+
+### Serialization-Safe Genome Storage
+
+**Problem:** Python objects from jakomics don't survive `saveRDS()`/`readRDS()` - they become invalid pointers.
+
+**Solution:** Created `GenomeFile` S7 class (pure R) to store genome metadata:
+```r
+GenomeFile <- S7::new_class(
+  properties = list(
+    short_name = class_character,
+    file_path = class_character,
+    name = class_character,
+    file_type = class_character,
+    md5 = class_character
+  )
+)
+```
+
+**Workflow:**
+1. `add_genomes()` uses jakomics to discover/validate files
+2. Converts Python FILE objects → GenomeFile S7 objects via `jakomics_to_genome_file()`
+3. Stores in `sack@genomes` slot (list of GenomeFile objects)
+4. Safe to serialize with `saveRDS()` - no Python pointers
+
+### Parallel Execution Architecture
+
+**Pattern:** Workers execute commands only, sequential parsing after completion
+
+**Why:** Python objects (jakomics modules, potato data) can't serialize to parallel workers
+
+**Implementation:**
+```r
+# Worker function - NO Python dependencies
+run_kofam_cmd <- function(genome_path, genome_name, hal_path, ko_list, conda_env) {
+  cmd <- sprintf("conda run -n %s exec_annotation ...", conda_env, ...)
+  output <- system(cmd, intern = TRUE)
+  list(output = output, command = cmd)
+}
+
+# Parallel execution (furrr)
+results <- furrr::future_map(seq_along(genome_paths), function(i) {
+  run_kofam_cmd(genome_paths[i], genome_names[i], ...)
+})
+
+# Sequential parsing (purrr) - AFTER parallel work done
+kofam_results <- purrr::map(raw_outputs, function(output_lines) {
+  # Parse with jakomics (Python)
+  hits <- list()
+  for (line in output_lines) {
+    clean_line <- sub("^[*\\s]+", "", line)  # Strip leading * or space
+    hits[[length(hits) + 1]] <- kegg$KOFAM(clean_line, ...)
+  }
+  parsed <- kegg$parse_kofam_hits(hits)
+  kofam_hits_to_tibble(parsed, potato_data)
+})
+```
+
+### Conda Environment Support
+
+**Problem:** Parallel workers can't access pre-activated conda environment
+
+**Solution:** Added `conda_env` parameter throughout jakomics:
+- Centralized in `jakomics.utilities.system_call()`
+- If `conda_env` provided, wraps command: `conda run -n {env} {command}`
+- Each worker independently activates environment for subprocess
+
+**jakomics changes:**
+```python
+def system_call(call, echo=False, run=True, return_type='err', conda_env=None):
+    if conda_env:
+        call = f"conda run -n {conda_env} {call}"
+    # ... rest of function
+```
+
+### File Provenance and Logging
+
+**Timestamped directories:** `results/annotations/{timestamp}/`
+- Timestamp created once per annotation session in `sack@metadata$annotation_session`
+- All tools for same run share same timestamp directory
+
+**Files saved per run:**
+- `.hal` file - list of HMM profile paths (MD5 hash filename)
+- `{genome}.kofam.txt` - raw kofam output for each genome
+- `kofam.log` - TSV with columns: `genome`, `command` (full shell command used)
+
+**Benefits:**
+- Reproducibility - can re-run exact command
+- Debugging - inspect raw tool outputs
+- Provenance - know what was run when
+
+### Results Data Structure
+
+**Nested tibble pattern:**
+```r
+sack@results <- tibble(
+  genome = character(),         # Genome short_name
+  kofam = list(),              # List column: one tibble per genome
+  blast = list(),              # Future: one tibble per genome
+  hmm = list()                 # Future: one tibble per genome
+)
+
+# Each kofam[[i]] tibble has:
+# potato, node_id, step, gene_id, ko, score, evalue, threshold, passed
+```
+
+**Usage:**
+```r
+# View all results
+sack@results %>% unnest(cols = kofam)
+
+# Filter to specific pathway
+sack@results %>% 
+  unnest(cols = kofam) %>% 
+  filter(potato == "glyoxylate_cycle")
+```
+
+### Progress Bars
+
+**Parallel (furrr):** Uses progressr package with cli styling
+```r
+progressr::handlers(progressr::handler_cli(...))
+progressr::with_progress({
+  p <- progressr::progressor(along = genome_paths)
+  results <- furrr::future_map(..., function(i) {
+    result <- run_cmd(...)
+    p()  # Update progress
+    result
+  })
+})
+```
+
+**Sequential (purrr):** Uses cli progress bar
+```r
+cli::cli_progress_bar("Running kofam", total = length(genome_paths))
+results <- purrr::map(..., function(i) {
+  cli::cli_progress_update()
+  run_cmd(...)
+})
+cli::cli_progress_done()
+```
+
+### Messaging with cli Package
+
+All user-facing messages use cli for consistent styling:
+```r
+cli::cli_alert_info("Preparing kofam annotation...")
+cli::cli_alert_success("Created {.file {basename(hal_path)}}")
+cli::cli_alert_warning("Overwriting existing results")
+cli::cli_abort(c(
+  "kofam results already exist",
+  "i" = "Use {.code overwrite = TRUE} to replace"
+))
+```
+
+### Configuration Defaults
+
+**Pattern:** User params > config > hardcoded defaults
+
+```r
+# Get conda_env from config if not provided
+if (is.null(conda_env)) {
+  conda_env <- sack@config$annotation$conda_env
+}
+
+# Get workers from config if not provided
+if (is.null(workers)) {
+  workers <- sack@config$annotation$workers
+  if (is.null(workers)) workers <- 1
+}
+```
+
+**Config structure:**
+```yaml
+annotation:
+  parallel: true
+  workers: 4
+  conda_env: potato
+```
+
+### Annotation vs Scoring Separation
+
+**Critical design principle:** Annotation = data collection, Scoring = interpretation
+
+**Annotation phase:**
+- Collect ALL hits regardless of score/evalue thresholds
+- Store raw scores, evalues, thresholds as metadata
+- Do NOT include `passed` or similar boolean columns
+- Do NOT filter results based on thresholds
+
+**Scoring phase (to be implemented):**
+- Apply thresholds in pathway context
+- Consider gene specificity weighting
+- Handle required vs optional genes
+- Generate pathway-level confidence scores
+
+**Why separate?**
+- Users can adjust thresholds later without re-running annotation
+- Different pathways may need different stringency
+- Scoring can consider pathway context (specificity, completeness)
+
+**Implementation notes:**
+- **Kofam:** Removed `-T` flag from exec_annotation, removed `passed` column, keep all hits
+- **BLAST (future):** Don't filter by evalue/bitscore/pident - return all hits
+- **HMM (future):** Return all hits. Note: HMM profiles may have "trusted cutoff" (TC) lines - we'll handle these in scoring phase, not annotation phase
+
+### Lessons for HMM and BLAST Implementation
+
+Apply the same patterns:
+
+**1. Worker function pattern:**
+```r
+run_hmm_cmd <- function(genome_path, genome_name, hmm_profile, conda_env) {
+  cmd <- sprintf("conda run -n %s hmmsearch ...", conda_env, hmm_profile, genome_path)
+  output <- system(cmd, intern = TRUE)
+  list(output = output, command = cmd)
+}
+```
+
+**2. Sequential parsing:**
+```r
+hmm_results <- purrr::map(raw_outputs, function(output_lines) {
+  # Parse with jakomics.hmm
+  hits <- hmm$parse_hmmsearch_output(output_lines)
+  hmm_hits_to_tibble(hits, potato_data)
+})
+```
+
+**3. File saving:**
+```r
+# In same timestamp directory as kofam
+annotation_dir <- file.path(sack@sack_root, "results", "annotations", 
+                           sack@metadata$annotation_session)
+
+# Save raw outputs
+output_file <- file.path(annotation_dir, paste0(genome_name, ".hmm.txt"))
+writeLines(raw_output, output_file)
+
+# Save command log
+log_file <- file.path(annotation_dir, "hmm.log")
+log_lines <- paste0(genome_names, "\t", commands)
+writeLines(c("genome\tcommand", log_lines), log_file)
+```
+
+**4. Nested tibble in results:**
+```r
+sack@results$hmm <- hmm_results  # Add hmm column
+sack@results$blast <- blast_results  # Add blast column
+```
+
+**5. HMM-specific considerations:**
+- HMM profiles may be concatenated (multiple profiles in one file)
+- Extract profile NAME from HMM file (not filename) for detection terms
+- May need to create temporary concatenated HMM file like .hal for kofam
+
+**6. BLAST-specific considerations:**
+- May need to create BLAST database from reference sequences
+- BLAST database can be pre-built or built on-the-fly
+- Reference sequences stored in `databases.blast.files` (can be multiple)
 
 ## Phase 1 Priorities (MVP)
 
@@ -821,9 +1122,12 @@ When you return to work on POTATO:
 
 ## Version History
 
-- **v0.0.5** - Current, foundation exists (reticulate, conda env)
-- **v1.0.0** - Target for Phase 1 MVP completion
+- **v0.6.0** - Current. Kofam annotation fully implemented with parallel execution, file provenance, GenomeFile serialization
+- **v0.5.1** - Simplified save/load (standard R), removed orphan functions
+- **v0.5.0** - Stripped to bare bones foundation, 35 tests passing
+- **v0.4.0** - Bug fixes and UX improvements (pre-cleanup)
+- **v1.0.0** - Target: all annotation tools + scoring + basic visualization
 
 ---
 
-Last updated: 2026-07-22
+Last updated: 2026-07-29

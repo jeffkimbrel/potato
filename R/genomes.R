@@ -19,7 +19,10 @@ add_genomes <- function(sack, path, validate = TRUE, recursive = FALSE) {
 
   # Check jakomics is available
   if (!exists("jakomics")) {
-    stop("jakomics not loaded. Check conda environment 'potato' is activated.", call. = FALSE)
+    cli::cli_abort(c(
+      "jakomics not loaded",
+      "i" = "Check conda environment {.envvar potato} is activated"
+    ))
   }
 
   # Handle different input types
@@ -31,7 +34,7 @@ add_genomes <- function(sack, path, validate = TRUE, recursive = FALSE) {
     # It's a wildcard pattern - expand it
     expanded <- Sys.glob(path)
     if (length(expanded) == 0) {
-      stop("No files match pattern: ", path, call. = FALSE)
+      cli::cli_abort("No files match pattern: {.file {path}}")
     }
     genome_dir <- NULL
     genome_files <- expanded
@@ -53,46 +56,68 @@ add_genomes <- function(sack, path, validate = TRUE, recursive = FALSE) {
   )
 
   if (length(file_objects) == 0) {
-    stop("No genome files found with .faa or .fasta extension (protein FASTA)", call. = FALSE)
+    cli::cli_abort("No genome files found with {.file .faa} or {.file .fasta} extension")
   }
 
-  message("Found ", length(file_objects), " genome file(s)")
+  cli::cli_alert_info("Found {length(file_objects)} genome file{?s}")
 
   # Validate FAA files if requested
   if (validate) {
+    cli::cli_progress_bar("Validating genomes", total = length(file_objects))
     for (file_obj in file_objects) {
-      message("  Validating: ", file_obj$name)
+      cli::cli_progress_update()
       tryCatch({
         jakomics$utilities$validate_fasta(file_obj$file_path)
       }, error = function(e) {
-        stop("Invalid FASTA file: ", file_obj$name, "\n  ", e$message, call. = FALSE)
+        cli::cli_abort(c(
+          "Invalid FASTA file: {.file {file_obj$name}}",
+          "x" = e$message
+        ))
       })
+    }
+    cli::cli_progress_done()
+  }
+
+  # Convert jakomics FILE objects to GenomeFile S7 objects
+  new_genomes <- lapply(file_objects, jakomics_to_genome_file)
+
+  # Check for duplicates (by file_path)
+  if (length(sack@genomes) > 0) {
+    existing_paths <- sapply(sack@genomes, function(g) g@file_path)
+    new_paths <- sapply(new_genomes, function(g) g@file_path)
+
+    duplicates <- intersect(existing_paths, new_paths)
+    if (length(duplicates) > 0) {
+      cli::cli_warn(c(
+        "Skipping {length(duplicates)} genome{?s} already in sack",
+        "i" = "{.file {basename(duplicates)}}"
+      ))
+      # Remove duplicates from new_genomes
+      new_genomes <- new_genomes[!new_paths %in% duplicates]
     }
   }
 
-  new_genomes <- file_objects
-
-  # Check for duplicates (by file_path)
-  existing_paths <- sapply(sack@genomes, function(g) g$file_path)
-  new_paths <- sapply(new_genomes, function(g) g$file_path)
-
-  duplicates <- intersect(existing_paths, new_paths)
-  if (length(duplicates) > 0) {
-    warning("Skipping ", length(duplicates), " genome(s) already in sack:\n  ",
-            paste(basename(duplicates), collapse = "\n  "), call. = FALSE)
-    # Remove duplicates from new_genomes
-    new_genomes <- new_genomes[!new_paths %in% duplicates]
-  }
-
   if (length(new_genomes) == 0) {
-    message("No new genomes added")
+    cli::cli_alert_info("No new genomes added")
     return(sack)
   }
 
-  # Append to existing genomes
+  # Add to @genomes slot
   sack@genomes <- c(sack@genomes, new_genomes)
 
-  message("Added ", length(new_genomes), " genome(s). Total: ", length(sack@genomes))
+  # Create tibble for @results (just genome names)
+  new_results <- tibble::tibble(
+    genome = sapply(new_genomes, function(g) g@short_name)
+  )
+
+  # Initialize or append to sack@results
+  if (is.null(sack@results)) {
+    sack@results <- new_results
+  } else {
+    sack@results <- dplyr::bind_rows(sack@results, new_results)
+  }
+
+  cli::cli_alert_success("Added {length(new_genomes)} genome{?s}. Total: {length(sack@genomes)}")
 
   sack
 }

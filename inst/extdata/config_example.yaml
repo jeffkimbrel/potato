@@ -8,8 +8,6 @@ databases:
     profiles_dir: /path/to/kofam/profiles
     ko_list: /path/to/kofam/ko_list
     executable: exec_annotation
-    thresholds:
-      score_ratio: 1.0
 
   # BLAST database (reference sequences)
   # Can specify multiple files - will be merged before searching
@@ -43,6 +41,17 @@ databases:
     executable: hmmsearch
     thresholds:
       evalue: 1e-10
+
+# Annotation settings
+annotation:
+  parallel: true         # Use parallel processing
+  workers: 4             # Number of parallel workers
+  conda_env: potato      # Optional: conda environment for tool execution
+
+# Scoring settings
+scoring:
+  min_fraction: 0.75     # Minimum fraction of pathway genes required
+  use_specificity: true  # Weight genes by pathway specificity
 
 # Notes:
 # - Database keys MUST match types: kofam, blast, hmm, pfam

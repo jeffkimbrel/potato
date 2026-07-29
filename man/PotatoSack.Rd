@@ -32,7 +32,7 @@ configuration, potatoes, genomes, annotation results, and provenance tracking.
 
 \item{\code{potatoes}}{List of Potato objects}
 
-\item{\code{genomes}}{List of jakomics FILE objects}
+\item{\code{genomes}}{List of GenomeFile objects}
 
 \item{\code{results}}{Annotation results table (tibble)}
 

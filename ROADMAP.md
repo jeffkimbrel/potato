@@ -257,89 +257,96 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 
 ## Implementation Phases
 
-### Phase 0: Foundation ✓ (Partially Complete)
+### Phase 0: Foundation ✓ (Complete)
+
+**Status:** v0.5.0 - v0.5.1 completed foundational cleanup
 
 - [x] R package skeleton
 - [x] Reticulate bridge to Python
 - [x] Conda environment with bioinformatics tools
-- [ ] Define potato JSON schema formally (JSON Schema file)
-- [ ] Define tools.json schema
+- [x] S7 classes (Potato, PotatoSack, GenomeFile)
+- [x] Core workflow functions (initialize, create, validate, add_genomes)
+- [x] Config loading and validation
+- [x] Potato loading and validation
+- [x] Test suite (35 tests passing)
+- [x] Standard save/load (saveRDS/readRDS)
+- [x] Serialization-safe genome storage (GenomeFile S7 class)
+- [x] 7 example potatoes with new schema
+- [ ] Define potato JSON schema formally (JSON Schema file) - deferred
+- [ ] Define tools.json schema - deferred
 
-### Phase 0.5: Minimal Viable Test (NEW)
+### Phase 0.5: Kofam Annotation Implementation ✓ (COMPLETE)
 
-**Goal:** Prove the architecture with the absolute simplest possible case.
+**Status:** v0.6.0 - Kofam annotation fully working
 
-**Test Case:**
-- ✅ One genome (FAA file, ~50 proteins)
-- ✅ One potato (3 genes, linear pathway: A → B → C)
-- ✅ One tool (kofam via jakomics)
-- ✅ No LLM, no parallelization, no complexity
+**Completed:**
+- [x] Kofam execution with parallel workers via furrr
+- [x] Conda environment support (centralized in jakomics)
+- [x] File provenance (raw outputs + command logs in timestamped directories)
+- [x] GenomeFile S7 class for serialization-safe genome storage
+- [x] Nested tibble results structure (one row per genome, list column per tool)
+- [x] Progress bars (cli for sequential, progressr for parallel)
+- [x] All messaging via cli package
+- [x] Config defaults (conda_env and workers from config)
+- [x] .hal file creation for kofam profiles
+- [x] Sequential parsing after parallel execution
+- [x] Overwrite protection with user confirmation
 
-**Why Start Here:**
-Validate that the core pieces connect:
-1. Load potato JSON → Python object
-2. Extract KO terms from potato
-3. Run kofam via jakomics.kegg.run_kofam()
-4. Map results back to potato genes
-5. Score pathway (3/3 = present)
-6. Return result to R
+**Architecture proven:**
+- Workers execute shell commands only (no Python serialization issues)
+- Sequential post-processing handles parsing with jakomics
+- Python FILE objects converted to R S7 GenomeFile objects for safe serialization
+- All annotation tools will follow same pattern
 
-**Files to Create:**
-```
-tests/fixtures/
-├── genomes/test_genome.faa          # Small test genome
-├── potatoes/test_linear.json        # 3 genes: gapA → pgk → eno
-└── tools/test_tools.json            # Minimal kofam config
-
-inst/python/potato_minimal.py        # Bare minimum code
-R/minimal.R                          # R wrapper for test
-```
-
-**Success Criteria:**
-```r
-result <- test_minimal(
-  "tests/fixtures/genomes/test_genome.faa",
-  "tests/fixtures/potatoes/test_linear.json",
-  "tests/fixtures/tools/test_tools.json"
-)
-# Returns: list(pathway="test_linear", found=3, total=3, present=TRUE)
-```
-
-**Incremental Complexity Ladder:**
-Once minimal works, add one feature at a time:
-1. ✅ One genome, one potato, one tool ← START HERE
-2. Output files (TSV writing)
-3. Multiple tools (kofam + blast)
-4. OR branches in pathway
-5. Proper DAG traversal (networkx)
-6. Required vs. optional genes
-7. Multiple potatoes
-8. Multiple genomes (parallelization)
-9. Genbank input (conversion)
-10. Gene specificity weighting
-11. LLM agents
+**Next:** Implement run_hmm() and run_blast() using same architecture
 
 ---
 
 ### Phase 1: Core Functionality (MVP)
 
-**Goal:** Run a single potato against a single genome without LLM features.
+**Goal:** Run annotation tools against genomes, store results.
 
-#### 1.1 Data Structures
-- [ ] Python `Potato` class - loads/validates JSON, represents DAG
-- [ ] Python `ToolConfig` class - loads/validates tools.json
-- [ ] R wrapper functions for loading potatoes
-- [ ] DAG validation (no cycles, required nodes exist, etc.)
+#### 1.1 Data Structures ✓
+- [x] R S7 classes (Potato, PotatoSack, GenomeFile) - fully implemented
+- [x] Python integration via reticulate
+- [x] Config loading and validation
+- [x] Potato loading and validation
+- [x] DAG validation (no cycles, required nodes exist, etc.)
 
-#### 1.2 Tool Execution
-- [ ] Python tool runners:
-  - [ ] KofamScan wrapper
-  - [ ] HMMER3 wrapper  
-  - [ ] BLASTP wrapper
-  - [ ] PFAM wrapper (via HMMER)
-- [ ] R `annotate_genome()` function
-  - Takes: genome FAA file, potato, tools.json
-  - Returns: annotation results (which genes detected by which tools)
+#### 1.2 Tool Execution (IN PROGRESS)
+- [x] **Kofam** - R/run_kofam.R (COMPLETE)
+  - [x] Parallel execution with furrr
+  - [x] Conda environment support
+  - [x] File provenance (raw outputs + logs)
+  - [x] Nested tibble results
+  - [x] Progress bars
+  
+- [ ] **HMM** - R/run_hmm.R (NEXT)
+  - Follow kofam pattern:
+    - Worker runs: `conda run -n {env} hmmsearch {profile} {faa}`
+    - Sequential parsing with jakomics.hmm
+    - Save: `{genome}.hmm.txt` + `hmm.log`
+    - Add `sack@results$hmm` column
+  - HMM-specific:
+    - May have concatenated profiles (multiple in one file)
+    - Extract profile NAME from HMM file (not filename)
+    - Detection terms in potato use profile NAMEs
+  
+- [ ] **BLAST** - R/run_blast.R
+  - Follow kofam pattern:
+    - Worker runs: `conda run -n {env} blastp -query {faa} -db {db}`
+    - Sequential parsing with jakomics.blast
+    - Save: `{genome}.blast.txt` + `blast.log`
+    - Add `sack@results$blast` column
+  - BLAST-specific:
+    - May need to build BLAST database first
+    - Config can specify multiple reference files (merge into one DB)
+    - Use `makeblastdb` if DB doesn't exist
+
+- [ ] R `annotate_all()` function
+  - Wrapper that runs all configured tools (kofam, hmm, blast)
+  - Uses same timestamp directory for all tools
+  - Returns sack with all tool results populated
 
 #### 1.3 Scoring Engine
 - [ ] DAG traversal for pathway scoring
@@ -847,11 +854,10 @@ When building a potato, agent asks:
    ```
 4. **Run on genomes**:
    ```r
-   results <- annotate_genomes(
-     genome_dir = "my_mags/",
-     potato_dir = "my_potatoes/",
-     tools_config = "tools.json"
-   )
+   initialize_potato_sack("my_project")
+   sack <- create_sack("my_project")
+   sack <- add_genomes(sack, "my_mags/*.faa")
+   # Annotation workflow (to be implemented)
    ```
 5. **Inspect results** (same output format as v1)
 
@@ -866,20 +872,27 @@ When building a potato, agent asks:
 
 ## Next Steps
 
-1. ✅ Complete this roadmap (done!)
-2. [ ] Formalize JSON schemas (potato, tools.json)
-3. [ ] Implement Phase 1.1 (Python data structures)
-4. [ ] Create 3 test potatoes manually
-5. [ ] Implement Phase 1.2 (tool execution)
-6. [ ] Build scoring engine (Phase 1.3)
-7. [ ] Integration test with real genome
-8. [ ] Iterate...
+### Completed (v0.5.0 - v0.5.1)
+1. ✅ Complete this roadmap
+2. ✅ Simplify foundation - remove premature features
+3. ✅ Establish core workflow (initialize, create, validate, add_genomes)
+4. ✅ Create test suite (35 tests passing)
+5. ✅ Standardize save/load (use R's saveRDS/readRDS)
+6. ✅ Update all 7 example potatoes to new schema
+7. ✅ Strict validation (databases field, standard types only)
+
+### Next Priorities
+1. [ ] Implement annotation workflow (annotate_simple.R skeleton exists)
+2. [ ] Connect jakomics tool runners (kofam, blast, hmm)
+3. [ ] Design output format (tibble with nested genes)
+4. [ ] Scoring logic (simple fraction first, then DAG-aware)
+5. [ ] Integration test with real genome
+6. [ ] Iterate based on real usage
 
 ---
 
 ## Contributors
 
 - Jeff Kimbrel (primary author)
-- Claude (design discussions, implementation assistance)
 
-Last updated: 2026-07-22
+Last updated: 2026-07-29
