@@ -1,16 +1,17 @@
-#' Load a potato sack
+#' Create a PotatoSack from project directory
 #'
-#' Constructs a PotatoSack S7 object from project files, or loads a saved RDS.
+#' Constructs a PotatoSack S7 object from a project directory containing
+#' potato_config.yaml and potatoes. To save/load sacks, use standard R
+#' functions: saveRDS(sack, "sack.rds") and readRDS("sack.rds").
 #'
-#' @param path Character. Path to sack directory or RDS file. If NULL, searches upward from current directory.
+#' @param path Character. Path to sack directory. If NULL, searches upward from current directory.
 #'
 #' @returns PotatoSack S7 object
 #' @export
-load_potato_sack <- function(path = NULL) {
+create_sack <- function(path = NULL) {
 
-  # Determine what we're loading
+  # Auto-find sack directory if not specified
   if (is.null(path)) {
-    # Search upward for potato_config.yaml
     sack_root <- find_potato_sack()
     if (is.null(sack_root)) {
       stop("Not in a potato sack directory.\n",
@@ -21,19 +22,7 @@ load_potato_sack <- function(path = NULL) {
     path <- sack_root
   }
 
-  # Check what type of path we have
-  if (file.exists(path) && grepl("\\.rds$", path, ignore.case = TRUE)) {
-    # Load saved RDS
-    message("Loading saved sack from RDS")
-    sack <- readRDS(path)
-    if (!S7::S7_inherits(sack, PotatoSack)) {
-      stop("RDS file does not contain a PotatoSack object", call. = FALSE)
-    }
-    message("Loaded: ", length(sack@genomes), " genome(s), ", length(sack@potatoes), " potato(es)")
-    return(sack)
-  }
-
-  # Otherwise, construct from directory
+  # Validate directory exists
   if (!dir.exists(path)) {
     stop("Directory not found: ", path, call. = FALSE)
   }
@@ -45,7 +34,7 @@ load_potato_sack <- function(path = NULL) {
     stop("No potato_config.yaml found in: ", sack_root, call. = FALSE)
   }
 
-  message("Loading potato sack from: ", basename(sack_root))
+  message("Creating PotatoSack from: ", basename(sack_root))
 
   # Load config
   config <- load_potato_config(config_path)
@@ -80,7 +69,7 @@ load_potato_sack <- function(path = NULL) {
     )
   )
 
-  message("  Sack loaded. Use add_genomes() to register genome files.")
+  message("  Sack created. Use add_genomes() to register genome files.")
 
   sack
 }

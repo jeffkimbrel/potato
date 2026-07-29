@@ -16,12 +16,12 @@ test_that("initialize_potato_sack creates project structure", {
   unlink(temp_dir, recursive = TRUE)
 })
 
-test_that("load_potato_sack constructs from directory", {
+test_that("create_sack constructs from directory", {
   temp_dir <- tempfile()
   initialize_potato_sack(temp_dir, copy_potatoes = TRUE)
 
-  # Load sack
-  sack <- load_potato_sack(temp_dir)
+  # Create sack
+  sack <- create_sack(temp_dir)
 
   expect_true(S7::S7_inherits(sack, PotatoSack))
   expect_equal(sack@sack_id, basename(temp_dir))

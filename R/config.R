@@ -110,32 +110,3 @@ validate_database_configs <- function(databases) {
 
   databases
 }
-
-
-#' Print method for potato_config
-#' @export
-print.potato_config <- function(x, ...) {
-  cat("<Potato Configuration>\n")
-  cat("  Config:", x$config_path, "\n")
-
-  if (!is.null(x$project_name)) {
-    cat("  Project:", x$project_name, "\n")
-  }
-
-  cat("\nDatabases:\n")
-
-  # Count by type
-  db_types <- sapply(x$databases, function(db) db$type)
-  type_counts <- table(db_types)
-
-  for (type in names(type_counts)) {
-    cat("  ", type, ": ", type_counts[type], " database(s)\n", sep = "")
-  }
-
-  cat("\nConfigured databases:\n")
-  for (db_name in names(x$databases)) {
-    cat("  - ", db_name, " (", x$databases[[db_name]]$type, ")\n", sep = "")
-  }
-
-  invisible(x)
-}

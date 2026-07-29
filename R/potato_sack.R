@@ -9,6 +9,7 @@
 #'
 #' @returns Invisibly returns the path to the new project folder.
 #' @export
+
 initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
 
   project_path <- normalizePath(path, mustWork = FALSE)
@@ -234,9 +235,9 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
   cat("Next steps:\n")
   cat("  1. Open", paste0(name, ".Rproj"), "in RStudio or load folder in Positron\n")
   cat("  2. Edit potato_config.yaml to set your database paths\n")
-  cat("  3. Run: sack <- load_potato_sack()\n")
+  cat("  3. Run: sack <- create_sack()\n")
   cat("  4. Add genomes: sack <- add_genomes(sack, \"path/to/genomes/*.faa\")\n")
-  cat("  5. Run annotation: results <- annotate_sack_simple(sack)\n")
+  cat("  5. Save: saveRDS(sack, \"sack.rds\")  |  Load: sack <- readRDS(\"sack.rds\")\n")
   cat("\n")
 
   invisible(project_path)

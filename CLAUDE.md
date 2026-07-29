@@ -233,8 +233,10 @@ tests/                 # Test suite
 
 **Workflow:**
 ```r
-sack <- load_potato_sack()
+sack <- create_sack()
 sack <- add_genomes(sack, "~/data/mags/*.faa")  # Registers .faa/.fasta files, doesn't copy
+saveRDS(sack, "sack.rds")  # Standard R save
+sack <- readRDS("sack.rds")  # Standard R load
 ```
 
 **Rationale:** Don't force users to reorganize their existing data structures. Keep foundation simple - GenBank conversion can be added later (see ROADMAP.md).
@@ -244,9 +246,9 @@ sack <- add_genomes(sack, "~/data/mags/*.faa")  # Registers .faa/.fasta files, d
 **Decision:** Accept that "sack" refers to both the folder structure and the S7 object. Context makes it clear.
 
 - **Folder sack:** Created by `initialize_potato_sack()` - directory with config, potatoes/, etc.
-- **S7 PotatoSack:** In-memory object created by `load_potato_sack()` from folder files
+- **S7 PotatoSack:** In-memory object created by `create_sack()` from folder files
 
-`load_potato_sack()` bridges them - reads folder files, constructs S7 object. Can also load saved RDS if path ends in `.rds`.
+`create_sack()` constructs the S7 object from directory files. Use standard `saveRDS()`/`readRDS()` for persistence.
 
 ### No Examples in Documentation
 
@@ -263,7 +265,8 @@ sack <- add_genomes(sack, "~/data/mags/*.faa")  # Registers .faa/.fasta files, d
 - **Message logging system:** Removed (R/messages.R) - deferred to future (see ROADMAP)
 - **Provenance export functions:** Removed - future feature, not needed yet
 - **combine_sacks():** Removed - complex function for combining multiple annotation runs
-- **All test files:** Deleted - will rebuild tests when core workflows stabilize
+- **Custom save/load functions:** Removed `save_potato_sack()`, `load_saved_sack()`, `inspect_saved_sack()` - use standard `saveRDS()`/`readRDS()` instead
+- **RDS auto-detection in load:** Simplified - `create_sack()` only constructs from directory, doesn't load RDS files
 
 ---
 
