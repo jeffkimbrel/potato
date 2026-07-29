@@ -12,7 +12,7 @@
       "nodes": ["gapA_1"],
       "type": "enzyme",
       "name": "glyceraldehyde-3-phosphate dehydrogenase",
-      "ko": ["K00134"],
+      "databases": {"kofam": ["K00134"]},
       "ec": ["1.2.1.12"],
       "required": true,
       "is_marker": false
@@ -23,7 +23,7 @@
       "nodes": ["pgk_2"],
       "type": "enzyme",
       "name": "phosphoglycerate kinase",
-      "ko": ["K00927"],
+      "databases": {"kofam": ["K00927"]},
       "ec": ["2.7.2.3"],
       "required": true,
       "is_marker": false
@@ -34,7 +34,7 @@
       "nodes": ["eno_3"],
       "type": "enzyme",
       "name": "enolase",
-      "ko": ["K01689", "K15633", "K15634"],
+      "databases": {"kofam": ["K01689", "K15633", "K15634"]},
       "ec": ["4.2.1.11"],
       "required": true,
       "is_marker": false

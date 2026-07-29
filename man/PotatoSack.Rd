@@ -14,8 +14,7 @@ PotatoSack(
   scores = NULL,
   completed_stages = character(0),
   provenance = list(),
-  metadata = list(),
-  messages = list()
+  metadata = list()
 )
 }
 \description{
@@ -44,7 +43,5 @@ configuration, potatoes, genomes, annotation results, and provenance tracking.
 \item{\code{provenance}}{Provenance tracking for each stage}
 
 \item{\code{metadata}}{Additional metadata}
-
-\item{\code{messages}}{Collected messages, warnings, and errors from workflow}
 }}
 

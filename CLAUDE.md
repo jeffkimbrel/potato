@@ -16,12 +16,12 @@
 
 ## Important Files
 
-- **[ROADMAP.md](ROADMAP.md)** - Complete implementation plan, phases, file formats
-- **[BRAINSTORM.md](BRAINSTORM.md)** - Design evolution, key insights, dead ends
+- **[ROADMAP.md](ROADMAP.md)** - Complete implementation plan, phases, file formats, future enhancements
 - **[environment.yaml](environment.yaml)** - Conda environment with bioinformatics tools
 - **R/zzz.R** - Reticulate setup, loads Python backend on package load
 - **inst/python/** - Python backend code (will be rewritten for v1)
-- **inst/extdata/potato_db.xlsx** - Old GATOR v1 database (will be converted)
+- **inst/potatoes/** - Example potato JSON files
+- **inst/.claude/commands/build-potato.md** - Agent instructions for building potato JSONs
 
 ---
 
@@ -83,6 +83,65 @@ bioinformatics tools (kofamscan, hmmer3, blastp)
 - **jakomics** handles tool execution, file I/O, parsing outputs
 - **potato Python code** handles potato JSON, DAG logic, scoring
 - **potato R code** provides user interface, visualization, analysis
+
+---
+
+## Potato JSON Structure
+
+Each potato is a self-contained pathway definition with genes and topology:
+
+```json
+{
+  "id": "pathway_id",
+  "name": "Human Readable Name",
+  "source": "KEGG M00123 / custom",
+  "tags": ["metabolism", "energy"],
+  "notes": "Brief description",
+  
+  "nodes": [
+    {
+      "id": "geneSymbol",
+      "step": 1,
+      "nodes": ["geneSymbol_1"],
+      "type": "enzyme",
+      "name": "enzyme name",
+      "databases": {
+        "kofam": ["K00001"],
+        "blast": ["ref_seq_id"],
+        "hmm": ["profile_name"],
+        "pfam": ["PF00001"]
+      },
+      "ec": ["1.1.1.1"],
+      "required": true,
+      "marker": false,
+      "notes": "Biological context"
+    }
+  ],
+  
+  "edges": [
+    {
+      "from": "geneA_1",
+      "to": "geneB_2",
+      "compound": "metabolite name",
+      "kegg_compound": "C00031"
+    }
+  ],
+  
+  "scoring": {
+    "min_fraction": 0.75,
+    "marker_mode": "any"
+  }
+}
+```
+
+**Key fields:**
+- `databases`: Detection methods using standard types (kofam, blast, hmm, pfam)
+- `step`: Sequential step number (or array for bifunctional enzymes)
+- `nodes`: DAG node IDs in `id_step` format
+- `marker`: Diagnostic gene for this pathway
+- `required`: Must be present for pathway completion
+
+**No legacy fields:** Don't use `ko`, `blast_terms`, `hmm_path`, etc. Use `databases` only.
 
 ---
 
@@ -149,6 +208,145 @@ tests/                 # Test suite
 
 ---
 
+## Recent Simplification Decisions (2026-07-28)
+
+### Database Configuration - Use Standard Types
+
+**Decision:** Database keys in `potato_config.yaml` should be simple type names (`kofam`, `blast`, `hmm`, `patric`), NOT custom names like `kofam113`, `gator_blast`, `nifH_hmm`.
+
+**Note:** `patric` is valid (not `pfam`). PFAM is a type of HMM profile, so it falls under the `hmm` type.
+
+**Rationale:** 
+- Portability - potato JSONs reference database types, not user-specific names
+- Simplicity - fewer places for discrepancies between config and potatoes
+- One database per type is sufficient for most use cases
+
+**Implementation:**
+- Config template uses: `kofam:`, `blast:`, `hmm:`, `patric:`
+- Potato JSONs reference same: `"databases": {"kofam": [...], "blast": [...]}`
+- Validation strictly enforces only these types (errors on any other database name)
+- If user needs multiple versions, they manage externally (merge files, use hierarchy)
+
+### Genome Management - Register Don't Copy
+
+**Decision:** Genomes stay where they are on disk, registered with `add_genomes()`. Only accepts protein FASTA files (.faa or .fasta). GenBank conversion removed and deferred to future enhancement.
+
+**Workflow:**
+```r
+sack <- load_potato_sack()
+sack <- add_genomes(sack, "~/data/mags/*.faa")  # Registers .faa/.fasta files, doesn't copy
+```
+
+**Rationale:** Don't force users to reorganize their existing data structures. Keep foundation simple - GenBank conversion can be added later (see ROADMAP.md).
+
+### S7 Object vs Folder - Both Called "Sack"
+
+**Decision:** Accept that "sack" refers to both the folder structure and the S7 object. Context makes it clear.
+
+- **Folder sack:** Created by `initialize_potato_sack()` - directory with config, potatoes/, etc.
+- **S7 PotatoSack:** In-memory object created by `load_potato_sack()` from folder files
+
+`load_potato_sack()` bridges them - reads folder files, constructs S7 object. Can also load saved RDS if path ends in `.rds`.
+
+### No Examples in Documentation
+
+**Decision:** Don't add `@examples` to roxygen documentation. Extra noise, not helpful yet.
+
+### Removed Features (Deferred to Future)
+
+**Removed during foundation cleanup to reduce complexity before core workflows exist:**
+
+- **Legacy schema support:** All backward compatibility code removed
+- **Database name customization:** Simplified to type-based keys (kofam, blast, hmm, patric)
+- **Potato `type` field:** Removed (pathway vs. structural_complex) - not used for any logic
+- **GenBank conversion:** Removed from `add_genomes()` - deferred to future (see ROADMAP)
+- **Message logging system:** Removed (R/messages.R) - deferred to future (see ROADMAP)
+- **Provenance export functions:** Removed - future feature, not needed yet
+- **combine_sacks():** Removed - complex function for combining multiple annotation runs
+- **All test files:** Deleted - will rebuild tests when core workflows stabilize
+
+---
+
+## Design Rationale (Why These Decisions)
+
+### Why DAG Structure Works Now
+
+**The Breakthrough:** The bipartite DAG wasn't the problem - Excel was!
+
+**Reality Check:**
+- DAG structure is sound - matches how biochemists think
+- Excel cell limits made it unusable (string syntax was a workaround)
+- JSON removes all constraints → DAG becomes viable and elegant
+- Visually graphable, handles KEGG module complexity, extensible
+
+### Why Self-Contained Potatoes
+
+**Old thinking:** Central gene registry (like Excel gene sheet)
+
+**New thinking:** Each potato defines its own genes
+
+**Benefits:**
+- Portability - share a single JSON file, it works
+- Flexibility - can override definitions when needed
+- Version control - each potato evolves independently
+- No external dependencies
+
+**Trade-off:** Possible inconsistencies across potatoes (addressed via validation warnings)
+
+### Why Gene Specificity Matters
+
+**Biological intuition:** Not all genes are equally informative
+
+**Example:**
+- `gapA` (glyceraldehyde-3-P dehydrogenase) - found in 50+ pathways, low information
+- `mlrA` (microcystin linearase) - only in microcystin degradation, high information
+
+**Impact:** Transforms scoring from simplistic (5/8 genes) to contextual (high-confidence vs. low-confidence finds based on which genes)
+
+**Implementation:** Pre-compute specificity = 1 / (number of potatoes containing gene)
+
+### Why Compounds Are Edge Metadata
+
+**Old v2 attempt:** Bipartite graph with compound nodes structurally required
+
+**New v1:** Compounds as optional edge metadata
+
+**Benefits:**
+- Scoring logic stays enzyme-centric (simple)
+- Preserves biological context for LLM reasoning
+- Optional - can omit when not relevant
+
+### Why Tool Availability Varies
+
+**Reality:** Not all users have all tools (KEGG is expensive/restricted)
+
+**Solution:** Graceful degradation with transparent reporting
+
+**Implementation:**
+- Potatoes specify what they need (`databases: {kofam: [...], blast: [...]}`)
+- Runtime uses what's available in user's tools.json
+- Reports which tools were used vs. requested
+- Warns about genes only detectable via unavailable tools
+
+**Impact:** Potatoes are shareable across users with different tool setups
+
+### Why LLMs Are Assistants, Not Oracles
+
+**What LLMs ARE good for:**
+- Pre-computing specificity scores (reasoning baked in)
+- Building potato drafts from KEGG modules
+- Interpreting results in natural language
+- Suggesting alternatives (with caveats)
+
+**What LLMs ARE NOT good for:**
+- Gene-to-function annotation (use established tools)
+- Runtime scoring decisions (too slow, too variable)
+- Replacing expert validation
+
+**Approach:** Hybrid - LLM-enhanced but deterministic at runtime
+
+---
+
 ## Phase 1 Priorities (MVP)
 
 The goal is a working prototype: **one potato, one genome, no LLM features**.
@@ -181,13 +379,37 @@ tests/fixtures/
   "name": "Test Pathway (Linear)",
   "tags": ["test"],
   "nodes": [
-    {"id": "geneA", "type": "enzyme", "name": "Gene A", "ko": ["K00001"], "required": true},
-    {"id": "geneB", "type": "enzyme", "name": "Gene B", "ko": ["K00002"], "required": true},
-    {"id": "geneC", "type": "enzyme", "name": "Gene C", "ko": ["K00003"], "required": true}
+    {
+      "id": "geneA",
+      "step": 1,
+      "nodes": ["geneA_1"],
+      "type": "enzyme",
+      "name": "Gene A",
+      "databases": {"kofam": ["K00001"]},
+      "required": true
+    },
+    {
+      "id": "geneB",
+      "step": 2,
+      "nodes": ["geneB_2"],
+      "type": "enzyme",
+      "name": "Gene B",
+      "databases": {"kofam": ["K00002"]},
+      "required": true
+    },
+    {
+      "id": "geneC",
+      "step": 3,
+      "nodes": ["geneC_3"],
+      "type": "enzyme",
+      "name": "Gene C",
+      "databases": {"kofam": ["K00003"]},
+      "required": true
+    }
   ],
   "edges": [
-    {"from": "geneA", "to": "geneB"},
-    {"from": "geneB", "to": "geneC"}
+    {"from": "geneA_1", "to": "geneB_2"},
+    {"from": "geneB_2", "to": "geneC_3"}
   ],
   "scoring": {
     "min_fraction": 1.0
@@ -217,8 +439,8 @@ class Potato:
         """Extract all KO IDs for kofam searching"""
         kos = []
         for node in self.nodes:
-            if 'ko' in node:
-                kos.extend(node['ko'])
+            if 'databases' in node and 'kofam' in node['databases']:
+                kos.extend(node['databases']['kofam'])
         return kos
 
 class ToolRunner:

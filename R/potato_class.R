@@ -4,21 +4,11 @@
 #'
 #' @param id Character. Unique identifier for the potato
 #' @param name Character. Human-readable name
-#' @param type Character. Type of biological entity. Options:
-#'   - "pathway" (default): Metabolic pathway
-#'   - "structural_complex": Physical structures (R-bodies, flagella, pili)
-#'   - "secretion_system": Type III/IV/VI secretion systems
-#'   - "regulatory_system": Two-component systems, quorum sensing
-#'   - "defense_system": CRISPR, restriction-modification
-#'   - "transport_system": ABC transporters, porins
-#'   - "marker_gene": Single diagnostic genes
 #' @param nodes List. Nodes (genes/enzymes) in the pathway. Each node can have:
 #'   - `marker`: Logical. If TRUE, this gene is a diagnostic marker for the pathway
 #'   - `required`: Logical. If TRUE, pathway cannot be complete without this gene
-#'   - `type`: Character. "enzyme" or "compound"
-#'   - Detection methods: `ko`, `ec`, `pfam`, `hmm`, `blast_db`, `blast_terms`
-#'   - Direct path overrides: `blast_db_path`, `hmm_path`, `pfam_path` (override config lookup)
-#'   - `thresholds`: List. Gene-specific thresholds overriding config defaults
+#'   - `type`: Character. "enzyme", "compound", or "transporter"
+#'   - `databases`: List. Detection methods by database type (e.g., kofam, blast, hmm)
 #' @param edges List. Edges connecting nodes
 #' @param tags Character vector. Tags for organizing potatoes
 #' @param source Character. Source/origin of the pathway definition
@@ -35,7 +25,6 @@ Potato <- S7::new_class(
   properties = list(
     id = S7::class_character,
     name = S7::class_character,
-    type = S7::class_character,
     nodes = S7::class_list,
     edges = S7::class_list,
     tags = S7::class_character,
@@ -83,7 +72,6 @@ load_potato <- function(path) {
   Potato(
     id = data$id,
     name = data$name,
-    type = if (is.null(data$type)) "pathway" else data$type,
     nodes = nodes,
     edges = edges,
     tags = tags,
@@ -152,7 +140,7 @@ load_test_potato <- function() {
 #'
 #' @param potato Potato object
 #' @return List of enzyme nodes
-#' @export
+#' @keywords internal
 get_enzyme_nodes <- function(potato) {
   S7::check_is_S7(potato)
 
@@ -165,44 +153,28 @@ get_enzyme_nodes <- function(potato) {
 }
 
 
-#' Get detection terms for a database
+#' Get detection terms for a database type
 #'
-#' Extracts all terms (KO IDs, gene names, etc.) for a specific database from
-#' a potato's enzyme nodes. Supports both new 'databases' field and legacy fields.
+#' Extracts all terms (KO IDs, gene names, etc.) for a specific database type from
+#' a potato's enzyme nodes.
 #'
 #' @param potato Potato object
-#' @param database_name Name of database in config (e.g., "kofam113", "gator_blast")
-#' @param tool_type Legacy parameter for backward compatibility ("ko", "pfam", "ec", "hmm", "blast_db", "blast_terms")
+#' @param database_name Database type ("kofam", "blast", "hmm", "pfam")
 #' @return Character vector of unique terms
-#' @export
-get_detection_terms <- function(potato, database_name = NULL, tool_type = NULL) {
+#' @keywords internal
+get_detection_terms <- function(potato, database_name) {
   S7::check_is_S7(potato)
-
-  if (is.null(database_name) && is.null(tool_type)) {
-    stop("Must provide either database_name or tool_type", call. = FALSE)
-  }
 
   enzyme_nodes <- get_enzyme_nodes(potato)
 
-  # New schema: extract terms from databases field
-  if (!is.null(database_name)) {
-    terms <- unlist(lapply(enzyme_nodes, function(node) {
-      if (!is.null(node$databases) && !is.null(node$databases[[database_name]])) {
-        node$databases[[database_name]]
-      }
-    }))
-    return(unique(terms))
-  }
+  # Extract terms from databases field
+  terms <- unlist(lapply(enzyme_nodes, function(node) {
+    if (!is.null(node$databases) && !is.null(node$databases[[database_name]])) {
+      node$databases[[database_name]]
+    }
+  }))
 
-  # Legacy schema: extract from tool_type field
-  if (!is.null(tool_type)) {
-    terms <- unlist(lapply(enzyme_nodes, function(node) {
-      if (!is.null(node[[tool_type]])) {
-        node[[tool_type]]
-      }
-    }))
-    return(unique(terms))
-  }
+  unique(terms)
 }
 
 
@@ -210,7 +182,7 @@ get_detection_terms <- function(potato, database_name = NULL, tool_type = NULL) 
 #'
 #' @param potato Potato object
 #' @return List of nodes marked as marker genes
-#' @export
+#' @keywords internal
 get_marker_genes <- function(potato) {
   S7::check_is_S7(potato)
 
@@ -227,7 +199,7 @@ get_marker_genes <- function(potato) {
 #'
 #' @param potato Potato object
 #' @return igraph object
-#' @export
+#' @keywords internal
 build_potato_graph <- function(potato) {
   S7::check_is_S7(potato)
 
@@ -277,15 +249,6 @@ validate_potato <- function(potato, strict = FALSE) {
     errors <- c(errors, "Missing required field: 'name'")
   }
 
-  # Validate type field
-  valid_types <- c("pathway", "structural_complex", "secretion_system",
-                   "regulatory_system", "defense_system", "transport_system",
-                   "marker_gene")
-  if (nchar(potato@type) > 0 && !potato@type %in% valid_types) {
-    warnings <- c(warnings, sprintf("Unknown type '%s' (expected: %s)",
-                                   potato@type, paste(valid_types, collapse = ", ")))
-  }
-
   # Check ID format (alphanumeric, underscores, hyphens only)
   if (!grepl("^[a-zA-Z0-9_-]+$", potato@id)) {
     warnings <- c(warnings, "Potato ID should contain only letters, numbers, underscores, and hyphens")
@@ -313,21 +276,18 @@ validate_potato <- function(potato, strict = FALSE) {
     }
     if (is.null(node$type)) {
       errors <- c(errors, sprintf("%s: missing 'type'", node_prefix))
-    } else if (!node$type %in% c("enzyme", "compound")) {
-      warnings <- c(warnings, sprintf("%s: type '%s' is non-standard (expected 'enzyme' or 'compound')",
+    } else if (!node$type %in% c("enzyme", "compound", "transporter")) {
+      warnings <- c(warnings, sprintf("%s: type '%s' is non-standard (expected 'enzyme', 'compound', or 'transporter')",
                                       node_prefix, node$type))
     }
 
     # Check enzyme nodes have detection methods via databases field
     if (!is.null(node$type) && node$type == "enzyme") {
-      # New schema: check for databases field
       has_databases <- !is.null(node$databases) && length(node$databases) > 0
-      # Legacy schema: check for old detection method fields
-      has_legacy <- any(c("ko", "ec", "pfam", "hmm", "blast_db", "blast_terms") %in% names(node))
 
-      if (!has_databases && !has_legacy) {
-        warnings <- c(warnings, sprintf("%s: enzyme has no detection methods (needs 'databases' field or legacy fields)",
-                                        node_prefix))
+      if (!has_databases) {
+        errors <- c(errors, sprintf("%s: enzyme missing 'databases' field",
+                                    node_prefix))
       }
 
       # Validate databases field structure
@@ -335,42 +295,32 @@ validate_potato <- function(potato, strict = FALSE) {
         if (!is.list(node$databases)) {
           errors <- c(errors, sprintf("%s: 'databases' must be a list", node_prefix))
         } else {
-          # Check each database entry
+          # Check each database entry - only allow standard types
+          valid_db_types <- c("kofam", "blast", "hmm", "patric")
           for (db_name in names(node$databases)) {
             db_terms <- node$databases[[db_name]]
+
+            # Error on non-standard database type
+            if (!db_name %in% valid_db_types) {
+              errors <- c(errors, sprintf("%s: invalid database type '%s' (allowed: %s)",
+                                          node_prefix, db_name, paste(valid_db_types, collapse = ", ")))
+            }
+
             if (!is.character(db_terms) && !is.list(db_terms)) {
               errors <- c(errors, sprintf("%s: database '%s' terms must be character vector or list",
                                           node_prefix, db_name))
             }
-            # Validate KO format if this looks like a kofam database
-            if (grepl("kofam", db_name, ignore.case = TRUE)) {
+
+            # Validate KO format for kofam
+            if (db_name == "kofam") {
               ko_ids <- if (is.list(db_terms)) unlist(db_terms) else db_terms
               invalid_ko <- ko_ids[!grepl("^K[0-9]{5}$", ko_ids)]
               if (length(invalid_ko) > 0) {
-                warnings <- c(warnings, sprintf("%s: invalid KO format in '%s': %s (should be K##### e.g., K00001)",
-                                                node_prefix, db_name, paste(invalid_ko, collapse = ", ")))
+                warnings <- c(warnings, sprintf("%s: invalid KO format in 'kofam': %s (should be K##### e.g., K00001)",
+                                                node_prefix, paste(invalid_ko, collapse = ", ")))
               }
             }
           }
-        }
-      }
-
-      # Legacy field validation (keep for backward compatibility)
-      if (!is.null(node$ko)) {
-        ko_ids <- if (is.list(node$ko)) unlist(node$ko) else node$ko
-        invalid_ko <- ko_ids[!grepl("^K[0-9]{5}$", ko_ids)]
-        if (length(invalid_ko) > 0) {
-          warnings <- c(warnings, sprintf("%s: invalid KO format: %s (should be K##### e.g., K00001)",
-                                          node_prefix, paste(invalid_ko, collapse = ", ")))
-        }
-      }
-
-      if (!is.null(node$ec)) {
-        ec_ids <- if (is.list(node$ec)) unlist(node$ec) else node$ec
-        invalid_ec <- ec_ids[!grepl("^[0-9]+\\.[0-9-]+\\.[0-9-]+\\.[0-9-]+$", ec_ids)]
-        if (length(invalid_ec) > 0) {
-          warnings <- c(warnings, sprintf("%s: invalid EC format: %s (should be X.X.X.X)",
-                                          node_prefix, paste(invalid_ec, collapse = ", ")))
         }
       }
 
@@ -398,39 +348,6 @@ validate_potato <- function(potato, strict = FALSE) {
         }
       }
 
-      # Check for direct path overrides (legacy support)
-      if (!is.null(node$blast_db_path)) {
-        if (!file.exists(node$blast_db_path)) {
-          warnings <- c(warnings, sprintf("%s: blast_db_path specified but file not found: %s",
-                                          node_prefix, node$blast_db_path))
-        }
-        if (has_databases) {
-          warnings <- c(warnings, sprintf("%s: both 'databases' and 'blast_db_path' specified (path takes precedence)",
-                                          node_prefix))
-        }
-      }
-
-      if (!is.null(node$hmm_path)) {
-        if (!file.exists(node$hmm_path)) {
-          warnings <- c(warnings, sprintf("%s: hmm_path specified but file not found: %s",
-                                          node_prefix, node$hmm_path))
-        }
-        if (has_databases) {
-          warnings <- c(warnings, sprintf("%s: both 'databases' and 'hmm_path' specified (path takes precedence)",
-                                          node_prefix))
-        }
-      }
-
-      if (!is.null(node$pfam_path)) {
-        if (!file.exists(node$pfam_path)) {
-          warnings <- c(warnings, sprintf("%s: pfam_path specified but file not found: %s",
-                                          node_prefix, node$pfam_path))
-        }
-        if (has_databases) {
-          warnings <- c(warnings, sprintf("%s: both 'databases' and 'pfam_path' specified (path takes precedence)",
-                                          node_prefix))
-        }
-      }
     }
   }
 

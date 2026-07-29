@@ -1,0 +1,53 @@
+# Example potato configuration file
+# Copy and modify for your system
+
+databases:
+  # KOfam database (KEGG Orthology)
+  kofam:
+    type: kofam
+    profiles_dir: /path/to/kofam/profiles
+    ko_list: /path/to/kofam/ko_list
+    executable: exec_annotation
+    thresholds:
+      score_ratio: 1.0
+
+  # BLAST database (reference sequences)
+  # Can specify multiple files - will be merged before searching
+  blast:
+    type: blast
+    files:
+      - /path/to/gator.faa           # Primary reference set
+      - /path/to/custom_refs.faa     # Additional custom sequences
+    executable: blastp
+    thresholds:
+      evalue: 1e-7
+      bitscore: 50
+      pident: 25
+
+  # HMM database (custom profiles)
+  # Can specify multiple files - will be concatenated
+  hmm:
+    type: hmm
+    files:
+      - /path/to/your/mlr.hmm          # Example: microcystin degradation
+      - /path/to/your/phospho.hmm      # Example: phosphorus metabolism
+    executable: hmmsearch
+    thresholds:
+      evalue: 1e-10
+      bitscore: 50
+
+  # PFAM database (optional)
+  pfam:
+    type: pfam
+    path: /path/to/Pfam-A.hmm
+    executable: hmmsearch
+    thresholds:
+      evalue: 1e-10
+
+# Notes:
+# - Database keys MUST match types: kofam, blast, hmm, pfam
+# - Potatoes reference types (not custom names) for portability
+# - Multiple files per database are supported for blast and hmm
+# - HMM profile NAMEs (inside HMM file) are used as detection terms
+#   Example: if mlr.hmm contains "NAME mlrA_aligned", use "mlrA_aligned" in potato
+# - All paths are USER PROVIDED - potato does not bundle databases

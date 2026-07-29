@@ -15,3 +15,4 @@ List of nodes marked as marker genes
 \description{
 Get marker gene nodes from potato
 }
+\keyword{internal}

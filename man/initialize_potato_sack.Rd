@@ -4,12 +4,10 @@
 \alias{initialize_potato_sack}
 \title{Initialize a new potato sack project}
 \usage{
-initialize_potato_sack(path, name, copy_potatoes = TRUE)
+initialize_potato_sack(path, copy_potatoes = TRUE)
 }
 \arguments{
-\item{path}{Character. Parent directory where the project folder will be created.}
-
-\item{name}{Character. Name of the project. Used as the folder name and RStudio project name.}
+\item{path}{Character. Full path where the project will be created.}
 
 \item{copy_potatoes}{Logical. If TRUE (default), copies example potatoes from package to project.}
 }
@@ -20,10 +18,4 @@ Invisibly returns the path to the new project folder.
 Creates a new project folder with the standard structure: potatoes directory,
 config file, RStudio project file, and folders for genomes and results.
 A "potato sack" is a collection of potatoes (pathways) for an annotation project.
-}
-\examples{
-\dontrun{
-initialize_potato_sack("~/projects", "my_mag_analysis")
-initialize_potato_sack("~/projects", "diazotroph_screen", copy_potatoes = FALSE)
-}
 }

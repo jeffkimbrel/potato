@@ -1,6 +1,5 @@
 {
   "id": "glyoxylate_bhac",
-  "type": "pathway",
   "name": "Glyoxylate - BHAC pathway",
   "tags": ["glyoxylate", "carbon", "test"],
   "source": "GATOR v1 database",
@@ -16,8 +15,8 @@
       "required": true,
       "ec": ["2.6.1.35"],
       "databases": {
-        "kofam113": ["K28179"],
-        "gator_blast": ["bhaA_BLT64_RS06510"]
+        "kofam": ["K28179"],
+        "blast": ["bhaA_BLT64_RS06510"]
       }
     },
     {
@@ -30,8 +29,8 @@
       "required": true,
       "ec": ["4.1.3.41"],
       "databases": {
-        "kofam113": ["K18425"],
-        "gator_blast": ["bhcC_BLT64_RS06500"]
+        "kofam": ["K18425"],
+        "blast": ["bhcC_BLT64_RS06500"]
       }
     },
     {
@@ -43,8 +42,8 @@
       "is_marker": false,
       "required": true,
       "databases": {
-        "kofam113": ["K28180"],
-        "gator_blast": ["bhcB_BLT64_RS06505"]
+        "kofam": ["K28180"],
+        "blast": ["bhcB_BLT64_RS06505"]
       }
     },
     {
@@ -56,8 +55,8 @@
       "is_marker": false,
       "required": true,
       "databases": {
-        "kofam113": ["K28178"],
-        "gator_blast": ["bhcD_BLT64_RS06495"]
+        "kofam": ["K28178"],
+        "blast": ["bhcD_BLT64_RS06495"]
       }
     },
     {
@@ -69,7 +68,7 @@
       "is_marker": false,
       "required": false,
       "databases": {
-        "gator_blast": ["bhcR_BLT64_RS06515"]
+        "blast": ["bhcR_BLT64_RS06515"]
       }
     }
   ],

@@ -15,3 +15,4 @@ igraph object
 \description{
 Build igraph from potato
 }
+\keyword{internal}

@@ -4,22 +4,15 @@
 #' config file, RStudio project file, and folders for genomes and results.
 #' A "potato sack" is a collection of potatoes (pathways) for an annotation project.
 #'
-#' @param path Character. Parent directory where the project folder will be created.
-#' @param name Character. Name of the project. Used as the folder name and RStudio project name.
+#' @param path Character. Full path where the project will be created.
 #' @param copy_potatoes Logical. If TRUE (default), copies example potatoes from package to project.
 #'
 #' @returns Invisibly returns the path to the new project folder.
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' initialize_potato_sack("~/projects", "my_mag_analysis")
-#' initialize_potato_sack("~/projects", "diazotroph_screen", copy_potatoes = FALSE)
-#' }
-initialize_potato_sack <- function(path, name, copy_potatoes = TRUE) {
+initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
 
-  path <- normalizePath(path, mustWork = FALSE)
-  project_path <- file.path(path, name)
+  project_path <- normalizePath(path, mustWork = FALSE)
+  name <- basename(project_path)
 
   if (dir.exists(project_path)) {
     stop("Directory already exists: ", project_path, "\n",
@@ -34,7 +27,8 @@ initialize_potato_sack <- function(path, name, copy_potatoes = TRUE) {
     file.path(project_path, "genomes"),
     file.path(project_path, "results"),
     file.path(project_path, "results", "annotations"),
-    file.path(project_path, "results", "scores")
+    file.path(project_path, "results", "scores"),
+    file.path(project_path, ".claude")
   )
 
   for (d in dirs) {
@@ -53,6 +47,29 @@ initialize_potato_sack <- function(path, name, copy_potatoes = TRUE) {
     }
   }
 
+  # --- Copy Claude agents from package ---
+  package_claude <- system.file(".claude", package = "potato")
+  if (nzchar(package_claude) && dir.exists(package_claude)) {
+    # Copy entire .claude directory structure
+    claude_files <- list.files(package_claude, recursive = TRUE, full.names = TRUE, include.dirs = FALSE)
+    if (length(claude_files) > 0) {
+      for (src_file in claude_files) {
+        # Get relative path from package .claude dir
+        rel_path <- sub(paste0("^", package_claude, "/"), "", src_file)
+        dest_file <- file.path(project_path, ".claude", rel_path)
+
+        # Create parent directory if needed
+        dest_dir <- dirname(dest_file)
+        if (!dir.exists(dest_dir)) {
+          dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+        }
+
+        file.copy(src_file, dest_file, overwrite = FALSE)
+      }
+      cat("  Copied Claude agents to .claude/\n")
+    }
+  }
+
   # --- potato_config.yaml ---
   yaml_lines <- c(
     paste0("project_name: ", name),
@@ -67,35 +84,35 @@ initialize_potato_sack <- function(path, name, copy_potatoes = TRUE) {
     "# Database definitions",
     "# Each database has a type (kofam, blast, hmm, pfam) and type-specific config",
     "databases:",
-    "  # KOfam databases",
-    "  kofam113:",
+    "  # KOfam database",
+    "  kofam:",
     "    type: kofam",
-    "    profiles_dir: /path/to/kofam/113/profiles/",
-    "    ko_list: /path/to/kofam/113/ko_list",
+    "    profiles_dir: /path/to/kofam/profiles/",
+    "    ko_list: /path/to/kofam/ko_list",
     "    executable: exec_annotation",
     "    thresholds:",
     "      score_ratio: 1.0  # 1.0 = use native KOfam thresholds",
     "  ",
-    "  # BLAST databases",
-    "  # gator_blast:",
+    "  # BLAST database",
+    "  # blast:",
     "  #   type: blast",
-    "  #   path: /path/to/gator.faa",
+    "  #   path: /path/to/database.faa",
     "  #   executable: blastp",
     "  #   thresholds:",
     "  #     evalue: 1e-7",
     "  #     bitscore: 50",
     "  #     pident: 30",
     "  ",
-    "  # HMM databases",
-    "  # nifH_hmm:",
+    "  # HMM database",
+    "  # hmm:",
     "  #   type: hmm",
-    "  #   path: /path/to/nifH.hmm",
+    "  #   path: /path/to/profiles.hmm",
     "  #   executable: hmmsearch",
     "  #   thresholds:",
     "  #     evalue: 1e-10",
     "  ",
     "  # PFAM database",
-    "  # pfam_a:",
+    "  # pfam:",
     "  #   type: pfam",
     "  #   path: /path/to/Pfam-A.hmm",
     "  #   executable: hmmsearch",
@@ -172,6 +189,7 @@ initialize_potato_sack <- function(path, name, copy_potatoes = TRUE) {
     "|-- results/                # Output files",
     "|   |-- annotations/        # Gene-level annotation results",
     "|   +-- scores/             # Pathway-level scoring results",
+    "|-- .claude/                # Claude Code agents for building potatoes",
     "+-- README.md               # This file",
     "```",
     "",
@@ -211,12 +229,14 @@ initialize_potato_sack <- function(path, name, copy_potatoes = TRUE) {
   cat("  Potatoes : ", file.path(project_path, "potatoes/"), "\n", sep = "")
   cat("  Genomes  : ", file.path(project_path, "genomes/"), "\n", sep = "")
   cat("  Results  : ", file.path(project_path, "results/"), "\n", sep = "")
+  cat("  Agents   : ", file.path(project_path, ".claude/"), "\n", sep = "")
   cat("\n")
   cat("Next steps:\n")
-  cat("  1. Edit potato_config.yaml to set your database paths\n")
-  cat("  2. Open", paste0(name, ".Rproj"), "in RStudio\n")
-  cat("  3. Add genome files to genomes/\n")
-  cat("  4. Run your annotation workflow\n")
+  cat("  1. Open", paste0(name, ".Rproj"), "in RStudio or load folder in Positron\n")
+  cat("  2. Edit potato_config.yaml to set your database paths\n")
+  cat("  3. Run: sack <- load_potato_sack()\n")
+  cat("  4. Add genomes: sack <- add_genomes(sack, \"path/to/genomes/*.faa\")\n")
+  cat("  5. Run annotation: results <- annotate_sack_simple(sack)\n")
   cat("\n")
 
   invisible(project_path)

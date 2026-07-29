@@ -36,10 +36,7 @@ PotatoSack <- S7::new_class(
     provenance = S7::new_property(S7::class_list, default = list()),
 
     #' @field metadata Additional metadata
-    metadata = S7::new_property(S7::class_list, default = list()),
-
-    #' @field messages Collected messages, warnings, and errors from workflow
-    messages = S7::new_property(S7::class_list, default = list())
+    metadata = S7::new_property(S7::class_list, default = list())
   )
 )
 

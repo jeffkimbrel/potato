@@ -733,6 +733,47 @@ When building a potato, agent asks:
 
 ## Future Enhancements (Post v1.0)
 
+### GenBank Conversion
+
+**Current Status**: v1.0 only accepts FAA (protein FASTA) files as input. GenBank conversion logic was removed during foundation cleanup.
+
+**Needed**: Function to convert GenBank files (.gb, .gbk, .gbff) to FAA format for annotation.
+
+**Implementation Options**:
+1. Use jakomics `GENOME.from_genbank()` to parse GenBank and extract proteins
+2. Call Biopython SeqIO directly
+3. Use external tool (e.g., `genbank_to_fasta.py`)
+
+**Priority**: Medium - Many users have GenBank files from NCBI/IMG, but FAA is increasingly common for MAGs.
+
+---
+
+### Workflow Message Logging
+
+**Current Status**: Message collection system removed during foundation cleanup to reduce complexity before core workflows exist.
+
+**Needed**: System to collect and retrieve warnings, errors, and info messages during annotation workflows. Useful for reviewing what happened during batch runs on hundreds of MAGs.
+
+**Implementation**:
+1. `add_sack_message()` - Internal function to append messages to `sack@messages` list
+2. `sack_msg()` - Helper that prints (if verbose) AND stores messages
+3. `sack_messages()` - User-facing retrieval/filtering (by level, stage, genome)
+4. `sack_message_summary()` - Formatted summary showing errors/warnings/info counts
+
+**Use Cases**:
+- "Which genomes had kofam annotation failures?"
+- "Show me all warnings from the scoring stage"
+- "Did any genomes trigger low-completeness warnings?"
+
+**Design Considerations**:
+- Should messages be stored in sack object or written to log file?
+- How to handle message volume in large batch runs (1000+ genomes)?
+- Integration with R's message()/warning() system vs. separate logging
+
+**Priority**: Low - Implement after core annotation workflows are stable and generating messages worth collecting.
+
+---
+
 ### Database Agreement & Consensus Tracking
 
 **Problem**: When a potato gene can be detected by multiple databases (e.g., KOfam + BLAST), it's valuable to know:

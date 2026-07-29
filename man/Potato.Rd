@@ -7,7 +7,6 @@
 Potato(
   id = character(0),
   name = character(0),
-  type = character(0),
   nodes = list(),
   edges = list(),
   tags = character(0),
@@ -23,25 +22,12 @@ Potato(
 
 \item{name}{Character. Human-readable name}
 
-\item{type}{Character. Type of biological entity. Options:
-\itemize{
-\item "pathway" (default): Metabolic pathway
-\item "structural_complex": Physical structures (R-bodies, flagella, pili)
-\item "secretion_system": Type III/IV/VI secretion systems
-\item "regulatory_system": Two-component systems, quorum sensing
-\item "defense_system": CRISPR, restriction-modification
-\item "transport_system": ABC transporters, porins
-\item "marker_gene": Single diagnostic genes
-}}
-
 \item{nodes}{List. Nodes (genes/enzymes) in the pathway. Each node can have:
 \itemize{
 \item \code{marker}: Logical. If TRUE, this gene is a diagnostic marker for the pathway
 \item \code{required}: Logical. If TRUE, pathway cannot be complete without this gene
-\item \code{type}: Character. "enzyme" or "compound"
-\item Detection methods: \code{ko}, \code{ec}, \code{pfam}, \code{hmm}, \code{blast_db}, \code{blast_terms}
-\item Direct path overrides: \code{blast_db_path}, \code{hmm_path}, \code{pfam_path} (override config lookup)
-\item \code{thresholds}: List. Gene-specific thresholds overriding config defaults
+\item \code{type}: Character. "enzyme", "compound", or "transporter"
+\item \code{databases}: List. Detection methods by database type (e.g., kofam, blast, hmm)
 }}
 
 \item{edges}{List. Edges connecting nodes}

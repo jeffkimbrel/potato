@@ -15,3 +15,4 @@ List of enzyme nodes
 \description{
 Get enzyme nodes from potato
 }
+\keyword{internal}

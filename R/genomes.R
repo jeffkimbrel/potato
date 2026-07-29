@@ -1,53 +1,47 @@
-#' Load genome files as jakomics FILE objects
+#' Add genomes to a potato sack
 #'
-#' Discovers genome files (.faa, .gbk, .gb, .gbff) and returns them as a list of
-#' jakomics FILE objects for downstream processing.
+#' Register genome files with a potato sack without copying them. Can be called
+#' multiple times to add genomes from different locations.
 #'
-#' @param genome_dir Directory containing genome files
-#' @param genome_files Character vector of specific genome file paths (alternative to genome_dir)
-#' @param validate Logical. If TRUE, validates .faa files using BioPython (default: TRUE)
+#' @param sack PotatoSack object
+#' @param path Character. Path to protein FASTA (.faa or .fasta) files. Can be:
+#'   - A directory: adds all .faa/.fasta files in directory
+#'   - A wildcard pattern: "~/data/mags/*.faa"
+#'   - A single file: "~/data/genome1.faa"
+#'   - A vector of files
+#' @param validate Logical. If TRUE, validates .faa files (default: TRUE)
+#' @param recursive Logical. If path is a directory, search recursively (default: FALSE)
 #'
-#' @returns List of jakomics FILE objects (reticulate Python objects)
-#'
-#' @details
-#' This function discovers genome files and validates .faa files using
-#' `jakomics.utilities.validate_fasta()`. Genbank files (.gb, .gbk, .gbff) are
-#' not converted here - use `convert_genbank_to_faa()` for that.
-#'
-#' The returned FILE objects are reticulate Python objects with properties:
-#' - `$file_path` - Full path to file
-#' - `$name` - Filename with extension
-#' - `$short_name` - Filename without extension
-#' - `$suffix` - File extension (e.g., ".faa")
-#' - `$id` - Unique ID (UUID hex)
-#'
+#' @returns Modified PotatoSack object with genomes added
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Load all genome files from directory
-#' genomes <- prepare_genomes(genome_dir = "genomes/")
-#'
-#' # Load specific files
-#' genomes <- prepare_genomes(genome_files = c("genome1.faa", "genome2.gbk"))
-#'
-#' # Access properties
-#' genomes[[1]]$name
-#' genomes[[1]]$file_path
-#' }
-prepare_genomes <- function(genome_dir = NULL, genome_files = NULL, validate = TRUE) {
+
+add_genomes <- function(sack, path, validate = TRUE, recursive = FALSE) {
 
   # Check jakomics is available
   if (!exists("jakomics")) {
     stop("jakomics not loaded. Check conda environment 'potato' is activated.", call. = FALSE)
   }
 
-  # Input validation
-  if (is.null(genome_dir) && is.null(genome_files)) {
-    stop("Must provide either genome_dir or genome_files", call. = FALSE)
+  # Handle different input types
+  if (length(path) == 1 && dir.exists(path)) {
+    # It's a directory
+    genome_dir <- path
+    genome_files <- NULL
+  } else if (length(path) == 1 && grepl("\\*", path)) {
+    # It's a wildcard pattern - expand it
+    expanded <- Sys.glob(path)
+    if (length(expanded) == 0) {
+      stop("No files match pattern: ", path, call. = FALSE)
+    }
+    genome_dir <- NULL
+    genome_files <- expanded
+  } else {
+    # It's a file or vector of files
+    genome_dir <- NULL
+    genome_files <- path
   }
 
-  # Convert inputs
+  # Convert inputs for jakomics
   genome_dir_str <- if (is.null(genome_dir)) "" else genome_dir
   genome_files_list <- if (is.null(genome_files)) list() else as.list(genome_files)
 
@@ -55,107 +49,53 @@ prepare_genomes <- function(genome_dir = NULL, genome_files = NULL, validate = T
   file_objects <- jakomics$utilities$get_files(
     file_names = genome_files_list,
     directory = genome_dir_str,
-    file_type = list("faa", "fasta", "gb", "gbk", "gbff")
+    file_type = list("faa", "fasta")
   )
 
   if (length(file_objects) == 0) {
-    stop("No genome files found matching extensions: faa, fasta, gb, gbk, gbff", call. = FALSE)
+    stop("No genome files found with .faa or .fasta extension (protein FASTA)", call. = FALSE)
   }
 
   message("Found ", length(file_objects), " genome file(s)")
 
-  # Validate FAA/FASTA files if requested
+  # Validate FAA files if requested
   if (validate) {
     for (file_obj in file_objects) {
-      if (file_obj$suffix %in% c(".faa", ".fasta")) {
-        message("  Validating: ", file_obj$name)
-        tryCatch({
-          jakomics$utilities$validate_fasta(file_obj$file_path)
-        }, error = function(e) {
-          stop("Invalid FASTA file: ", file_obj$name, "\n  ", e$message, call. = FALSE)
-        })
-      }
+      message("  Validating: ", file_obj$name)
+      tryCatch({
+        jakomics$utilities$validate_fasta(file_obj$file_path)
+      }, error = function(e) {
+        stop("Invalid FASTA file: ", file_obj$name, "\n  ", e$message, call. = FALSE)
+      })
     }
   }
 
-  file_objects
+  new_genomes <- file_objects
+
+  # Check for duplicates (by file_path)
+  existing_paths <- sapply(sack@genomes, function(g) g$file_path)
+  new_paths <- sapply(new_genomes, function(g) g$file_path)
+
+  duplicates <- intersect(existing_paths, new_paths)
+  if (length(duplicates) > 0) {
+    warning("Skipping ", length(duplicates), " genome(s) already in sack:\n  ",
+            paste(basename(duplicates), collapse = "\n  "), call. = FALSE)
+    # Remove duplicates from new_genomes
+    new_genomes <- new_genomes[!new_paths %in% duplicates]
+  }
+
+  if (length(new_genomes) == 0) {
+    message("No new genomes added")
+    return(sack)
+  }
+
+  # Append to existing genomes
+  sack@genomes <- c(sack@genomes, new_genomes)
+
+  message("Added ", length(new_genomes), " genome(s). Total: ", length(sack@genomes))
+
+  sack
 }
 
 
-#' Convert genbank files to protein FASTA
-#'
-#' Takes jakomics FILE objects representing genbank files and converts them to
-#' protein FASTA format using `jakomics.genome.GENOME.genbank_to_fasta()`.
-#'
-#' @param file_objects List of jakomics FILE objects (from `prepare_genomes()`)
-#' @param output_dir Directory for output FAA files (default: "temp_genomes")
-#' @param overwrite Logical. Overwrite existing FAA files (default: FALSE)
-#'
-#' @returns List of jakomics FILE objects pointing to the new FAA files
-#'
-#' @details
-#' Only processes files with extensions .gb, .gbk, or .gbff. Other files are skipped
-#' with a warning. Output files are named: `<genome_short_name>_<uuid>.faa`
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Load genomes (including genbank files)
-#' genomes <- prepare_genomes(genome_dir = "genomes/")
-#'
-#' # Convert genbank to FAA
-#' faa_genomes <- convert_genbank_to_faa(genomes)
-#'
-#' # Now all are FAA files
-#' faa_genomes[[1]]$file_path
-#' }
-convert_genbank_to_faa <- function(file_objects, output_dir = "temp_genomes",
-                                   overwrite = FALSE) {
 
-  # Check jakomics is available
-  if (!exists("jakomics")) {
-    stop("jakomics not loaded. Check conda environment 'potato' is activated.", call. = FALSE)
-  }
-
-  # Create output directory if needed
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-  }
-
-  faa_file_objects <- list()
-
-  for (file_obj in file_objects) {
-    # Skip non-genbank files
-    if (!file_obj$suffix %in% c(".gb", ".gbk", ".gbff")) {
-      warning("Skipping non-genbank file: ", file_obj$name)
-      next
-    }
-
-    # Generate output path
-    output_faa <- file.path(output_dir, paste0(file_obj$short_name, "_", file_obj$id, ".faa"))
-
-    # Check if exists
-    if (file.exists(output_faa) && !overwrite) {
-      stop("Output file already exists: ", output_faa, "\n  Set overwrite=TRUE to replace", call. = FALSE)
-    }
-
-    message("Converting: ", file_obj$name, " -> ", basename(output_faa))
-
-    # Convert via jakomics
-    genome <- jakomics$genome$GENOME(file_obj)
-    genome$genbank_to_fasta(write_faa = output_faa)
-
-    # Create new FILE object for the FAA
-    faa_file_obj <- jakomics$file$FILE(output_faa)
-    faa_file_objects <- c(faa_file_objects, list(faa_file_obj))
-  }
-
-  if (length(faa_file_objects) == 0) {
-    warning("No genbank files were converted")
-  } else {
-    message("Converted ", length(faa_file_objects), " genbank file(s)")
-  }
-
-  faa_file_objects
-}

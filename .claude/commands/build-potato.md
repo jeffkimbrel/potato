@@ -1,0 +1,1 @@
+../../inst/.claude/commands/build-potato.md

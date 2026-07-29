@@ -12,7 +12,7 @@
       "nodes": ["nifD_1"],
       "type": "enzyme",
       "name": "nitrogenase molybdenum-iron protein alpha chain",
-      "ko": ["K02586"],
+      "databases": {"kofam": ["K02586"]},
       "ec": ["1.18.6.1"],
       "required": true,
       "is_marker": false,
@@ -24,7 +24,7 @@
       "nodes": ["nifK_2"],
       "type": "enzyme",
       "name": "nitrogenase molybdenum-iron protein beta chain",
-      "ko": ["K02591"],
+      "databases": {"kofam": ["K02591"]},
       "ec": ["1.18.6.1"],
       "required": true,
       "is_marker": false,
@@ -36,7 +36,7 @@
       "nodes": ["nifH_3"],
       "type": "enzyme",
       "name": "nitrogenase iron protein",
-      "ko": ["K02588"],
+      "databases": {"kofam": ["K02588"]},
       "required": true,
       "is_marker": true,
       "notes": "Fe protein, electron donor to MoFe protein (DIAGNOSTIC for nitrogen fixation)"
@@ -47,7 +47,7 @@
       "nodes": ["vnfD_4"],
       "type": "enzyme",
       "name": "vanadium-dependent nitrogenase alpha chain",
-      "ko": ["K22896"],
+      "databases": {"kofam": ["K22896"]},
       "required": false,
       "is_marker": false,
       "notes": "Alpha chain of V-nitrogenase VFe protein (alternative to Mo-nitrogenase)"
@@ -58,7 +58,7 @@
       "nodes": ["vnfK_5"],
       "type": "enzyme",
       "name": "vanadium-dependent nitrogenase beta chain",
-      "ko": ["K22897"],
+      "databases": {"kofam": ["K22897"]},
       "required": false,
       "is_marker": false,
       "notes": "Beta chain of V-nitrogenase VFe protein"
@@ -69,7 +69,7 @@
       "nodes": ["vnfG_6"],
       "type": "enzyme",
       "name": "vanadium nitrogenase delta subunit",
-      "ko": ["K22898"],
+      "databases": {"kofam": ["K22898"]},
       "required": false,
       "is_marker": false,
       "notes": "Delta subunit unique to V-nitrogenase"
@@ -80,7 +80,7 @@
       "nodes": ["vnfH_7"],
       "type": "enzyme",
       "name": "vanadium nitrogenase iron protein",
-      "ko": ["K22899"],
+      "databases": {"kofam": ["K22899"]},
       "required": false,
       "is_marker": false,
       "notes": "Fe protein for V-nitrogenase (alternative to nifH)"
