@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** v0.6.0 - Foundation complete. Kofam annotation fully implemented with parallel execution, file provenance, and nested tibble results.
+**Current Status:** v0.7.0 (ready to commit) - Complete annotation pipeline with scoring and visualization. All three annotation tools (kofam, blast, hmm) working, pathway scoring implemented, ggplot2-based visualizations ready.
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -351,7 +351,61 @@ sack <- readRDS("sack.rds")  # Standard R load
 
 ---
 
-## Current Working Functions (v0.6.0)
+## Complete Workflow Status (v0.7.0)
+
+### Fully Implemented and Tested ✓
+
+**Foundation (v0.5.x)**
+- ✅ Project initialization and sack creation
+- ✅ Config loading and validation
+- ✅ Potato loading and validation
+- ✅ GenomeFile S7 class for serialization-safe genome storage
+- ✅ Standard R save/load (saveRDS/readRDS)
+
+**Annotation Tools (v0.6.x)**
+- ✅ Kofam annotation with parallel execution (v0.6.0)
+- ✅ BLAST annotation with filtered databases (v0.6.1)
+- ✅ HMM annotation with profile extraction (v0.6.2)
+- ✅ All tools use consistent architecture:
+  - Parallel workers execute shell commands
+  - Sequential parsing with jakomics
+  - Filtered databases (extract only needed terms)
+  - File provenance (raw outputs + command logs)
+  - Nested tibble results structure
+  - Progress bars (progressr/cli)
+
+**Scoring (v0.7.0)**
+- ✅ `score_pathways()` - Apply quality thresholds to annotation hits
+- ✅ Handle OR branches (alternative genes at same step)
+- ✅ Calculate pathway completion fractions
+- ✅ Determine presence/absence based on min_fraction threshold
+- ✅ Store results in `sack@scores` tibble
+
+**Visualization (v0.7.0)**
+- ✅ `plot_potato()` - ggraph network plot with step-based layout
+- ✅ `plot_pathway_heatmap()` - ggplot2 tile heatmap across genomes
+- ✅ `plot_genome_pathways()` - ggplot2 horizontal bars for one genome
+- ✅ `plot_pathway_summary()` - ggplot2 stacked bars (pathways per genome)
+- ✅ `export_potato_dot()` - Export to graphviz format
+- ✅ All plots use tidyverse/ggplot2 (no base graphics)
+
+### Ready for Testing
+All features above have been implemented and basic testing done on:
+- 22 genomes (marine isolates)
+- 7 potatoes (glyoxylate cycle, entner-doudoroff, etc.)
+- All three annotation tools
+- Scoring with default thresholds
+- All visualization types
+
+### Not Yet Implemented
+- Gene specificity weighting in scoring
+- Marker gene emphasis in scoring
+- LLM agents (builder, converter, analysis)
+- Multi-sack comparisons
+- Advanced DAG traversal (currently simple step-based)
+- Genbank → FAA conversion (deferred from v0.5)
+
+## Current Working Functions (v0.7.0)
 
 ### User Workflow Functions
 - `initialize_potato_sack(path)` - Create project folder structure
@@ -372,8 +426,22 @@ sack <- readRDS("sack.rds")  # Standard R load
 - `print_validation(validation_result)` - Pretty print validation
 
 ### Annotation Functions
-- `run_kofam(sack, ...)` - Run kofam on all or selected genomes
+- `run_kofam(sack, potato_names, conda_env, workers, overwrite)` - Kofam annotation
 - `create_kofam_hal(sack, potato_names)` - Create .hal file for kofam
+- `run_blast(sack, potato_names, conda_env, workers, overwrite)` - BLAST annotation
+- `create_blast_db(sack, potato_names)` - Extract BLAST reference sequences
+- `run_hmm(sack, potato_names, conda_env, workers, overwrite)` - HMM annotation
+- `create_hmm_profile(sack, potato_names)` - Extract HMM profiles by NAME
+
+### Scoring Functions
+- `score_pathways(sack, kofam_threshold, blast_evalue, blast_bitscore, hmm_evalue)` - Score all pathways
+
+### Visualization Functions
+- `plot_potato(potato, sack, genome_name, layout)` - Network plot with detection status
+- `plot_pathway_heatmap(sack, cluster_rows, cluster_cols)` - Presence/absence heatmap
+- `plot_genome_pathways(sack, genome_name, threshold)` - Completion bars for one genome
+- `plot_pathway_summary(sack)` - Pathways detected per genome
+- `export_potato_dot(potato, file)` - Export to graphviz DOT format
 
 ### Config Functions
 - `load_potato_config(config_path = NULL)` - Load and validate config YAML
@@ -1122,11 +1190,66 @@ When you return to work on POTATO:
 
 ## Version History
 
-- **v0.6.0** - Current. Kofam annotation fully implemented with parallel execution, file provenance, GenomeFile serialization
+- **v0.7.0** - READY TO COMMIT. Scoring and visualization complete. All plots use ggplot2/ggraph.
+- **v0.6.2** - HMM annotation with profile extraction
+- **v0.6.1** - BLAST annotation with filtered databases
+- **v0.6.0** - Kofam annotation fully implemented with parallel execution, file provenance, GenomeFile serialization
 - **v0.5.1** - Simplified save/load (standard R), removed orphan functions
 - **v0.5.0** - Stripped to bare bones foundation, 35 tests passing
 - **v0.4.0** - Bug fixes and UX improvements (pre-cleanup)
-- **v1.0.0** - Target: all annotation tools + scoring + basic visualization
+- **v1.0.0** - Target: gene specificity weighting + LLM agents + polished documentation
+
+## Complete Example Workflow (v0.7.0)
+
+```r
+library(potato)
+
+# 1. Initialize project
+initialize_potato_sack("~/my_project")
+sack <- create_sack("~/my_project")
+
+# 2. Add genomes
+sack <- add_genomes(sack, "~/genomes/*.faa")
+
+# 3. Run all annotation tools
+sack <- run_kofam(sack, conda_env = "potato", workers = 8)
+sack <- run_blast(sack, conda_env = "potato", workers = 8)
+sack <- run_hmm(sack, conda_env = "potato", workers = 8)
+
+# 4. Score pathways
+sack <- score_pathways(sack)
+
+# 5. Save results
+saveRDS(sack, "sack.rds")
+
+# 6. Visualize results
+plot_pathway_heatmap(sack)
+plot_genome_pathways(sack, "genome_name")
+plot_potato(sack@potatoes$glyoxylate_cycle, sack, "genome_name")
+plot_pathway_summary(sack)
+
+# 7. Export results
+write.csv(sack@scores, "pathway_scores.csv")
+write.csv(sack@results %>% unnest(kofam), "kofam_hits.csv")
+```
+
+## What to Work on Next
+
+**Immediate (v0.7.1):**
+- Test with larger dataset (100+ genomes)
+- Add gene specificity weighting to scoring
+- Export functions for results (write TSV/CSV)
+
+**Near-term (v0.8.0):**
+- Marker gene emphasis in scoring
+- Required vs optional gene handling
+- Pathway-level confidence scores (not just fraction)
+
+**Future (v0.9.0+):**
+- LLM agent for potato building
+- LLM agent for result interpretation
+- Advanced DAG traversal algorithms
+- Multi-sack comparisons
 
 ---
 
