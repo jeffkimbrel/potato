@@ -55,6 +55,7 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
   # Create filtered HMM profile from potato detection terms
   hmm_result <- create_hmm_profile(sack, potato_names)
   hmm_profile <- hmm_result$hmm_profile
+  tc_values <- hmm_result$tc_values
   sack <- hmm_result$sack
 
   # Get annotation session directory (created by create_hmm_profile)
@@ -82,15 +83,28 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
 
   cli::cli_alert_info("Running HMM on {length(genome_paths)} genome{?s}...")
 
+  # Find conda executable if needed
+  conda_cmd <- "conda"
+  if (!is.null(conda_env)) {
+    conda_cmd <- find_conda()
+    if (conda_cmd == "") {
+      cli::cli_abort(c(
+        "{.code conda} not found",
+        "i" = "Make sure conda is installed",
+        "i" = "Searched in PATH, CONDA_EXE, and common install locations"
+      ))
+    }
+  }
+
   # STEP 1: Run hmmsearch commands in parallel (just execute, return raw output + command)
-  run_hmm_cmd <- function(genome_path, genome_name, hmm_profile, conda_env) {
+  run_hmm_cmd <- function(genome_path, genome_name, hmm_profile, conda_cmd, conda_env) {
     # hmmsearch: --tblout gives parseable table format, --noali skips alignments
     temp_out <- tempfile(fileext = ".tbl")
     cmd <- sprintf("hmmsearch --tblout %s --noali %s %s > /dev/null",
                    shQuote(temp_out), shQuote(hmm_profile), shQuote(genome_path))
 
     if (!is.null(conda_env)) {
-      cmd <- sprintf("conda run -n %s %s", conda_env, cmd)
+      cmd <- sprintf("%s run -n %s %s", conda_cmd, conda_env, cmd)
     }
 
     system(cmd)
@@ -109,18 +123,19 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     progressr::with_progress({
       p <- progressr::progressor(along = genome_paths)
       results <- furrr::future_map(seq_along(genome_paths), function(i) {
-        result <- run_hmm_cmd(genome_paths[i], genome_names[i], hmm_profile, conda_env)
+        result <- run_hmm_cmd(genome_paths[i], genome_names[i], hmm_profile, conda_cmd, conda_env)
         p()
         result
       }, .options = furrr::furrr_options(seed = TRUE))
     })
     future::plan(future::sequential)
   } else {
+    results <- list()
     cli::cli_progress_bar("Running HMM", total = length(genome_paths))
-    results <- purrr::map(seq_along(genome_paths), function(i) {
+    for (i in seq_along(genome_paths)) {
+      results[[i]] <- run_hmm_cmd(genome_paths[i], genome_names[i], hmm_profile, conda_cmd, conda_env)
       cli::cli_progress_update()
-      run_hmm_cmd(genome_paths[i], genome_names[i], hmm_profile, conda_env)
-    })
+    }
     cli::cli_progress_done()
   }
 
@@ -172,7 +187,7 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     }
 
     # Match to potato nodes
-    hmm_hits_to_tibble(parsed, potato_data)
+    hmm_hits_to_tibble(parsed, potato_data, tc_values)
   })
 
   # Add to sack results
@@ -186,7 +201,7 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
 
 #' Convert HMM hits to tibble (internal)
 #' @noRd
-hmm_hits_to_tibble <- function(parsed_hits, potato_data) {
+hmm_hits_to_tibble <- function(parsed_hits, potato_data, tc_values) {
   # Build map of HMM profile name -> potato nodes
   profile_to_nodes <- list()
   for (potato_id in names(potato_data)) {
@@ -213,6 +228,10 @@ hmm_hits_to_tibble <- function(parsed_hits, potato_data) {
     nodes <- profile_to_nodes[[profile_name]]
     if (is.null(nodes)) next
 
+    # Get TC value for this profile (NA if not present)
+    tc_threshold <- tc_values[[profile_name]]
+    if (is.null(tc_threshold)) tc_threshold <- NA_real_
+
     for (hit in hits_list) {
       for (node_info in nodes) {
         rows[[length(rows) + 1]] <- list(
@@ -223,7 +242,8 @@ hmm_hits_to_tibble <- function(parsed_hits, potato_data) {
           query = profile_name,
           evalue = hit$evalue,
           score = hit$score,
-          bias = hit$bias
+          bias = hit$bias,
+          tc_threshold = tc_threshold
         )
       }
     }
@@ -238,7 +258,8 @@ hmm_hits_to_tibble <- function(parsed_hits, potato_data) {
       query = character(),
       evalue = numeric(),
       score = numeric(),
-      bias = numeric()
+      bias = numeric(),
+      tc_threshold = numeric()
     ))
   }
 

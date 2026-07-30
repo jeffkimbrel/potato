@@ -313,55 +313,102 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 - [x] Potato loading and validation
 - [x] DAG validation (no cycles, required nodes exist, etc.)
 
-#### 1.2 Tool Execution (IN PROGRESS)
-- [x] **Kofam** - R/run_kofam.R (COMPLETE)
+#### 1.2 Tool Execution ✓ (COMPLETE)
+- [x] **Kofam** - R/run_kofam.R (v0.6.0)
   - [x] Parallel execution with furrr
   - [x] Conda environment support
   - [x] File provenance (raw outputs + logs)
   - [x] Nested tibble results
   - [x] Progress bars
   
-- [ ] **HMM** - R/run_hmm.R (NEXT)
-  - Follow kofam pattern:
-    - Worker runs: `conda run -n {env} hmmsearch {profile} {faa}`
-    - Sequential parsing with jakomics.hmm
-    - Save: `{genome}.hmm.txt` + `hmm.log`
-    - Add `sack@results$hmm` column
-  - HMM-specific:
-    - May have concatenated profiles (multiple in one file)
-    - Extract profile NAME from HMM file (not filename)
-    - Detection terms in potato use profile NAMEs
+- [x] **HMM** - R/run_hmm.R (v0.6.2, enhanced v0.7.1)
+  - [x] Parallel execution following kofam pattern
+  - [x] Extract HMM profile NAMEs from files
+  - [x] Extract trusted cutoffs (TC) from profiles (v0.7.1)
+  - [x] TC values stored in results for per-profile thresholding (v0.7.1)
+  - [x] Concatenated profile support
+  - [x] File provenance and command logging
   
-- [ ] **BLAST** - R/run_blast.R
-  - Follow kofam pattern:
-    - Worker runs: `conda run -n {env} blastp -query {faa} -db {db}`
-    - Sequential parsing with jakomics.blast
-    - Save: `{genome}.blast.txt` + `blast.log`
-    - Add `sack@results$blast` column
-  - BLAST-specific:
-    - May need to build BLAST database first
-    - Config can specify multiple reference files (merge into one DB)
-    - Use `makeblastdb` if DB doesn't exist
+- [x] **BLAST** - R/run_blast.R (v0.6.1)
+  - [x] Parallel execution following kofam pattern
+  - [x] Create filtered BLAST databases from reference sequences
+  - [x] Extract sequences from configured files
+  - [x] File provenance and command logging
 
-- [ ] R `annotate_all()` function
+- [x] **Conda path detection** (v0.7.1)
+  - [x] `find_conda()` helper searches PATH, CONDA_EXE, common locations
+  - [x] Applied to all three annotation tools
+  - [x] Works when conda is shell function (not in R's PATH)
+
+- [ ] R `annotate_all()` function (FUTURE)
   - Wrapper that runs all configured tools (kofam, hmm, blast)
   - Uses same timestamp directory for all tools
   - Returns sack with all tool results populated
 
-#### 1.3 Scoring Engine
-- [ ] DAG traversal for pathway scoring
-  - [ ] Handle OR branches (ilvH | ilvM)
-  - [ ] Handle required vs. optional nodes
-  - [ ] Calculate min_fraction thresholds
-- [ ] Output formats:
+#### 1.3 Scoring Engine ✓ (COMPLETE - v0.7.0)
+- [x] Pathway scoring with quality thresholds
+  - [x] Handle OR branches (alternative genes at same step)
+  - [x] Calculate min_fraction thresholds (per-potato)
+  - [x] Per-gene thresholding:
+    - Kofam: uses KEGG per-gene threshold
+    - HMM: uses per-profile TC when available, else e-value
+    - BLAST: global e-value and bitscore thresholds
+- [x] Results stored in `sack@scores` tibble
+- [ ] Output formats (FUTURE):
   - [ ] Gene-level: `genome_gator.tsv` (gene, product, tool, score, locus_tag)
   - [ ] Pathway-level: `genome_potato.tsv` (pathway, present, steps, confidence)
 
-#### 1.4 Basic Testing
-- [ ] Create 3-5 test potatoes (leucine biosynthesis, nitrogen fixation, etc.)
-- [ ] Test genomes (known MAGs with varying completeness)
+**Note:** Current scoring is simple step counting (fraction detected), not true DAG traversal. Doesn't verify connectivity from input to output. Sufficient for most presence/absence calls.
+
+#### 1.4 Visualization ✓ (COMPLETE - v0.7.0, enhanced v0.7.1)
+- [x] `plot_potato()` - Network visualization of pathway DAG
+- [x] `plot_pathway_heatmap()` - Presence/absence across genomes
+- [x] `plot_genome_pathways()` - Completion bars for single genome
+  - [x] Per-pathway threshold markers (v0.7.1)
+- [x] `plot_pathway_summary()` - Stacked bars, pathways per genome
+- [x] `potato_theme()` - Consistent theming with transparent backgrounds (v0.7.1)
+- [x] All visualizations use ggplot2/ggraph
+
+#### 1.5 Analysis Functions ✓ (COMPLETE - v0.7.1)
+
+**Goal:** Diagnostic tools for understanding why pathways are/aren't detected and identifying threshold issues.
+
+- [x] `summarize_missing_genes(sack, potato_name, min_genomes)` - Identify systematically missing genes
+  - Shows which genes are missing most often across genomes
+  - Returns: tibble with `gene_id`, `times_missing`, `fraction_missing`
+  - Use case: "Gene X is missing in 90% of genomes → database/threshold issue?"
+  
+  ```r
+  missing <- summarize_missing_genes(sack)
+  missing %>% filter(fraction_missing > 0.8)  # genes missing in >80% of genomes
+  ```
+
+- [x] `find_near_miss_pathways(sack, buffer)` - Find pathways just below threshold
+  - Identifies pathways within `buffer` distance of their threshold
+  - Returns: tibble with `distance_from_threshold`, `steps_detected`, `steps_total`
+  - Use case: "Which pathways would flip to present with slight threshold adjustment?"
+  
+  ```r
+  near_miss <- find_near_miss_pathways(sack, buffer = 0.1)
+  # Shows pathways at 0.65-0.75 when threshold is 0.75
+  ```
+
+- [x] `plot_near_miss_pathways(sack, genome_name, buffer)` - Visualize near-miss status
+  - Color codes: green = present, orange = near miss, gray = absent
+  - Shows which pathways are "almost there"
+  
+  ```r
+  plot_near_miss_pathways(sack, genome_name = "Muricauda_sp_ARW7G5W", buffer = 0.1)
+  ```
+
+**Why these matter:** Help users diagnose threshold tuning issues and understand why pathways aren't detected. Especially important when using database-level thresholds (BLAST, HMM) rather than per-gene thresholds (kofam).
+
+#### 1.6 Basic Testing
+- [x] Create test potatoes (7 potatoes: glyoxylate cycle, entner-doudoroff, etc.)
+- [x] Test genomes (22 marine isolate genomes)
+- [x] Integration testing: genome → annotation → scoring → visualization
 - [ ] Unit tests for scoring logic
-- [ ] Integration test: genome → annotation → scoring → output
+- [ ] **HMM TC testing**: Add bacteriorhodopsin potato (uses PFAM with TC) to test per-profile trusted cutoff thresholds
 
 ### Phase 2: Database Management
 
@@ -383,10 +430,15 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
   - `silent`: no checks
 
 #### 2.3 Visualization
-- [ ] R function to plot potato DAG with `igraph`
-- [ ] Highlight found vs. missing nodes per genome
-- [ ] Export to graphviz DOT format
-- [ ] Generate pathway summary reports (HTML/PDF)
+- [x] R function to plot potato DAG with `igraph` (v0.7.0: `plot_potato()`)
+- [x] Highlight found vs. missing nodes per genome
+- [x] Export to graphviz DOT format
+- [x] Generate pathway summary reports (heatmap, barplots)
+- [ ] **Faceting for `plot_potato()`** - Show multiple genomes/potatoes in one plot
+  - `plot_potato(..., genome_names = c("g1", "g2"), facet_by = "genome")` - One potato, multiple genomes
+  - `plot_potato(..., potato_list, genome_name = "g1", facet_by = "potato")` - Multiple potatoes, one genome  
+  - `plot_potato(..., potato_list, genome_names, facet_by = "both")` - Grid of potatoes × genomes
+  - Technical challenge: ggraph faceting requires careful layout coordination across subplots
 
 ### Phase 3: Confidence Scoring
 
@@ -412,6 +464,46 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 #### 3.3 Enhanced Output
 - [ ] Confidence levels in pathway output
 - [ ] Explanation text: "Found leuB, leuC, leuD (pathway-specific). Missing ilvE (also in valine biosynthesis). Likely present given 78% MAG completeness."
+
+#### 3.4 Threshold Sensitivity Analysis ⚠️ HIGH-PRIORITY, HIGH-LOAD
+
+**Goal:** Identify "gate-keeper genes" whose thresholds block pathway detection and quantify threshold sensitivity.
+
+**Motivation:** BLAST and HMM use database-level thresholds (not per-gene like kofam), so we're not fine-tuning individual genes' needs. This analysis helps users understand which genes would benefit from relaxed thresholds.
+
+**Implementation:**
+- [ ] `analyze_threshold_sensitivity(sack, relaxation_steps = c(0.1, 0.2, 0.5))`
+  - For each gene in each pathway:
+    - Test relaxing threshold by 10%, 20%, 50%
+    - Track which pathways become detected at each step
+    - Identify "gate-keeper genes" (single gene blocking pathway)
+  - Return: tibble with gene, pathway, current_status, relaxed_status, new_hits_gained
+  
+- [ ] `plot_threshold_sensitivity(sack, pathway_name)`
+  - Visualize pathway completion vs. threshold relaxation
+  - Highlight which genes are most sensitive
+  - Show "tipping points" where pathway flips to present
+  
+- [ ] Integration with scoring:
+  - Flag pathways "close to threshold" (within buffer)
+  - Suggest per-gene threshold adjustments for potato JSON
+  - Generate recommended `thresholds:` blocks for potato nodes
+
+**Example output:**
+```
+Gene: mlrA (microcystin_degradation)
+Current: 0/22 genomes detected (e-value 1e-10)
+Relaxed 50%: 3/22 genomes detected (e-value 1e-5)
+Impact: pathway detected in 3 additional genomes
+Recommendation: Add to potato JSON:
+  "thresholds": {"hmm_evalue": 1e-5}
+```
+
+**Why high-load:**
+- Requires re-running hit detection at multiple thresholds (computationally expensive)
+- Need to track and compare results across multiple threshold scenarios
+- Complex data structure to represent multi-dimensional sensitivity
+- UI/visualization needs careful design to be interpretable
 
 ### Phase 4: LLM Integration
 
@@ -739,6 +831,53 @@ When building a potato, agent asks:
 ---
 
 ## Future Enhancements (Post v1.0)
+
+### Visualization Enhancements
+
+- [ ] **Gradient heatmap**: `plot_pathway_heatmap()` show completion fraction (0.0-1.0) as color gradient instead of binary present/absent
+  - Current: green = present, gray = absent
+  - Proposed: color gradient from red (0%) → yellow (50%) → green (100%)
+  - Shows "almost there" pathways more clearly
+  
+- [ ] **Faceting support**: Add faceting to `plot_potato()` for comparing detection across multiple genomes side-by-side
+
+### Threshold Sensitivity Analysis
+
+**Goal**: Identify which gene thresholds are blocking pathway detection and test optimal threshold settings.
+
+**Problem**: Some pathways may be absent only because one or two genes have overly strict thresholds. Hard to know which genes to relax without systematic testing.
+
+**Proposed Feature**: Per-gene threshold relaxation analysis
+
+```r
+# Test what happens if each gene's threshold is relaxed
+sensitivity <- threshold_sensitivity_analysis(
+  sack, 
+  relaxation_steps = c(0.1, 0.2, 0.3),  # Try 10%, 20%, 30% relaxation
+  pathways = c("glyoxylate_cycle"),     # Optional: specific pathways
+  genomes = c("genome1", "genome2")     # Optional: specific genomes
+)
+
+# Returns tibble showing:
+# - pathway, genome, gene, original_threshold, relaxation_level
+# - pathway_detected (TRUE/FALSE at each relaxation)
+# - gate_keeper (TRUE if this gene blocks detection)
+```
+
+**Use Cases:**
+- "aceA has blast e-value 1e-20, but relaxing to 1e-18 would call glyoxylate cycle present in 12 genomes"
+- "This pathway is robustly absent - even relaxing all thresholds 50% doesn't call it present"
+- "nifH threshold is too strict - it's a gate-keeper gene preventing nitrogen fixation detection"
+
+**Visualization:**
+```r
+plot_threshold_sensitivity(sensitivity)
+# Heatmap: genes × relaxation levels, colored by pathway status change
+```
+
+**Priority**: Medium - implement after basic scoring analysis functions are tested
+
+---
 
 ### GenBank Conversion
 

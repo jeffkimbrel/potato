@@ -105,12 +105,9 @@ plot_potato <- function(potato, sack = NULL, genome_name = NULL, layout = "sugiy
       subtitle = if (!is.null(genome_name)) paste("Genome:", genome_name) else NULL,
       color = "Detection Status"
     ) +
-    ggplot2::theme_void() +
-    ggplot2::theme(
-      plot.title = ggplot2::element_text(hjust = 0.5, size = 14, face = "bold"),
-      plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10),
-      legend.position = if (!is.null(genome_name)) "right" else "none"
-    )
+    ggplot2::coord_cartesian(clip = "off") +
+    ggplot2::theme(plot.margin = ggplot2::margin(20, 20, 20, 20)) +
+    potato_theme()
 
   p
 }
@@ -275,13 +272,8 @@ plot_pathway_heatmap <- function(sack, cluster_rows = TRUE, cluster_cols = TRUE)
       x = "Genome",
       y = "Pathway"
     ) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1),
-      axis.text.y = ggplot2::element_text(size = 9),
-      panel.grid = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
-    )
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+    potato_theme()
 
   p
 }
@@ -290,13 +282,14 @@ plot_pathway_heatmap <- function(sack, cluster_rows = TRUE, cluster_cols = TRUE)
 #' Plot pathway completion fractions as barplot
 #'
 #' Shows completion fraction for each pathway in a specific genome using ggplot2.
+#' Per-pathway thresholds are shown as markers on each bar.
 #'
 #' @param sack PotatoSack object with scores
 #' @param genome_name Genome name to plot
-#' @param threshold Show threshold line (default: 0.75)
+#' @param show_thresholds Show per-pathway threshold markers (default: TRUE)
 #'
 #' @export
-plot_genome_pathways <- function(sack, genome_name, threshold = 0.75) {
+plot_genome_pathways <- function(sack, genome_name, show_thresholds = TRUE) {
 
   if (is.null(sack@scores)) {
     cli::cli_abort("No scores found. Run {.fn score_pathways} first.")
@@ -310,6 +303,16 @@ plot_genome_pathways <- function(sack, genome_name, threshold = 0.75) {
   if (nrow(genome_scores) == 0) {
     cli::cli_abort("No scores found for genome {.val {genome_name}}")
   }
+
+  # Get threshold for each pathway
+  genome_scores <- genome_scores %>%
+    dplyr::mutate(
+      threshold = purrr::map_dbl(potato, function(p_id) {
+        potato <- sack@potatoes[[which(sapply(sack@potatoes, function(x) x@id == p_id))]]
+        thresh <- potato@scoring$min_fraction
+        if (is.null(thresh)) 0.75 else thresh
+      })
+    )
 
   # Order pathways by fraction
   genome_scores <- genome_scores %>%
@@ -329,20 +332,18 @@ plot_genome_pathways <- function(sack, genome_name, threshold = 0.75) {
       x = "Completion Fraction",
       y = NULL
     ) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      axis.text.y = ggplot2::element_text(size = 9),
-      panel.grid.major.y = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
-    )
+    potato_theme()
 
-  # Add threshold line if specified
-  if (!is.null(threshold)) {
-    p <- p + ggplot2::geom_vline(
-      xintercept = threshold,
-      linetype = "dashed",
+  # Add per-pathway threshold markers
+  if (show_thresholds) {
+    p <- p + ggplot2::geom_point(
+      data = genome_scores,
+      ggplot2::aes(x = threshold, y = potato_name),
+      shape = 124,  # vertical bar
+      size = 8,
       color = "red",
-      alpha = 0.7
+      alpha = 0.7,
+      inherit.aes = FALSE
     )
   }
 
@@ -395,11 +396,8 @@ plot_pathway_summary <- function(sack) {
       x = "Genome",
       y = "Number of Pathways"
     ) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1),
-      plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
-    )
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+    potato_theme()
 
   p
 }

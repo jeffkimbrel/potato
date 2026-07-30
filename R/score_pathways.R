@@ -4,11 +4,16 @@
 #' completion scores. Handles OR branches (alternative genes) and required vs
 #' optional genes.
 #'
+#' Threshold priority:
+#' - Kofam: Uses per-gene threshold from KEGG (can override with kofam_threshold)
+#' - HMM: Uses per-profile TC (trusted cutoff) if available, otherwise hmm_evalue
+#' - BLAST: Uses global blast_evalue and blast_bitscore
+#'
 #' @param sack PotatoSack object with annotation results
-#' @param kofam_threshold Score threshold for kofam hits (NULL = use kofam threshold)
+#' @param kofam_threshold Score threshold for kofam hits (NULL = use per-gene threshold)
 #' @param blast_evalue E-value threshold for BLAST hits (default: 1e-10)
 #' @param blast_bitscore Bitscore threshold for BLAST hits (default: 50)
-#' @param hmm_evalue E-value threshold for HMM hits (default: 1e-10)
+#' @param hmm_evalue E-value threshold for HMM hits without TC (default: 1e-10)
 #'
 #' @returns Modified PotatoSack with scores in @scores
 #' @export
@@ -70,8 +75,10 @@ score_pathways <- function(sack,
     if ("hmm" %in% names(sack@results)) {
       hmm_data <- sack@results$hmm[[i]]
       if (!is.null(hmm_data) && nrow(hmm_data) > 0) {
-        # Filter by threshold
-        hmm_filtered <- hmm_data[hmm_data$evalue <= hmm_evalue, ]
+        # Filter by threshold: use TC if available, otherwise use e-value
+        hmm_filtered <- hmm_data[
+          (!is.na(hmm_data$tc_threshold) & hmm_data$score >= hmm_data$tc_threshold) |
+          (is.na(hmm_data$tc_threshold) & hmm_data$evalue <= hmm_evalue), ]
         genome_hits$hmm <- hmm_filtered
       }
     }

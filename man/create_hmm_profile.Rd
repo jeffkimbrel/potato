@@ -12,9 +12,10 @@ create_hmm_profile(sack, potato_names = NULL)
 \item{potato_names}{Vector of potato names (NULL = all)}
 }
 \value{
-List with hmm_profile path and modified sack
+List with hmm_profile path, tc_values, and modified sack
 }
 \description{
 Extracts only the HMM profiles needed by potatoes from the configured
 HMM files and creates a filtered HMM profile file (may be concatenated).
+Also extracts trusted cutoff (TC) values from profiles for use in scoring.
 }

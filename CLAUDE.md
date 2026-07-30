@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** v0.7.0 (ready to commit) - Complete annotation pipeline with scoring and visualization. All three annotation tools (kofam, blast, hmm) working, pathway scoring implemented, ggplot2-based visualizations ready.
+**Current Status:** v0.7.1 - Complete annotation pipeline with scoring, visualization, and analysis tools. HMM trusted cutoff support, per-pathway threshold visualization, near-miss pathway detection, conda path auto-detection.
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -22,7 +22,7 @@
 - **R/zzz.R** - Reticulate setup, loads Python backend on package load
 - **inst/python/** - Python backend code (will be rewritten for v1)
 - **inst/potatoes/** - Example potato JSON files (7 examples)
-- **inst/.claude/commands/build-potato.md** - Agent instructions for building potato JSONs
+- **inst/.claude/commands/build-potato.md** - Agent instructions for building potato JSONs (updated v0.7.1 - expert guide, pushes back on vague requests, suggests PFAM/BLAST proactively)
 
 ---
 
@@ -107,10 +107,13 @@ Each potato is a self-contained pathway definition with genes and topology:
       "type": "enzyme",
       "name": "enzyme name",
       "databases": {
-        "kofam": ["K00001"],
-        "blast": ["ref_seq_id"],
-        "hmm": ["profile_name"],
-        "pfam": ["PF00001"]
+        "kofam": ["K00001"],              // KEGG Orthology IDs
+        "blast": ["ref_seq_id"],          // BLAST reference sequence IDs
+        "hmm": ["PF00001", "custom_hmm"]  // HMM profile NAMEs (includes PFAM)
+      },
+      "thresholds": {                     // OPTIONAL: per-gene overrides
+        "blast_evalue": 1e-20,
+        "hmm_evalue": 1e-15
       },
       "ec": ["1.1.1.1"],
       "required": true,
@@ -142,7 +145,13 @@ Each potato is a self-contained pathway definition with genes and topology:
 - `marker`: Diagnostic gene for this pathway
 - `required`: Must be present for pathway completion
 
-**No legacy fields:** Don't use `ko`, `blast_terms`, `hmm_path`, etc. Use `databases` only.
+**Important notes:**
+- **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names like `kofam118`, `gator_blast`)
+- **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database), NOT separate `pfam` field
+- **HMM profile names:** Use NAME from HMM file header (e.g., `NAME mlrA`), not filename
+- **Per-gene thresholds:** Optional `thresholds` field for overriding global defaults (use sparingly)
+- **No legacy fields:** Don't use `ko`, `blast_terms`, `hmm_path`, etc. Use `databases` only
+- **Notes fields:** Use liberally to document biological context, alternatives, caveats, marker rationale
 
 ---
 
@@ -362,10 +371,15 @@ sack <- readRDS("sack.rds")  # Standard R load
 - ✅ GenomeFile S7 class for serialization-safe genome storage
 - ✅ Standard R save/load (saveRDS/readRDS)
 
-**Annotation Tools (v0.6.x)**
+**Annotation Tools (v0.6.x - v0.7.x)**
 - ✅ Kofam annotation with parallel execution (v0.6.0)
+  - Per-gene thresholds from KEGG stored in results
 - ✅ BLAST annotation with filtered databases (v0.6.1)
+  - Global e-value and bitscore thresholds
 - ✅ HMM annotation with profile extraction (v0.6.2)
+  - Extracts trusted cutoffs (TC) from HMM profiles
+  - TC values stored in results (`tc_threshold` column) for per-profile thresholding
+  - Profiles without TC fall back to global e-value threshold
 - ✅ All tools use consistent architecture:
   - Parallel workers execute shell commands
   - Sequential parsing with jakomics
@@ -373,21 +387,36 @@ sack <- readRDS("sack.rds")  # Standard R load
   - File provenance (raw outputs + command logs)
   - Nested tibble results structure
   - Progress bars (progressr/cli)
+- ✅ Conda path detection (v0.7.1)
+  - `find_conda()` helper searches PATH, CONDA_EXE, common locations
+  - Works out-of-box when conda is shell function (not in R's PATH)
 
 **Scoring (v0.7.0)**
 - ✅ `score_pathways()` - Apply quality thresholds to annotation hits
+- ✅ Per-gene thresholding:
+  - Kofam: uses KEGG per-gene threshold (column: `threshold`)
+  - HMM: uses per-profile TC when available, else e-value (column: `tc_threshold`)
+  - BLAST: global e-value and bitscore thresholds
 - ✅ Handle OR branches (alternative genes at same step)
 - ✅ Calculate pathway completion fractions
 - ✅ Determine presence/absence based on min_fraction threshold
 - ✅ Store results in `sack@scores` tibble
 
-**Visualization (v0.7.0)**
+**Visualization (v0.7.0 - v0.7.1)**
 - ✅ `plot_potato()` - ggraph network plot with step-based layout
 - ✅ `plot_pathway_heatmap()` - ggplot2 tile heatmap across genomes
 - ✅ `plot_genome_pathways()` - ggplot2 horizontal bars for one genome
+  - Shows per-pathway threshold markers (red vertical bars)
+  - Each pathway displays its actual min_fraction threshold
 - ✅ `plot_pathway_summary()` - ggplot2 stacked bars (pathways per genome)
 - ✅ `export_potato_dot()` - Export to graphviz format
 - ✅ All plots use tidyverse/ggplot2 (no base graphics)
+- ✅ `potato_theme()` - Consistent theming with transparent backgrounds
+
+**Analysis Functions (v0.7.1)**
+- ✅ `summarize_missing_genes()` - Identify genes systematically missing across genomes
+- ✅ `find_near_miss_pathways()` - Find pathways just below detection threshold
+- ✅ `plot_near_miss_pathways()` - Visualize near-miss status with color coding
 
 ### Ready for Testing
 All features above have been implemented and basic testing done on:
@@ -400,12 +429,23 @@ All features above have been implemented and basic testing done on:
 ### Not Yet Implemented
 - Gene specificity weighting in scoring
 - Marker gene emphasis in scoring
+- Threshold sensitivity analysis (high-priority - see ROADMAP Phase 3.4)
 - LLM agents (builder, converter, analysis)
 - Multi-sack comparisons
-- Advanced DAG traversal (currently simple step-based)
+- Advanced DAG traversal (currently simple step-based, uses step counting)
 - Genbank → FAA conversion (deferred from v0.5)
 
-## Current Working Functions (v0.7.0)
+### Known Limitations
+- **Scoring:** Simple step counting (fraction detected) rather than true DAG traversal
+  - Doesn't verify connectivity from input to output
+  - A pathway with 80% of genes but a broken middle step still scores 0.8
+  - Good enough for most presence/absence calls, especially with incomplete MAGs
+- **HMM TC values:** Only available when profiles have embedded TC lines
+  - PFAM profiles have TC values
+  - Custom HMM profiles (e.g., mlr) typically don't have TC
+  - Falls back to global e-value threshold when TC absent
+
+## Current Working Functions (v0.7.1)
 
 ### User Workflow Functions
 - `initialize_potato_sack(path)` - Create project folder structure
@@ -439,17 +479,24 @@ All features above have been implemented and basic testing done on:
 ### Visualization Functions
 - `plot_potato(potato, sack, genome_name, layout)` - Network plot with detection status
 - `plot_pathway_heatmap(sack, cluster_rows, cluster_cols)` - Presence/absence heatmap
-- `plot_genome_pathways(sack, genome_name, threshold)` - Completion bars for one genome
+- `plot_genome_pathways(sack, genome_name, show_thresholds)` - Completion bars with per-pathway thresholds
 - `plot_pathway_summary(sack)` - Pathways detected per genome
 - `export_potato_dot(potato, file)` - Export to graphviz DOT format
+- `potato_theme()` - Consistent theme for all plots (transparent backgrounds)
+
+### Analysis Functions
+- `summarize_missing_genes(sack, potato_name, min_genomes)` - Find systematically missing genes
+- `find_near_miss_pathways(sack, buffer)` - Identify pathways just below threshold
+- `plot_near_miss_pathways(sack, genome_name, buffer)` - Visualize near-miss status
 
 ### Config Functions
 - `load_potato_config(config_path = NULL)` - Load and validate config YAML
 - `find_potato_sack(path = NULL)` - Search upward for potato_config.yaml
 
-### Internal Classes
+### Internal/Helper Functions
 - `GenomeFile` - S7 class for serialization-safe genome metadata
 - `jakomics_to_genome_file()` - Convert Python FILE objects to R S7 objects
+- `find_conda()` - Locate conda executable (PATH, CONDA_EXE, common locations)
 
 ### Test Suite
 - 35 tests covering all core workflows

@@ -15,13 +15,13 @@ score_pathways(
 \arguments{
 \item{sack}{PotatoSack object with annotation results}
 
-\item{kofam_threshold}{Score threshold for kofam hits (NULL = use kofam threshold)}
+\item{kofam_threshold}{Score threshold for kofam hits (NULL = use per-gene threshold)}
 
 \item{blast_evalue}{E-value threshold for BLAST hits (default: 1e-10)}
 
 \item{blast_bitscore}{Bitscore threshold for BLAST hits (default: 50)}
 
-\item{hmm_evalue}{E-value threshold for HMM hits (default: 1e-10)}
+\item{hmm_evalue}{E-value threshold for HMM hits without TC (default: 1e-10)}
 }
 \value{
 Modified PotatoSack with scores in @scores
@@ -30,4 +30,12 @@ Modified PotatoSack with scores in @scores
 Applies quality thresholds to annotation hits and calculates pathway-level
 completion scores. Handles OR branches (alternative genes) and required vs
 optional genes.
+}
+\details{
+Threshold priority:
+\itemize{
+\item Kofam: Uses per-gene threshold from KEGG (can override with kofam_threshold)
+\item HMM: Uses per-profile TC (trusted cutoff) if available, otherwise hmm_evalue
+\item BLAST: Uses global blast_evalue and blast_bitscore
+}
 }

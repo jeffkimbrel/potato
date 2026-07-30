@@ -4,15 +4,16 @@
 \alias{plot_genome_pathways}
 \title{Plot pathway completion fractions as barplot}
 \usage{
-plot_genome_pathways(sack, genome_name, threshold = 0.75)
+plot_genome_pathways(sack, genome_name, show_thresholds = TRUE)
 }
 \arguments{
 \item{sack}{PotatoSack object with scores}
 
 \item{genome_name}{Genome name to plot}
 
-\item{threshold}{Show threshold line (default: 0.75)}
+\item{show_thresholds}{Show per-pathway threshold markers (default: TRUE)}
 }
 \description{
 Shows completion fraction for each pathway in a specific genome using ggplot2.
+Per-pathway thresholds are shown as markers on each bar.
 }

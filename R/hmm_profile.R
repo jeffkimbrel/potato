@@ -2,11 +2,12 @@
 #'
 #' Extracts only the HMM profiles needed by potatoes from the configured
 #' HMM files and creates a filtered HMM profile file (may be concatenated).
+#' Also extracts trusted cutoff (TC) values from profiles for use in scoring.
 #'
 #' @param sack PotatoSack object
 #' @param potato_names Vector of potato names (NULL = all)
 #'
-#' @returns List with hmm_profile path and modified sack
+#' @returns List with hmm_profile path, tc_values, and modified sack
 #' @export
 create_hmm_profile <- function(sack, potato_names = NULL) {
 
@@ -42,9 +43,10 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
     cli::cli_abort("No hmm files configured in potato_config.yaml")
   }
 
-  # Read all HMM files and extract needed profiles
+  # Read all HMM files and extract needed profiles + TC values
   needed_profiles <- list()
   found_profiles <- character()
+  tc_values <- list()
 
   for (hmm_file in hmm_files) {
     if (!file.exists(hmm_file)) {
@@ -56,6 +58,7 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
     lines <- readLines(hmm_file)
     current_profile <- list()
     current_name <- NULL
+    current_tc <- NA_real_
     in_profile <- FALSE
 
     for (i in seq_along(lines)) {
@@ -68,16 +71,24 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
           if (current_name %in% all_profiles) {
             needed_profiles[[current_name]] <- current_profile
             found_profiles <- c(found_profiles, current_name)
+            tc_values[[current_name]] <- current_tc
           }
         }
         # Start new profile
         current_profile <- c(line)
         current_name <- NULL
+        current_tc <- NA_real_
         in_profile <- TRUE
       } else if (grepl("^NAME\\s+", line)) {
         # Extract profile NAME
         current_name <- sub("^NAME\\s+", "", line)
         current_name <- trimws(current_name)
+        current_profile <- c(current_profile, line)
+      } else if (grepl("^TC\\s+", line)) {
+        # Extract trusted cutoff (first value if multiple)
+        tc_line <- sub("^TC\\s+", "", line)
+        tc_parts <- strsplit(trimws(tc_line), "\\s+")[[1]]
+        current_tc <- as.numeric(tc_parts[1])
         current_profile <- c(current_profile, line)
       } else if (grepl("^//", line)) {
         # End of profile
@@ -86,10 +97,12 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
         if (!is.null(current_name) && current_name %in% all_profiles) {
           needed_profiles[[current_name]] <- current_profile
           found_profiles <- c(found_profiles, current_name)
+          tc_values[[current_name]] <- current_tc
         }
         # Reset for next profile
         current_profile <- list()
         current_name <- NULL
+        current_tc <- NA_real_
         in_profile <- FALSE
       } else if (in_profile) {
         # Part of current profile
@@ -102,6 +115,7 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
       if (current_name %in% all_profiles) {
         needed_profiles[[current_name]] <- current_profile
         found_profiles <- c(found_profiles, current_name)
+        tc_values[[current_name]] <- current_tc
       }
     }
   }
@@ -141,7 +155,15 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
   }
   writeLines(hmm_lines, filtered_hmm)
 
-  cli::cli_alert_success("Created filtered HMM with {length(needed_profiles)} profile{?s}")
+  # Write TC values as JSON
+  tc_file <- file.path(hmm_dir, "tc_values.json")
+  jsonlite::write_json(tc_values, tc_file, auto_unbox = TRUE, pretty = TRUE, na = "null")
 
-  list(hmm_profile = filtered_hmm, sack = sack)
+  # Report TC statistics
+  n_with_tc <- sum(!is.na(unlist(tc_values)))
+  n_without_tc <- sum(is.na(unlist(tc_values)))
+  cli::cli_alert_success("Created filtered HMM with {length(needed_profiles)} profile{?s}")
+  cli::cli_alert_info("TC values: {n_with_tc} with TC, {n_without_tc} without")
+
+  list(hmm_profile = filtered_hmm, tc_values = tc_values, sack = sack)
 }

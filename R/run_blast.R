@@ -95,8 +95,21 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
 
   cli::cli_alert_info("Running BLAST on {length(genome_paths)} genome{?s}...")
 
+  # Find conda executable if needed
+  conda_cmd <- "conda"
+  if (!is.null(conda_env)) {
+    conda_cmd <- find_conda()
+    if (conda_cmd == "") {
+      cli::cli_abort(c(
+        "{.code conda} not found",
+        "i" = "Make sure conda is installed",
+        "i" = "Searched in PATH, CONDA_EXE, and common install locations"
+      ))
+    }
+  }
+
   # STEP 1: Run blast commands in parallel (just execute, return raw output + command)
-  run_blast_cmd <- function(genome_path, genome_name, blast_db, conda_env) {
+  run_blast_cmd <- function(genome_path, genome_name, blast_db, conda_cmd, conda_env) {
     # BLAST tabular output format 6 (standard)
     # -evalue 1e-5: permissive threshold for performance (scoring phase can be stricter)
     # -max_target_seqs 500: limit hits per query for performance
@@ -104,7 +117,7 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
                    shQuote(genome_path), shQuote(blast_db))
 
     if (!is.null(conda_env)) {
-      cmd <- sprintf("conda run -n %s %s", conda_env, cmd)
+      cmd <- sprintf("%s run -n %s %s", conda_cmd, conda_env, cmd)
     }
 
     output <- system(cmd, intern = TRUE)
@@ -121,7 +134,7 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     progressr::with_progress({
       p <- progressr::progressor(along = genome_paths)
       results <- furrr::future_map(seq_along(genome_paths), function(i) {
-        result <- run_blast_cmd(genome_paths[i], genome_names[i], blast_db, conda_env)
+        result <- run_blast_cmd(genome_paths[i], genome_names[i], blast_db, conda_cmd, conda_env)
         p()
         result
       }, .options = furrr::furrr_options(seed = TRUE))
@@ -131,7 +144,7 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     cli::cli_progress_bar("Running BLAST", total = length(genome_paths))
     results <- purrr::map(seq_along(genome_paths), function(i) {
       cli::cli_progress_update()
-      run_blast_cmd(genome_paths[i], genome_names[i], blast_db, conda_env)
+      run_blast_cmd(genome_paths[i], genome_names[i], blast_db, conda_cmd, conda_env)
     })
     cli::cli_progress_done()
   }

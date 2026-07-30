@@ -85,8 +85,21 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
 
   cli::cli_alert_info("Running kofam on {length(genome_paths)} genome{?s}...")
 
+  # Find conda executable if needed
+  conda_cmd <- "conda"
+  if (!is.null(conda_env)) {
+    conda_cmd <- find_conda()
+    if (conda_cmd == "") {
+      cli::cli_abort(c(
+        "{.code conda} not found",
+        "i" = "Make sure conda is installed",
+        "i" = "Searched in PATH, CONDA_EXE, and common install locations"
+      ))
+    }
+  }
+
   # STEP 1: Run kofam commands in parallel (just execute, return raw output + command)
-  run_kofam_cmd <- function(genome_path, genome_name, hal_path, ko_list, conda_env) {
+  run_kofam_cmd <- function(genome_path, genome_name, hal_path, ko_list, conda_cmd, conda_env) {
     temp_dir <- file.path(tempdir(), paste0("kofam_", basename(genome_path)))
     dir.create(temp_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -94,7 +107,7 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
                    ko_list, temp_dir, genome_path, hal_path)
 
     if (!is.null(conda_env)) {
-      cmd <- sprintf("conda run -n %s %s", conda_env, cmd)
+      cmd <- sprintf("%s run -n %s %s", conda_cmd, conda_env, cmd)
     }
 
     output <- system(cmd, intern = TRUE)
@@ -111,7 +124,7 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     progressr::with_progress({
       p <- progressr::progressor(along = genome_paths)
       results <- furrr::future_map(seq_along(genome_paths), function(i) {
-        result <- run_kofam_cmd(genome_paths[i], genome_names[i], hal_path, kofam_config$ko_list, conda_env)
+        result <- run_kofam_cmd(genome_paths[i], genome_names[i], hal_path, kofam_config$ko_list, conda_cmd, conda_env)
         p()
         result
       }, .options = furrr::furrr_options(seed = TRUE))
@@ -121,7 +134,7 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     cli::cli_progress_bar("Running kofam", total = length(genome_paths))
     results <- purrr::map(seq_along(genome_paths), function(i) {
       cli::cli_progress_update()
-      run_kofam_cmd(genome_paths[i], genome_names[i], hal_path, kofam_config$ko_list, conda_env)
+      run_kofam_cmd(genome_paths[i], genome_names[i], hal_path, kofam_config$ko_list, conda_cmd, conda_env)
     })
     cli::cli_progress_done()
   }
