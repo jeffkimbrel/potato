@@ -1,111 +1,213 @@
 {
   "id": "entner_doudoroff_np",
   "name": "Entner-Doudoroff Pathway (Non-Phosphorylative)",
-  "source": "custom (non-phosphorylative ED variant)",
-  "tags": ["metabolism", "carbohydrate", "glycolysis_alternative", "aerobic", "zymomonas", "archaea"],
-  "notes": "Non-phosphorylative ED pathway: alternative variant found in Zymomonas mobilis, some archaea (Sulfolobus), and certain Gram-negative bacteria. Operates on unphosphorylated intermediates (glucose → gluconate → KDG) before producing pyruvate. More ATP-efficient than semi-phosphorylative ED since no initial phosphorylation required. Distinguished by gnaD (gluconate dehydratase) instead of edd. Final aldolase step (eda) cleaves KDG to pyruvate and glyceraldehyde (not G3P). Common in organisms with high extracellular glucose and periplasmic glucose oxidation.",
-
+  "source": "KEGG M00309",
+  "tags": [
+    "metabolism",
+    "carbohydrate",
+    "glycolysis_alternative",
+    "aerobic",
+    "archaea",
+    "halophiles"
+  ],
+  "notes": "Non-phosphorylative Entner-Doudoroff pathway: gluconate => glycerate. Operates on completely unphosphorylated intermediates (gluconate → KDG → glyceraldehyde → glycerate). Distinguished by gnaD (gluconate dehydratase) and kdgA (KDG aldolase, EC 4.1.2.51) which cleaves non-phosphorylated KDG. Found in archaea (Sulfolobus, Thermoplasma, halophiles) and some bacteria. Includes downstream glyceraldehyde processing (cutA/B/C complex, gadh, or aor) to complete pathway to glycerate. KEGG M00309 starts with gluconate - upstream glucose activation is a separate pathway.",
   "nodes": [
     {
-      "id": "gcd",
-      "step": 1,
-      "nodes": ["gcd_1"],
-      "type": "enzyme",
-      "name": "quinoprotein glucose dehydrogenase",
-      "databases": {"kofam": ["K00117"]},
-      "ec": ["1.1.5.2"],
-      "required": true,
-      "marker": false,
-      "notes": "Periplasmic enzyme; oxidizes glucose to glucono-δ-lactone using PQQ cofactor"
-    },
-    {
-      "id": "pgl",
-      "step": 2,
-      "nodes": ["pgl_2"],
-      "type": "enzyme",
-      "name": "6-phosphogluconolactonase",
-      "databases": {"kofam": ["K01057"]},
-      "ec": ["3.1.1.31"],
-      "required": false,
-      "marker": false,
-      "notes": "Hydrolyzes glucono-δ-lactone to gluconate; can also work on non-phosphorylated substrate"
-    },
-    {
-      "id": "ybhE",
-      "step": 2,
-      "nodes": ["ybhE_2"],
-      "type": "enzyme",
-      "name": "6-phosphogluconolactonase",
-      "databases": {"kofam": ["K07404"]},
-      "ec": ["3.1.1.31"],
-      "required": false,
-      "marker": false,
-      "notes": "Alternative lactonase for glucono-δ-lactone hydrolysis"
-    },
-    {
       "id": "gnaD",
-      "step": 3,
-      "nodes": ["gnaD_3"],
+      "step": 1,
+      "nodes": [
+        "gnaD_1"
+      ],
       "type": "enzyme",
       "name": "gluconate dehydratase",
-      "databases": {"kofam": ["K05308"]},
-      "ec": ["4.2.1.140"],
+      "databases": {
+        "kofam": [
+          "K05308"
+        ]
+      },
+      "ec": [
+        "4.2.1.140"
+      ],
       "required": true,
       "marker": true,
       "notes": "Diagnostic enzyme for non-phosphorylative ED; dehydrates gluconate to KDG (2-keto-3-deoxy-gluconate)"
     },
     {
-      "id": "eda",
-      "step": 4,
-      "nodes": ["eda_4"],
+      "id": "kdgA",
+      "step": 2,
+      "nodes": [
+        "kdgA_2"
+      ],
       "type": "enzyme",
-      "name": "2-keto-3-deoxy-gluconate aldolase",
-      "databases": {"kofam": ["K01625"]},
-      "ec": ["4.1.2.14"],
+      "name": "2-dehydro-3-deoxy-D-gluconate aldolase",
+      "databases": {
+        "kofam": [
+          "K18127"
+        ]
+      },
+      "ec": [
+        "4.1.2.51"
+      ],
       "required": true,
       "marker": true,
-      "notes": "Diagnostic aldolase; cleaves KDG to pyruvate and glyceraldehyde (non-phosphorylated product)"
+      "notes": "Diagnostic aldolase for non-phosphorylative ED; cleaves KDG (non-phosphorylated) to pyruvate and D-glyceraldehyde. Distinct from eda/kdpgA which require phosphorylated substrate."
+    },
+    {
+      "id": "kdpgA",
+      "step": 2,
+      "nodes": [
+        "kdpgA_2"
+      ],
+      "type": "enzyme",
+      "name": "2-dehydro-3-deoxy-phosphogluconate aldolase",
+      "databases": {
+        "kofam": [
+          "K11395"
+        ]
+      },
+      "ec": [
+        "4.1.2.55"
+      ],
+      "required": true,
+      "marker": false,
+      "notes": "Alternative aldolase for non-phosphorylative ED; can also cleave non-phosphorylated KDG"
+    },
+    {
+      "id": "cutABC",
+      "step": 3,
+      "nodes": [
+        "cutABC_3"
+      ],
+      "type": "enzyme",
+      "name": "glyceraldehyde dehydrogenase complex (cutABC)",
+      "databases": {
+        "kofam": [
+          "K18020",
+          "K18021",
+          "K18022"
+        ]
+      },
+      "ec": [
+        "1.2.99.8"
+      ],
+      "required": false,
+      "marker": false,
+      "notes": "Three-subunit complex: cutA (K18020, large), cutB (K18021, medium), cutC (K18022, small). All three subunits required for activity. KEGG: K18020+K18021+K18022"
+    },
+    {
+      "id": "gadh",
+      "step": 3,
+      "nodes": [
+        "gadh_3"
+      ],
+      "type": "enzyme",
+      "name": "D-glyceraldehyde dehydrogenase (NADP+)",
+      "databases": {
+        "kofam": [
+          "K18128"
+        ]
+      },
+      "ec": [
+        "1.2.1.89"
+      ],
+      "required": false,
+      "marker": false,
+      "notes": "Alternative glyceraldehyde dehydrogenase; uses NADP+ instead of complex. Single enzyme, not a complex."
+    },
+    {
+      "id": "aor",
+      "step": 3,
+      "nodes": [
+        "aor_3"
+      ],
+      "type": "enzyme",
+      "name": "aldehyde:ferredoxin oxidoreductase",
+      "databases": {
+        "kofam": [
+          "K03738"
+        ]
+      },
+      "ec": [
+        "1.2.7.5"
+      ],
+      "required": false,
+      "marker": false,
+      "notes": "Alternative aldehyde oxidoreductase; uses ferredoxin as electron acceptor. Single enzyme, not a complex."
     }
   ],
-
+  "input": {
+    "compound": "D-gluconate",
+    "kegg_compound": "C00257",
+    "targets": [
+      "gnaD_1"
+    ]
+  },
+  "output": {
+    "compound": "D-glycerate",
+    "kegg_compound": "C00258",
+    "sources": [
+      "cutABC_3",
+      "gadh_3",
+      "aor_3"
+    ]
+  },
   "edges": [
     {
-      "from": "gcd_1",
-      "to": "pgl_2",
-      "compound": "glucono-δ-lactone",
-      "kegg_compound": "C00198"
-    },
-    {
-      "from": "gcd_1",
-      "to": "ybhE_2",
-      "compound": "glucono-δ-lactone",
-      "kegg_compound": "C00198"
-    },
-    {
-      "from": "pgl_2",
-      "to": "gnaD_3",
-      "compound": "gluconate",
-      "kegg_compound": "C00257"
-    },
-    {
-      "from": "ybhE_2",
-      "to": "gnaD_3",
-      "compound": "gluconate",
-      "kegg_compound": "C00257"
-    },
-    {
-      "from": "gnaD_3",
-      "to": "eda_4",
-      "compound": "2-keto-3-deoxy-gluconate",
+      "from": "gnaD_1",
+      "to": "kdgA_2",
+      "compound": "2-keto-3-deoxy-gluconate (KDG)",
       "kegg_compound": "C00679",
       "notes": "KDG intermediate - diagnostic for non-phosphorylative ED"
+    },
+    {
+      "from": "gnaD_1",
+      "to": "kdpgA_2",
+      "compound": "2-keto-3-deoxy-gluconate (KDG)",
+      "kegg_compound": "C00679",
+      "notes": "KDG intermediate - alternative aldolase"
+    },
+    {
+      "from": "kdgA_2",
+      "to": "cutABC_3",
+      "compound": "D-glyceraldehyde",
+      "kegg_compound": "C00577"
+    },
+    {
+      "from": "kdgA_2",
+      "to": "gadh_3",
+      "compound": "D-glyceraldehyde",
+      "kegg_compound": "C00577"
+    },
+    {
+      "from": "kdgA_2",
+      "to": "aor_3",
+      "compound": "D-glyceraldehyde",
+      "kegg_compound": "C00577"
+    },
+    {
+      "from": "kdpgA_2",
+      "to": "cutABC_3",
+      "compound": "D-glyceraldehyde",
+      "kegg_compound": "C00577"
+    },
+    {
+      "from": "kdpgA_2",
+      "to": "gadh_3",
+      "compound": "D-glyceraldehyde",
+      "kegg_compound": "C00577"
+    },
+    {
+      "from": "kdpgA_2",
+      "to": "aor_3",
+      "compound": "D-glyceraldehyde",
+      "kegg_compound": "C00577"
     }
   ],
-
   "scoring": {
-    "min_fraction": 1.0,
+    "min_fraction": 0.8,
     "method": "step_completion",
     "marker_mode": "any",
-    "notes": "All 4 steps required for pathway completion. Diagnostic markers (gnaD/eda) distinguish non-phosphorylative ED from semi-phosphorylative ED and other glucose pathways. At least one marker gene must be present. gnaD is the key distinguishing enzyme from semi-phosphorylative ED which uses edd instead."
-  }
+    "notes": "Core pathway (steps 1-2) required. Downstream processing (step 3) is optional - different organisms use different glyceraldehyde dehydrogenases. Step 3 has three alternatives: (1) cutABC complex (all three subunits K18020+K18021+K18022 must be detected), (2) gadh alone, or (3) aor alone. Diagnostic markers (gnaD + kdgA/kdpgA) distinguish non-phosphorylative ED from other pathways."
+  },
+  "verified": false
 }

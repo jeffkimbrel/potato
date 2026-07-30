@@ -1,74 +1,110 @@
 {
   "id": "glyoxylate_bhac",
   "name": "Glyoxylate - BHAC pathway",
-  "tags": ["glyoxylate", "carbon", "test"],
+  "tags": [
+    "glyoxylate",
+    "carbon",
+    "test"
+  ],
   "source": "GATOR v1 database",
   "notes": "Beta-hydroxyaspartate cycle for glyoxylate metabolism. Converts glyoxylate to aspartate via beta-hydroxyaspartate intermediate.",
   "nodes": [
     {
       "id": "bhcA",
       "step": 1,
-      "nodes": ["bhcA_1"],
+      "nodes": [
+        "bhcA_1"
+      ],
       "type": "enzyme",
       "name": "Aspartate-Glyoxylate Aminotransferase",
       "is_marker": true,
       "required": true,
-      "ec": ["2.6.1.35"],
+      "ec": [
+        "2.6.1.35"
+      ],
       "databases": {
-        "kofam": ["K28179"],
-        "blast": ["bhaA_BLT64_RS06510"]
+        "kofam": [
+          "K28179"
+        ],
+        "blast": [
+          "bhaA_BLT64_RS06510"
+        ]
       }
     },
     {
       "id": "bhcC",
       "step": 2,
-      "nodes": ["bhcC_2"],
+      "nodes": [
+        "bhcC_2"
+      ],
       "type": "enzyme",
       "name": "Beta-hydroxyaspartate aldolase",
       "is_marker": false,
       "required": true,
-      "ec": ["4.1.3.41"],
+      "ec": [
+        "4.1.3.41"
+      ],
       "databases": {
-        "kofam": ["K18425"],
-        "blast": ["bhcC_BLT64_RS06500"]
+        "kofam": [
+          "K18425"
+        ],
+        "blast": [
+          "bhcC_BLT64_RS06500"
+        ]
       }
     },
     {
       "id": "bhcB",
       "step": 3,
-      "nodes": ["bhcB_3"],
+      "nodes": [
+        "bhcB_3"
+      ],
       "type": "enzyme",
       "name": "serine/threonine dehydratase",
       "is_marker": false,
       "required": true,
       "databases": {
-        "kofam": ["K28180"],
-        "blast": ["bhcB_BLT64_RS06505"]
+        "kofam": [
+          "K28180"
+        ],
+        "blast": [
+          "bhcB_BLT64_RS06505"
+        ]
       }
     },
     {
       "id": "bhcD",
       "step": 4,
-      "nodes": ["bhcD_4"],
+      "nodes": [
+        "bhcD_4"
+      ],
       "type": "enzyme",
       "name": "ornithine cyclodeaminase",
       "is_marker": false,
       "required": true,
       "databases": {
-        "kofam": ["K28178"],
-        "blast": ["bhcD_BLT64_RS06495"]
+        "kofam": [
+          "K28178"
+        ],
+        "blast": [
+          "bhcD_BLT64_RS06495"
+        ]
       }
     },
     {
       "id": "bhcR",
       "step": 5,
-      "nodes": ["bhcR_5"],
+      "nodes": [
+        "bhcR_5"
+      ],
       "type": "enzyme",
       "name": "bhc operon transcriptional regulator",
       "is_marker": false,
       "required": false,
       "databases": {
-        "blast": ["bhcR_BLT64_RS06515"]
+        "blast": [
+          "bhcR_BLT64_RS06515"
+        ]
       }
     }
   ],
@@ -92,5 +128,6 @@
   "scoring": {
     "min_fraction": 1.0,
     "marker_mode": "any"
-  }
+  },
+  "verified": false
 }

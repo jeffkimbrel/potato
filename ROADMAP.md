@@ -1,5 +1,15 @@
 # POTATO v1 - Development Roadmap
 
+**Current Version:** v0.8.0 (2026-07-30)
+
+**Status:** Complete annotation pipeline with scoring, visualization, text-based pathway views, and LLM-assisted potato building. Ready for real-world testing and potato database expansion.
+
+**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways → visualize results → analyze near-misses
+
+**What's next:** Gene specificity weighting, threshold sensitivity analysis, more verified potatoes
+
+---
+
 ## Vision
 
 POTATO (Pathway annOTATOr) is the successor to GATOR, designed to rapidly annotate collections of genomes (MAGs) against curated metabolic pathways. The core innovation is **self-contained potato files** (pathway definitions as DAG structures in JSON) with **LLM-assisted analysis** for handling MAG incompleteness and functional analogs.
@@ -57,8 +67,21 @@ Each potato is a self-contained pathway definition stored as a DAG.
   "id": "leucine_biosynthesis",
   "name": "Leucine Biosynthesis",
   "source": "KEGG M00570",
+  "verified": false,
   "tags": ["amino_acid_metabolism", "branched_chain"],
   "notes": "Canonical leucine biosynthesis pathway",
+  
+  "input": {
+    "compound": "pyruvate",
+    "kegg_compound": "C00022",
+    "targets": ["ilvB_1"]
+  },
+  
+  "output": {
+    "compound": "L-leucine",
+    "kegg_compound": "C00123",
+    "sources": ["leuA_5"]
+  },
   
   "nodes": [
     {
@@ -362,10 +385,19 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 
 #### 1.4 Visualization ✓ (COMPLETE - v0.7.0, enhanced v0.7.1)
 - [x] `plot_potato()` - Network visualization of pathway DAG
+  - [x] Accepts potato path or object
+  - [x] Optional genome detection overlay
+  - [x] Fixed node sizing and labeling (v0.7.1)
+  - [x] Support for input/output compound nodes (v0.7.1)
 - [x] `plot_pathway_heatmap()` - Presence/absence across genomes
 - [x] `plot_genome_pathways()` - Completion bars for single genome
   - [x] Per-pathway threshold markers (v0.7.1)
 - [x] `plot_pathway_summary()` - Stacked bars, pathways per genome
+- [x] `print_potato()` - Text-based pathway view (v0.7.1)
+  - [x] Compact notation: `*` = marker, `^` = optional, `{n}` = complex, `(A|B)` = alternatives
+  - [x] Shows input/output compounds
+  - [x] Optional EC numbers and KO IDs
+  - [x] Example: `[D-glucose-6-P] -> zwf -> (pgl^ | ybhE^) -> edd* -> eda*`
 - [x] `potato_theme()` - Consistent theming with transparent backgrounds (v0.7.1)
 - [x] All visualizations use ggplot2/ggraph
 
@@ -403,10 +435,20 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 
 **Why these matter:** Help users diagnose threshold tuning issues and understand why pathways aren't detected. Especially important when using database-level thresholds (BLAST, HMM) rather than per-gene thresholds (kofam).
 
-#### 1.6 Basic Testing
-- [x] Create test potatoes (7 potatoes: glyoxylate cycle, entner-doudoroff, etc.)
+#### 1.6 Basic Testing & Quality Control
+- [x] Create test potatoes (11 potatoes: glyoxylate cycle, entner-doudoroff variants, nitrogen fixation, etc.)
 - [x] Test genomes (22 marine isolate genomes)
 - [x] Integration testing: genome → annotation → scoring → visualization
+- [x] **Potato verification system** (v0.7.1)
+  - [x] All potatoes have `"verified": false` field
+  - [x] Agents and LLMs instructed to NEVER set verified to true
+  - [x] Manual verification workflow established
+  - [x] Text-based review with `print_potato()` for quick validation
+- [x] **Quality issues discovered** (v0.7.1)
+  - [x] Build-potato agent made substrate specificity errors (EC 3.1.1.31 vs 3.1.1.17)
+  - [x] Fixed Entner-Doudoroff pathway errors
+  - [x] Split nitrogen fixation into Mo-dependent and V-dependent potatoes
+  - [x] Updated agent instructions to validate EC numbers against substrate chemistry
 - [ ] Unit tests for scoring logic
 - [ ] **HMM TC testing**: Add bacteriorhodopsin potato (uses PFAM with TC) to test per-profile trusted cutoff thresholds
 
@@ -509,34 +551,44 @@ Recommendation: Add to potato JSON:
 
 **Goal:** LLM agents for database building and result interpretation.
 
-#### 4.1 Builder Agent
+#### 4.1 Builder Agent ✓ (IMPLEMENTED - v0.7.1)
 
-Helps create new potato JSON files.
+Interactive skill for creating new potato JSON files. Invoked with `/build-potato` command.
 
-**Mode 1: From KEGG Module**
-```r
-build_potato(kegg_module = "M00570")
-```
-- [ ] Fetch from KEGG REST API
-- [ ] Parse KEGG module definition syntax
-- [ ] Extract KO IDs, pathway structure, compound info
-- [ ] Generate potato JSON draft
-- [ ] User reviews/edits, saves
+**Status: Operational with quality control measures**
 
-**Mode 2: From Gene List**
-```r
-build_potato(genes = c("rbdA", "rbdB", "rbdC", "rbdD"), 
-             pathway_name = "R-body synthesis")
-```
-- [ ] LLM searches for KO/PFAM/EC for each gene
-- [ ] Suggests pathway logic
-- [ ] Generates potato JSON draft
+**Capabilities:**
+- [x] **KEGG module import** - Fetch and parse KEGG module definitions
+  - [x] Parse module syntax (parentheses for OR, + for AND)
+  - [x] Fetch KO details from KEGG API
+  - [x] Validate EC numbers against substrate chemistry
+  - [x] Generate input/output compound fields
+  - [x] Set `"verified": false` (NEVER true)
+- [x] **Custom pathway creation** - Conversational pathway building
+  - [x] Push back on vague requests ("nitrogen fixation" → "which type?")
+  - [x] Suggest PFAM domains and BLAST references
+  - [x] Ask about input/output compounds
+  - [x] Handle transporters with location qualifiers (_external, _internal)
+- [x] **Potato migration** - Update old potatoes to new schema
+  - [x] Map custom database names to standard types
+  - [x] Add verified field if missing
+  - [x] Add input/output fields if missing
+- [x] **GATOR Excel conversion** - Parse old GATOR v1 spreadsheets
+  - [x] Parse string syntax (->  | + operators)
+  - [x] Map to potato JSON DAG structure
 
-**Mode 3: Interactive**
-```r
-build_potato(prompt = "I want a shikimate pathway potato")
-```
-- [ ] Conversational refinement
+**Quality control lessons learned (v0.7.1):**
+- ⚠️ Agent made substrate specificity errors (wrong EC numbers)
+- ⚠️ Example: Used EC 3.1.1.31 (6-phosphogluconolactonase) instead of EC 3.1.1.17 (gluconolactonase) in non-phosphorylative pathway
+- ✓ Solution: Enhanced validation instructions to cross-check EC substrate specificity
+- ✓ Added `print_potato()` for quick text-based verification
+- ✓ Mandatory `"verified": false` field - only humans verify potatoes
+- ✓ Agent now validates KEGG module definitions more carefully
+
+**Known limitations:**
+- Agent can make biochemical errors - human verification required
+- Does not guarantee substrate specificity correctness
+- User must manually set `verified: true` after thorough review
 - [ ] LLM asks clarifying questions
 - [ ] Generates potato JSON
 

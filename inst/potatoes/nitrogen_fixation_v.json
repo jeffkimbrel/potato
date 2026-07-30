@@ -1,0 +1,55 @@
+{
+  "id": "nitrogen_fixation_v",
+  "name": "Nitrogen Fixation (V-dependent)",
+  "source": "Alternative nitrogenase system",
+  "tags": [
+    "nitrogen_metabolism",
+    "energy_metabolism",
+    "vanadium"
+  ],
+  "notes": "Vanadium-dependent nitrogen fixation via alternative nitrogenase enzyme complex. Less common than Mo-nitrogenase, found when molybdenum is scarce. Reduces N2 to NH3 using vnfHDGK complex with a vanadium-iron cofactor (FeV-co). Similar structure to Mo-nitrogenase but with vanadium instead of molybdenum.",
+  "input": {
+    "compound": "N2",
+    "kegg_compound": "C00697",
+    "targets": [
+      "vnfH_1"
+    ]
+  },
+  "output": {
+    "compound": "2 NH3",
+    "kegg_compound": "C00014",
+    "sources": [
+      "vnfDGK_4"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "vnfDKGH",
+      "step": 1,
+      "nodes": [
+        "vnfDKGH_1"
+      ],
+      "type": "enzyme",
+      "name": "nitrogenase complex (V-dependent)",
+      "databases": {
+        "kofam": [
+          "K22896",
+          "K22897",
+          "K22898",
+          "K22899"
+        ]
+      },
+      "required": true,
+      "marker": true,
+      "notes": "Complete V-nitrogenase complex: vnfD (VFe alpha) + vnfK (VFe beta) + vnfG (VFe delta) + vnfH (Fe protein). All four subunits required. KEGG: K22896+K22897+K22898+K22899"
+    }
+  ],
+  "edges": [],
+  "scoring": {
+    "min_fraction": 0.75,
+    "method": "step_completion",
+    "marker_mode": "any",
+    "notes": "All genes (vnfH, vnfD, vnfK, vnfG) required for functional V-nitrogenase. All are markers for V-dependent system."
+  },
+  "verified": false
+}

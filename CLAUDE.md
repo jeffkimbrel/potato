@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** v0.7.1 - Complete annotation pipeline with scoring, visualization, and analysis tools. HMM trusted cutoff support, per-pathway threshold visualization, near-miss pathway detection, conda path auto-detection.
+**Current Status:** v0.8.0 - Complete annotation pipeline with scoring, visualization, and analysis tools. HMM trusted cutoff support, per-pathway threshold visualization, near-miss pathway detection, conda path auto-detection, text-based pathway printing, potato verification system.
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -96,8 +96,21 @@ Each potato is a self-contained pathway definition with genes and topology:
   "id": "pathway_id",
   "name": "Human Readable Name",
   "source": "KEGG M00123 / custom",
+  "verified": false,
   "tags": ["metabolism", "energy"],
   "notes": "Brief description",
+  
+  "input": {
+    "compound": "substrate name",
+    "kegg_compound": "C00001",
+    "targets": ["geneA_1"]
+  },
+  
+  "output": {
+    "compound": "product name",
+    "kegg_compound": "C00002",
+    "sources": ["geneZ_5"]
+  },
   
   "nodes": [
     {
@@ -139,6 +152,11 @@ Each potato is a self-contained pathway definition with genes and topology:
 ```
 
 **Key fields:**
+- `verified`: **CRITICAL** - Always set to `false` for new/unverified potatoes. **NEVER set to true**. Only the user manually sets this after validation.
+- `input`/`output`: Starting substrate and final product (optional but recommended)
+  - For metabolic pathways: actual metabolites (e.g., "D-glucose", "pyruvate")
+  - For transporters: location-qualified (e.g., "NH4_external", "NH4_internal")
+  - `targets`/`sources`: which DAG nodes connect to input/output
 - `databases`: Detection methods using standard types (kofam, blast, hmm, pfam)
 - `step`: Sequential step number (or array for bifunctional enzymes)
 - `nodes`: DAG node IDs in `id_step` format
@@ -146,12 +164,14 @@ Each potato is a self-contained pathway definition with genes and topology:
 - `required`: Must be present for pathway completion
 
 **Important notes:**
+- **Verified field:** Agents and Claude should ALWAYS set `"verified": false` and NEVER change it to true. Only humans verify potatoes.
 - **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names like `kofam118`, `gator_blast`)
 - **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database), NOT separate `pfam` field
 - **HMM profile names:** Use NAME from HMM file header (e.g., `NAME mlrA`), not filename
 - **Per-gene thresholds:** Optional `thresholds` field for overriding global defaults (use sparingly)
 - **No legacy fields:** Don't use `ko`, `blast_terms`, `hmm_path`, etc. Use `databases` only
 - **Notes fields:** Use liberally to document biological context, alternatives, caveats, marker rationale
+- **Input/output:** For transporters moving compounds across membranes, use location qualifiers like "_external", "_internal", "_periplasm"
 
 ---
 
@@ -459,6 +479,9 @@ All features above have been implemented and basic testing done on:
 - `load_potato(path)` - Load single potato JSON
 - `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory
 - `load_test_potato()` - Load example test potato
+- `print_potato(potato, compact, show_compounds, show_ko, show_ec)` - Text-based pathway view
+  - Compact notation: `*` = marker, `^` = optional, `{n}` = complex, `(A|B)` = alternatives
+  - Example: `[D-glucose-6-P] -> zwf -> (pgl^ | ybhE^) -> edd* -> eda*`
 - `get_enzyme_nodes(potato)` - Extract enzyme nodes
 - `get_detection_terms(potato, database_name)` - Extract KO/blast/hmm terms
 - `get_marker_genes(potato)` - Extract marker gene nodes

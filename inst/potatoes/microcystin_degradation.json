@@ -2,19 +2,29 @@
   "id": "microcystin_degradation",
   "name": "Microcystin Degradation",
   "source": "Bourne et al. 1996, 2001; Harada et al. 2004; Thees 2019; Li et al. 2025",
-  "tags": ["toxin_degradation", "secondary_metabolism", "bioremediation"],
+  "tags": [
+    "toxin_degradation",
+    "secondary_metabolism",
+    "bioremediation"
+  ],
   "notes": "Stepwise microcystin-LR degradation pathway found in most MC-degrading bacteria via the mlrABCD gene cluster. Microcystinase (mlrA) cleaves cyclic MC-LR (highly toxic) into linearized form (160× less toxic), serine hydrolase (mlrB) cleaves linear MC-LR into tetrapeptide (20× less toxic), and metalloprotease (mlrC) further degrades tetrapeptide into small fragments like ADDA. MlrD is a PTR2 family peptide transporter (membrane protein) whose exact role in MC degradation remains under investigation but likely involves transport of degradation intermediates or products.",
-
   "nodes": [
     {
       "id": "mlrA",
       "step": 1,
-      "nodes": ["mlrA_1"],
+      "nodes": [
+        "mlrA_1"
+      ],
       "type": "enzyme",
       "name": "microcystinase",
       "databases": {
-        "hmm": ["mlrA_aligned"],
-        "blast": ["mlrA_AF411068_partial", "QVQ24103.1_mlrA"]
+        "hmm": [
+          "mlrA_aligned"
+        ],
+        "blast": [
+          "mlrA_AF411068_partial",
+          "QVQ24103.1_mlrA"
+        ]
       },
       "required": true,
       "marker": true,
@@ -23,12 +33,19 @@
     {
       "id": "mlrB",
       "step": 2,
-      "nodes": ["mlrB_2"],
+      "nodes": [
+        "mlrB_2"
+      ],
       "type": "enzyme",
       "name": "serine hydrolase",
       "databases": {
-        "hmm": ["mlrB_aligned"],
-        "blast": ["mlrB_AF411069_partial", "AMH41235.1_mlrB"]
+        "hmm": [
+          "mlrB_aligned"
+        ],
+        "blast": [
+          "mlrB_AF411069_partial",
+          "AMH41235.1_mlrB"
+        ]
       },
       "required": true,
       "marker": false,
@@ -37,12 +54,19 @@
     {
       "id": "mlrC",
       "step": 3,
-      "nodes": ["mlrC_3"],
+      "nodes": [
+        "mlrC_3"
+      ],
       "type": "enzyme",
       "name": "metalloprotease",
       "databases": {
-        "hmm": ["mlrC_aligned"],
-        "blast": ["Q93CA6.1_mlrC", "mlrC_AF411070_partial"]
+        "hmm": [
+          "mlrC_aligned"
+        ],
+        "blast": [
+          "Q93CA6.1_mlrC",
+          "mlrC_AF411070_partial"
+        ]
       },
       "required": true,
       "marker": false,
@@ -51,19 +75,25 @@
     {
       "id": "mlrD",
       "step": 4,
-      "nodes": ["mlrD_4"],
+      "nodes": [
+        "mlrD_4"
+      ],
       "type": "transporter",
       "name": "peptide transporter (PTR2 family)",
       "databases": {
-        "hmm": ["mlrD_aligned"],
-        "blast": ["mlrD_AF411071_partial", "QCT05772.1_mlrD"]
+        "hmm": [
+          "mlrD_aligned"
+        ],
+        "blast": [
+          "mlrD_AF411071_partial",
+          "QCT05772.1_mlrD"
+        ]
       },
       "required": false,
       "marker": false,
       "notes": "PTR2 family peptide transporter, likely membrane protein (Li et al., 2025, Ecotoxicology and Environmental Safety). Part of mlrABCD gene cluster found in most MC-degrading bacteria. Function in MC degradation still unclear but may transport degradation intermediates/products. REQUIREMENT STATUS UNKNOWN - marked as optional until function is better understood."
     }
   ],
-
   "edges": [
     {
       "from": "mlrA_1",
@@ -84,11 +114,11 @@
       "notes": "mlrC produces small non-toxic fragments; mlrD role uncertain"
     }
   ],
-
   "scoring": {
     "min_fraction": 0.75,
     "method": "step_completion",
     "marker_mode": "any",
     "notes": "Pathway is present if mlrA + mlrB + mlrC are detected (core degradation pathway). mlrD is optional. mlrA is diagnostic marker."
-  }
+  },
+  "verified": false
 }

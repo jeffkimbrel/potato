@@ -1,0 +1,124 @@
+{
+  "id": "entner_doudoroff_semi_phos_alt",
+  "name": "Entner-Doudoroff Pathway (Semi-Phosphorylative, Alternative)",
+  "source": "KEGG M00633",
+  "tags": [
+    "metabolism",
+    "carbohydrate",
+    "glycolysis_alternative",
+    "archaea",
+    "crenarchaeota",
+    "thermococcales"
+  ],
+  "notes": "Alternative semi-phosphorylative Entner-Doudoroff pathway (M00633): gluconate => G3P. Found specifically in crenarchaeota (Sulfolobus, Thermoplasma, Thermococcales). Similar to M00308 but uses alternative enzymes: kdgK2 (K18126) for kinase step and kdpgA (K11395) for aldolase. Branches with non-phosphorylative ED (M00309) at gnaD. Diagnostic feature: combination of kdgK2 phosphorylation with kdpgA aldolase. Common in thermophilic archaea.",
+  "nodes": [
+    {
+      "id": "gnaD",
+      "step": 1,
+      "nodes": [
+        "gnaD_1"
+      ],
+      "type": "enzyme",
+      "name": "gluconate dehydratase",
+      "databases": {
+        "kofam": [
+          "K05308"
+        ]
+      },
+      "ec": [
+        "4.2.1.140"
+      ],
+      "required": true,
+      "marker": false,
+      "notes": "Dehydrates gluconate to KDG; shared with non-phosphorylative ED (M00309)"
+    },
+    {
+      "id": "kdgK2",
+      "step": 2,
+      "nodes": [
+        "kdgK2_2"
+      ],
+      "type": "enzyme",
+      "name": "2-dehydro-3-deoxygluconokinase",
+      "databases": {
+        "kofam": [
+          "K18126"
+        ]
+      },
+      "ec": [
+        "2.7.1.178"
+      ],
+      "required": true,
+      "marker": true,
+      "notes": "Alternative kinase for semi-phosphorylative ED; phosphorylates KDG to KDPG. Specific to archaeal variant M00633."
+    },
+    {
+      "id": "kdpgA",
+      "step": 3,
+      "nodes": [
+        "kdpgA_3"
+      ],
+      "type": "enzyme",
+      "name": "2-dehydro-3-deoxyphosphogluconate aldolase",
+      "databases": {
+        "kofam": [
+          "K11395"
+        ]
+      },
+      "ec": [
+        "4.1.2.55"
+      ],
+      "required": true,
+      "marker": true,
+      "notes": "Alternative KDPG aldolase for M00633; cleaves KDPG to G3P + pyruvate. Different EC number than K01625."
+    },
+    {
+      "id": "gapN",
+      "step": 4,
+      "nodes": [
+        "gapN_4"
+      ],
+      "type": "enzyme",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NADP+)",
+      "databases": {
+        "kofam": [
+          "K18978"
+        ]
+      },
+      "ec": [
+        "1.2.1.90"
+      ],
+      "required": false,
+      "marker": false,
+      "notes": "Non-phosphorylating GAPDH; directly converts G3P to 3-phosphoglycerate using NADP+ without ATP generation. Common in archaea."
+    }
+  ],
+  "edges": [
+    {
+      "from": "gnaD_1",
+      "to": "kdgK2_2",
+      "compound": "2-keto-3-deoxy-gluconate (KDG)",
+      "kegg_compound": "C00679"
+    },
+    {
+      "from": "kdgK2_2",
+      "to": "kdpgA_3",
+      "compound": "2-dehydro-3-deoxy-6-phosphogluconate (KDPG)",
+      "kegg_compound": "C04442",
+      "notes": "Phosphorylation step - diagnostic for semi-phosphorylative ED"
+    },
+    {
+      "from": "kdpgA_3",
+      "to": "gapN_4",
+      "compound": "D-glyceraldehyde 3-phosphate",
+      "kegg_compound": "C00118"
+    }
+  ],
+  "scoring": {
+    "min_fraction": 0.75,
+    "method": "step_completion",
+    "marker_mode": "any",
+    "notes": "Core pathway (steps 1-3) required for detection. Downstream processing (step 4) optional. Diagnostic markers (kdgK2 + kdpgA) distinguish M00633 from M00308 (which uses kdgK + eda) and from non-phosphorylative M00309 (which lacks phosphorylation step entirely)."
+  },
+  "verified": false
+}

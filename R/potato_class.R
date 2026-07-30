@@ -31,6 +31,8 @@ Potato <- S7::new_class(
     source = S7::class_character,
     notes = S7::class_character,
     scoring = S7::class_list,
+    input = S7::class_list,
+    output = S7::class_list,
     json_path = S7::class_character,
     graph = S7::class_any
   ),
@@ -78,6 +80,8 @@ load_potato <- function(path) {
     source = if (is.null(data$source)) "" else data$source,
     notes = if (is.null(data$notes)) "" else data$notes,
     scoring = if (is.null(data$scoring)) list() else data$scoring,
+    input = if (is.null(data$input)) list() else data$input,
+    output = if (is.null(data$output)) list() else data$output,
     json_path = path,
     graph = NULL  # Build on demand
   )
@@ -205,9 +209,10 @@ build_potato_graph <- function(potato) {
 
   if (length(potato@edges) == 0) {
     # Graph with just nodes, no edges
-    node_ids <- sapply(potato@nodes, function(n) n$id)
-    g <- igraph::make_empty_graph(n = length(node_ids), directed = TRUE)
-    igraph::V(g)$name <- node_ids
+    # Use the 'nodes' field which has id_step format, not just 'id'
+    node_names <- unlist(sapply(potato@nodes, function(n) n$nodes))
+    g <- igraph::make_empty_graph(n = length(node_names), directed = TRUE)
+    igraph::V(g)$name <- node_names
     return(g)
   }
 

@@ -2,45 +2,72 @@
   "id": "test_glycolysis",
   "name": "Test Glycolysis (3 steps)",
   "source": "Manual test pathway",
-  "tags": ["test", "central_metabolism"],
+  "tags": [
+    "test",
+    "central_metabolism"
+  ],
   "notes": "Simple 3-gene linear pathway for testing potato infrastructure",
-
   "nodes": [
     {
       "id": "gapA",
       "step": 1,
-      "nodes": ["gapA_1"],
+      "nodes": [
+        "gapA_1"
+      ],
       "type": "enzyme",
       "name": "glyceraldehyde-3-phosphate dehydrogenase",
-      "databases": {"kofam": ["K00134"]},
-      "ec": ["1.2.1.12"],
+      "databases": {
+        "kofam": [
+          "K00134"
+        ]
+      },
+      "ec": [
+        "1.2.1.12"
+      ],
       "required": true,
       "is_marker": false
     },
     {
       "id": "pgk",
       "step": 2,
-      "nodes": ["pgk_2"],
+      "nodes": [
+        "pgk_2"
+      ],
       "type": "enzyme",
       "name": "phosphoglycerate kinase",
-      "databases": {"kofam": ["K00927"]},
-      "ec": ["2.7.2.3"],
+      "databases": {
+        "kofam": [
+          "K00927"
+        ]
+      },
+      "ec": [
+        "2.7.2.3"
+      ],
       "required": true,
       "is_marker": false
     },
     {
       "id": "eno",
       "step": 3,
-      "nodes": ["eno_3"],
+      "nodes": [
+        "eno_3"
+      ],
       "type": "enzyme",
       "name": "enolase",
-      "databases": {"kofam": ["K01689", "K15633", "K15634"]},
-      "ec": ["4.2.1.11"],
+      "databases": {
+        "kofam": [
+          "K01689",
+          "K15633",
+          "K15634"
+        ]
+      },
+      "ec": [
+        "4.2.1.11"
+      ],
       "required": true,
       "is_marker": false
     }
   ],
-
   "edges": [
     {
       "from": "gapA_1",
@@ -55,8 +82,8 @@
       "kegg_compound": "C00197"
     }
   ],
-
   "scoring": {
     "min_fraction": 1.0
-  }
+  },
+  "verified": false
 }

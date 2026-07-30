@@ -1,18 +1,152 @@
+#' Build bipartite graph with compound nodes (internal)
+#' @noRd
+build_bipartite_graph <- function(potato) {
+
+  # Collect all unique compounds from edges
+  compound_info <- list()
+
+  # Add input compound if present
+  if (!is.null(potato@input)) {
+    compound_info[["INPUT"]] <- list(
+      id = "INPUT",
+      name = potato@input$compound,
+      from_step = 0,
+      to_step = 1,
+      kegg_id = potato@input$kegg_compound
+    )
+  }
+
+  # Add output compound if present
+  if (!is.null(potato@output)) {
+    compound_info[["OUTPUT"]] <- list(
+      id = "OUTPUT",
+      name = potato@output$compound,
+      from_step = 999,  # Will be adjusted based on max step
+      to_step = 1000,
+      kegg_id = potato@output$kegg_compound
+    )
+  }
+
+  for (edge in potato@edges) {
+    if (!is.null(edge$compound)) {
+      # Extract steps from node IDs
+      from_step <- as.integer(sub(".*_(\\d+)$", "\\1", edge$from))
+      to_step <- as.integer(sub(".*_(\\d+)$", "\\1", edge$to))
+
+      # Create compound node ID: compound_fromStep_toStep
+      compound_id <- paste0("COMPOUND_", from_step, "_", to_step)
+
+      # Store compound info
+      if (!(compound_id %in% names(compound_info))) {
+        compound_info[[compound_id]] <- list(
+          id = compound_id,
+          name = edge$compound,
+          from_step = from_step,
+          to_step = to_step,
+          kegg_id = edge$kegg_compound
+        )
+      }
+    }
+  }
+
+  # Build edge list: enzyme → compound → enzyme
+  edge_list <- list()
+
+  # Add input edges
+  if (!is.null(potato@input)) {
+    for (target in potato@input$targets) {
+      edge_list[[length(edge_list) + 1]] <- c("INPUT", target)
+    }
+  }
+
+  for (edge in potato@edges) {
+    if (!is.null(edge$compound)) {
+      from_step <- as.integer(sub(".*_(\\d+)$", "\\1", edge$from))
+      to_step <- as.integer(sub(".*_(\\d+)$", "\\1", edge$to))
+      compound_id <- paste0("COMPOUND_", from_step, "_", to_step)
+
+      # Two edges: enzyme → compound, compound → enzyme
+      edge_list[[length(edge_list) + 1]] <- c(edge$from, compound_id)
+      edge_list[[length(edge_list) + 1]] <- c(compound_id, edge$to)
+    } else {
+      # No compound - direct enzyme → enzyme edge
+      edge_list[[length(edge_list) + 1]] <- c(edge$from, edge$to)
+    }
+  }
+
+  # Add output edges
+  if (!is.null(potato@output)) {
+    for (source in potato@output$sources) {
+      edge_list[[length(edge_list) + 1]] <- c(source, "OUTPUT")
+    }
+  }
+
+  # Create igraph
+  edge_matrix <- do.call(rbind, edge_list)
+  g <- igraph::graph_from_edgelist(edge_matrix, directed = TRUE)
+
+  # Store compound info as vertex attributes
+  node_types <- ifelse(
+    grepl("^COMPOUND_", igraph::V(g)$name) | igraph::V(g)$name %in% c("INPUT", "OUTPUT"),
+    "compound",
+    "enzyme"
+  )
+  g <- igraph::set_vertex_attr(g, "node_type", value = node_types)
+
+  # Add compound names
+  compound_names <- character(length(igraph::V(g)))
+  for (i in seq_along(igraph::V(g))) {
+    node_name <- igraph::V(g)$name[i]
+    if (node_name %in% names(compound_info)) {
+      compound_names[i] <- compound_info[[node_name]]$name
+    } else {
+      compound_names[i] <- ""
+    }
+  }
+  g <- igraph::set_vertex_attr(g, "compound_name", value = compound_names)
+
+  g
+}
+
+
 #' Create step-based layout for potato graph (internal)
 #' @noRd
-create_step_layout <- function(potato, node_names) {
+create_step_layout <- function(potato, node_names, is_bipartite = FALSE) {
 
-  # Extract step number from each node name (format: id_step)
+  # Extract step number from each node name (format: id_step or COMPOUND_from_to or INPUT/OUTPUT)
   node_data <- purrr::map_dfr(node_names, function(node_name) {
-    step <- as.integer(sub(".*_(\\d+)$", "\\1", node_name))
-    node_id <- sub("_\\d+$", "", node_name)
+    if (node_name == "INPUT") {
+      # Input compound - position before step 1
+      step <- 0.5
+      node_id <- "INPUT"
+    } else if (node_name == "OUTPUT") {
+      # Output compound - position after last step (will adjust later)
+      step <- 999
+      node_id <- "OUTPUT"
+    } else if (grepl("^COMPOUND_", node_name)) {
+      # Intermediate compound node - position between steps
+      steps <- as.integer(strsplit(sub("COMPOUND_", "", node_name), "_")[[1]])
+      step <- mean(steps)  # Midpoint between steps
+      node_id <- node_name
+    } else {
+      # Enzyme node
+      step <- as.integer(sub(".*_(\\d+)$", "\\1", node_name))
+      node_id <- sub("_\\d+$", "", node_name)
+    }
 
     tibble::tibble(
       name = node_name,
       node_id = node_id,
-      step = step
+      step = step,
+      is_compound = grepl("^COMPOUND_", node_name) || node_name %in% c("INPUT", "OUTPUT")
     )
   })
+
+  # Adjust OUTPUT position to be after the maximum actual step
+  if ("OUTPUT" %in% node_data$name) {
+    max_step <- max(node_data$step[node_data$step < 900])
+    node_data$step[node_data$name == "OUTPUT"] <- max_step + 0.5
+  }
 
   # Group by step and assign x coordinates
   node_data <- node_data %>%
@@ -26,7 +160,7 @@ create_step_layout <- function(potato, node_names) {
       y = -step
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::select(name, x, y)
+    dplyr::select(name, x, y, is_compound)
 
   node_data
 }
@@ -37,13 +171,19 @@ create_step_layout <- function(potato, node_names) {
 #' Visualizes pathway structure using ggraph, optionally highlighting detected
 #' genes for a specific genome.
 #'
-#' @param potato Potato S7 object
+#' @param potato Potato S7 object or path to potato JSON file
 #' @param sack Optional PotatoSack object (for highlighting detected genes)
 #' @param genome_name Optional genome name (requires sack)
+#' @param show_compounds Show compound nodes in bipartite graph (default: FALSE)
 #' @param layout Layout algorithm: "sugiyama" (hierarchical), "fr" (force-directed), "tree"
 #'
 #' @export
-plot_potato <- function(potato, sack = NULL, genome_name = NULL, layout = "sugiyama") {
+plot_potato <- function(potato, sack = NULL, genome_name = NULL, show_compounds = FALSE, layout = "sugiyama") {
+
+  # If potato is a character string, assume it's a file path and load it
+  if (is.character(potato)) {
+    potato <- load_potato(potato)
+  }
 
   if (!requireNamespace("ggraph", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg ggraph} is required for plotting")
@@ -53,8 +193,12 @@ plot_potato <- function(potato, sack = NULL, genome_name = NULL, layout = "sugiy
     cli::cli_abort("Package {.pkg igraph} is required for plotting")
   }
 
-  # Build igraph from potato edges
-  g <- build_potato_graph(potato)
+  # Build igraph from potato edges (bipartite or enzyme-only)
+  if (show_compounds) {
+    g <- build_bipartite_graph(potato)
+  } else {
+    g <- build_potato_graph(potato)
+  }
 
   # Get node detection status if genome provided
   if (!is.null(sack) && !is.null(genome_name)) {
@@ -67,47 +211,147 @@ plot_potato <- function(potato, sack = NULL, genome_name = NULL, layout = "sugiy
     )
   }
 
-  # Add node labels (gene symbols without _step suffix)
+  # Ensure all nodes in graph are in node_status
+  all_nodes <- igraph::V(g)$name
+  missing_nodes <- setdiff(all_nodes, node_status$name)
+
+  if (length(missing_nodes) > 0) {
+    # These are compound nodes
+    missing_status <- tibble::tibble(
+      name = missing_nodes,
+      detected = NA,
+      status = "Compound",
+      is_complex = FALSE,
+      fraction_detected = NA
+    )
+    node_status <- dplyr::bind_rows(node_status, missing_status)
+  }
+
+  # Reorder node_status to match graph node order
+  node_status <- node_status[match(all_nodes, node_status$name), ]
+
+  # Add node labels, EC numbers, required/marker status
+  # First add is_compound_node flag (includes INPUT/OUTPUT)
+  node_status$is_compound_node <- grepl("^COMPOUND_", node_status$name) |
+                                  node_status$name %in% c("INPUT", "OUTPUT")
+  node_status$gene_id <- ifelse(node_status$is_compound_node,
+                                 node_status$name,
+                                 sub("_\\d+$", "", node_status$name))
+
+  # Get EC numbers, required, marker from potato nodes (only for enzyme nodes)
+  node_status$ec <- purrr::map_chr(seq_len(nrow(node_status)), function(i) {
+    if (node_status$is_compound_node[i]) return("")
+    id <- node_status$gene_id[i]
+    node <- purrr::keep(potato@nodes, ~ .x$id == id)
+    if (length(node) > 0 && !is.null(node[[1]]$ec)) {
+      ec_nums <- node[[1]]$ec
+      if (length(ec_nums) > 0) {
+        return(paste0("\n[", ec_nums[1], "]"))
+      }
+    }
+    return("")
+  })
+
+  node_status$required <- purrr::map_lgl(seq_len(nrow(node_status)), function(i) {
+    if (node_status$is_compound_node[i]) return(FALSE)
+    id <- node_status$gene_id[i]
+    node <- purrr::keep(potato@nodes, ~ .x$id == id)
+    if (length(node) > 0) return(node[[1]]$required %||% FALSE)
+    FALSE
+  })
+
+  node_status$marker <- purrr::map_lgl(seq_len(nrow(node_status)), function(i) {
+    if (node_status$is_compound_node[i]) return(FALSE)
+    id <- node_status$gene_id[i]
+    node <- purrr::keep(potato@nodes, ~ .x$id == id)
+    if (length(node) > 0) return(node[[1]]$marker %||% FALSE)
+    FALSE
+  })
+
+  # Determine shape: square for compounds, diamond if marker, triangle if not required, circle otherwise
   node_status <- node_status %>%
-    dplyr::mutate(label = sub("_\\d+$", "", name))
+    dplyr::mutate(
+      node_shape = dplyr::case_when(
+        is_compound_node ~ "square",
+        marker ~ "diamond",
+        !required ~ "triangle",
+        TRUE ~ "circle"
+      ),
+      # Labels: compound name for compounds, gene symbol + EC for enzymes
+      label = ifelse(
+        is_compound_node,
+        igraph::V(g)$compound_name[match(name, igraph::V(g)$name)],
+        paste0(gene_id, ec)
+      )
+    )
 
   # Create manual layout based on step numbers
   # Y = -step (negative so it flows down), X = spread alternatives horizontally
-  node_coords <- create_step_layout(potato, igraph::V(g)$name)
+  node_coords <- create_step_layout(potato, igraph::V(g)$name, is_bipartite = show_compounds)
+
+  # Map shapes to numeric values for ggraph
+  shape_map <- c("circle" = 19, "triangle" = 17, "diamond" = 18, "square" = 15)
+  node_status$shape_code <- shape_map[node_status$node_shape]
+
+  # Fixed larger sizes so text fits
+  node_status$node_size <- 20
+
+  # Determine if showing genome detection
+  has_genome <- !is.null(sack) && !is.null(genome_name)
 
   # Create ggraph with manual layout
   p <- ggraph::ggraph(g, layout = "manual", x = node_coords$x, y = node_coords$y) +
     ggraph::geom_edge_link(
       arrow = grid::arrow(length = grid::unit(3, 'mm'), type = "closed"),
-      end_cap = ggraph::circle(5, 'mm'),
+      end_cap = ggraph::circle(8, 'mm'),
       color = "gray50",
       alpha = 0.6
     ) +
     ggraph::geom_node_point(
-      aes(color = node_status$status),
-      size = 12
+      ggplot2::aes(color = node_status$status, shape = node_status$shape_code),
+      size = 20
     ) +
     ggraph::geom_node_text(
-      aes(label = node_status$label),
+      ggplot2::aes(label = node_status$label),
       size = 3,
       fontface = "bold"
     ) +
-    ggplot2::scale_color_manual(
-      values = c(
-        "Detected" = "#4CAF50",
-        "Not detected" = "#F44336",
-        "Unknown" = "#2196F3"
-      ),
-      na.value = "#2196F3"
-    ) +
-    ggplot2::labs(
-      title = potato@name,
-      subtitle = if (!is.null(genome_name)) paste("Genome:", genome_name) else NULL,
-      color = "Detection Status"
-    ) +
+    ggplot2::scale_shape_identity() +
     ggplot2::coord_cartesian(clip = "off") +
     ggplot2::theme(plot.margin = ggplot2::margin(20, 20, 20, 20)) +
     potato_theme()
+
+  # Add color scale and legend only if genome provided
+  if (has_genome) {
+    p <- p +
+      ggplot2::scale_color_manual(
+        values = c(
+          "Detected" = "#4CAF50",
+          "Partial" = "#FFA726",
+          "Not detected" = "#F44336",
+          "Unknown" = "#2196F3",
+          "Compound" = "#999999"
+        ),
+        na.value = "#2196F3"
+      ) +
+      ggplot2::labs(
+        title = potato@name,
+        subtitle = paste("Genome:", genome_name),
+        color = "Detection Status"
+      )
+  } else {
+    # No genome - just use blue for enzymes, gray for compounds
+    p <- p +
+      ggplot2::scale_color_manual(
+        values = c("Unknown" = "#2196F3", "Compound" = "#999999"),
+        na.value = "#2196F3",
+        guide = "none"  # Hide legend
+      ) +
+      ggplot2::labs(
+        title = potato@name,
+        subtitle = NULL
+      )
+  }
 
   p
 }
@@ -202,13 +446,48 @@ get_node_status <- function(potato, sack, genome_name) {
       ))
     }
 
-    # Check if detected
+    # Check if detected - for complex nodes, track partial detection
     detected <- is_node_detected(node, potato@id, genome_hits)
+
+    # For complex nodes (multiple KOs in kofam), calculate fraction detected
+    is_complex <- FALSE
+    fraction_detected <- ifelse(detected, 1, 0)
+
+    if (!is.null(node$databases) && !is.null(node$databases$kofam)) {
+      ko_list <- node$databases$kofam
+      if (length(ko_list) > 1) {
+        is_complex <- TRUE
+        # Check each KO individually
+        if (!is.null(genome_hits$kofam) && nrow(genome_hits$kofam) > 0) {
+          ko_detected <- sapply(ko_list, function(ko) {
+            any(genome_hits$kofam$ko == ko & genome_hits$kofam$node_id == node$id)
+          })
+          fraction_detected <- sum(ko_detected) / length(ko_list)
+        } else {
+          fraction_detected <- 0
+        }
+      }
+    }
+
+    # Determine status
+    if (is_complex) {
+      if (fraction_detected == 1) {
+        status <- "Detected"
+      } else if (fraction_detected == 0) {
+        status <- "Not detected"
+      } else {
+        status <- "Partial"
+      }
+    } else {
+      status <- ifelse(detected, "Detected", "Not detected")
+    }
 
     tibble::tibble(
       name = node_name,
       detected = detected,
-      status = ifelse(detected, "Detected", "Not detected")
+      status = status,
+      is_complex = is_complex,
+      fraction_detected = fraction_detected
     )
   })
 

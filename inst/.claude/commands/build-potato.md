@@ -40,8 +40,21 @@ Help users build well-structured potato JSON files through:
   "id": "pathway_name",              // snake_case identifier
   "name": "Human Readable Name",
   "source": "KEGG M00123 / custom",
+  "verified": false,                 // ALWAYS false - NEVER set to true
   "tags": ["metabolism", "energy"],
   "notes": "Brief biological description",
+  
+  "input": {                         // RECOMMENDED: starting substrate
+    "compound": "substrate name",
+    "kegg_compound": "C00001",
+    "targets": ["geneA_1"]
+  },
+  
+  "output": {                        // RECOMMENDED: final product
+    "compound": "product name",
+    "kegg_compound": "C00002",
+    "sources": ["geneZ_5"]
+  },
   
   "nodes": [/* gene definitions */],
   "edges": [/* pathway topology */],
@@ -80,6 +93,7 @@ Each gene in the pathway:
 ```
 
 **Key Rules:**
+- **CRITICAL:** `"verified": false` - ALWAYS set this field to false. NEVER set to true. Only humans verify potatoes.
 - `step` is INTEGER for single occurrence, ARRAY for bifunctional enzymes
 - `nodes` must match: if `step: 1` then `nodes: ["id_1"]`, if `step: [2,5]` then `nodes: ["id_2", "id_5"]`
 - For OR branches (alternative enzymes), multiple genes share same `step` number
@@ -180,19 +194,37 @@ In potato JSONs, always use these standard types:
 
 **User says:** "Create potato from KEGG M00007" or similar
 
+**CRITICAL RULE: Only include genes explicitly in the KEGG module. Do NOT add upstream or downstream steps unless user specifically requests it.**
+
 **Your steps:**
 1. Use WebFetch to get module definition from `https://rest.kegg.jp/get/M{module_id}`
 2. Parse the module syntax:
    - `(K00001,K00002)` = OR branch (alternatives for same step)
    - Space-separated groups = sequential steps
    - Assign step numbers: 1, 2, 3...
+   - **IMPORTANT:** Only use the KO IDs present in the module definition - do NOT expand upstream or downstream
 3. For each KO, fetch gene details: `https://rest.kegg.jp/get/ko:{KO_ID}`
-4. Ask user: "Which genes are diagnostic markers for this pathway?"
-5. Generate JSON using standard database types: `"databases": {"kofam": ["K00001"]}`
-6. Validate (check nodes, edges, required fields)
-7. Write to appropriate location:
+   - **Validate EC numbers match expected substrate chemistry**
+   - For pathways with phosphorylated vs non-phosphorylated variants, verify EC specificity
+   - Example: EC 3.1.1.17 (gluconolactonase) vs EC 3.1.1.31 (6-phosphogluconolactonase)
+4. **Ask about input/output compounds:**
+   - "What substrate does this pathway start with?" → set `input.compound` and `input.kegg_compound`
+   - "What product does it produce?" → set `output.compound` and `output.kegg_compound`
+   - For metabolic pathways: actual metabolites (e.g., "D-glucose-6-phosphate", "pyruvate")
+   - For transporters: location-qualified (e.g., "NH4_external", "NH4_internal", "phosphate_periplasm")
+   - Set `input.targets` = first step nodes, `output.sources` = last step nodes
+5. Ask user: "Which genes are diagnostic markers for this pathway?"
+6. Generate JSON using standard database types: `"databases": {"kofam": ["K00001"]}`
+   - **CRITICAL:** Include `"verified": false` in the JSON
+7. Validate (check nodes, edges, required fields)
+8. Write to appropriate location:
    - Sack: `<sack_root>/potatoes/{id}.json`
    - Repo: `inst/potatoes/{id}.json`
+
+**Validation checks for substrate specificity:**
+- Cross-check enzyme EC numbers with pathway intermediate phosphorylation state
+- Flag if enzyme substrate doesn't match pathway chemistry (e.g., phosphorylated substrate in "non-phosphorylative" pathway)
+- When in doubt, stick EXACTLY to what KEGG module specifies - don't substitute similar enzymes
 
 **KEGG Module Parsing Example:**
 
@@ -239,13 +271,21 @@ Result: 4 steps, 8 genes total (multiple genes per step = OR branches)
 
 5. Ask: "Which genes are diagnostic markers?" (suggest pathway-specific genes)
 
-6. **Suggest reference sequences for niche genes:**
+6. **Ask about input/output:**
+   - "What's the starting substrate?" (e.g., "D-glucose", "N2", "NH4_external")
+   - "What's the final product?" (e.g., "pyruvate", "2 NH3", "NH4_internal")
+   - For transporters moving compounds across membranes, use location qualifiers: "_external", "_internal", "_periplasm"
+   - Get KEGG compound IDs if available
+   - Determine which step nodes connect to input/output
+
+7. **Suggest reference sequences for niche genes:**
    - "Gene X doesn't have good KEGG coverage. Do you have reference sequences from model organisms?"
    - "Consider adding BLAST references for robustness"
 
-7. Generate JSON using standard database types
+8. Generate JSON using standard database types
+   - **CRITICAL:** Include `"verified": false`
 
-8. Show preview, iterate with user
+9. Show preview, iterate with user
 
 9. Validate and save
 
@@ -268,9 +308,13 @@ Result: 4 steps, 8 genes total (multiple genes per step = OR branches)
    - Replace custom names with standard types
    - Keep the same detection terms (K##### IDs, sequence IDs, profile names)
    - Preserve all other fields
+   - **If missing:** Add `"verified": false` field
+   - **If missing:** Ask about input/output compounds and add those fields
 5. **Report changes:**
    - "Updated kofam113 → kofam (3 genes affected)"
    - "Updated gator_blast → blast (2 genes affected)"
+   - "Added verified: false field"
+   - "Added input/output fields"
 6. **Validate and save**
 
 **Example:**
@@ -278,6 +322,262 @@ Result: 4 steps, 8 genes total (multiple genes per step = OR branches)
 Old: {"databases": {"kofam113": ["K00001"], "gator_blast": ["ref1"]}}
 New: {"databases": {"kofam": ["K00001"], "blast": ["ref1"]}}
 ```
+
+## Option 4: Convert from Old GATOR Excel Format
+
+**User says:** "Make me a potato for [pathway] from the old gator spreadsheet" or "Convert [pathway] from gator_db.xlsx"
+
+**GATOR v1 used Excel spreadsheets** with pathway definitions stored as text strings using special syntax. You'll need to parse this format and convert to potato JSON.
+
+### GATOR Excel Structure
+
+The old `gator_db.xlsx` file has multiple sheets:
+- **db sheet** - List of pathways with their string-based topology
+- **gene sheet** - Gene definitions with KO terms, BLAST references, etc.
+- **Other sheets** - Metadata and configuration
+
+### GATOR Pathway Syntax (v1)
+
+The old format used string syntax to represent pathway structure:
+
+**Operators:**
+- `->` or ` ` (space) = Sequential steps (A then B)
+- `|` = OR branch (A or B alternatives)
+- `+` = AND within same step (both required together)
+- `()` = Grouping
+
+**Examples:**
+```
+geneA -> geneB -> geneC           # Linear 3-step pathway
+geneA geneB geneC                 # Same as above (space = sequential)
+geneA -> (geneB | geneC)          # Step 2 has alternatives
+(geneA + geneB) -> geneC          # Step 1 requires both genes
+geneA -> (geneB | geneC) -> geneD # Mixed: alternative at step 2
+```
+
+### Conversion Strategy
+
+**Your steps:**
+
+1. **Locate and read the Excel file:**
+   - Default location: `/Users/kimbrel1/Github/gator/gator_db.xlsx`
+   - If file doesn't exist there, ask: "Where is your gator_db.xlsx file?"
+   - User may provide alternative path
+
+2. **Use Python to parse Excel:**
+   ```python
+   import pandas as pd
+   
+   # Read pathway sheet
+   db_df = pd.read_excel('gator_db.xlsx', sheet_name='db')
+   
+   # Read gene definitions
+   gene_df = pd.read_excel('gator_db.xlsx', sheet_name='gene')
+   ```
+
+3. **Find the requested pathway:**
+   - Search `db_df` for pathway name/ID
+   - Extract pathway string (e.g., `"aceA -> aceB -> gltA"`)
+   - Extract pathway metadata (name, description, tags)
+
+4. **Parse the pathway string:**
+   
+   **Algorithm:**
+   ```python
+   def parse_gator_pathway(pathway_string):
+       # Split by -> to get steps
+       steps = pathway_string.split('->')
+       
+       step_num = 1
+       nodes = []
+       edges = []
+       
+       for step_str in steps:
+           step_str = step_str.strip()
+           
+           # Check for OR alternatives: (geneA | geneB)
+           if '|' in step_str:
+               # Remove parentheses if present
+               step_str = step_str.strip('()')
+               alternatives = [g.strip() for g in step_str.split('|')]
+               
+               # Each alternative gets same step number
+               for gene in alternatives:
+                   nodes.append({
+                       "id": gene,
+                       "step": step_num,
+                       "nodes": [f"{gene}_{step_num}"]
+                   })
+               
+           # Check for AND: (geneA + geneB)
+           elif '+' in step_str:
+               step_str = step_str.strip('()')
+               required_together = [g.strip() for g in step_str.split('+')]
+               
+               # Both genes at same step, connected in parallel
+               for gene in required_together:
+                   nodes.append({
+                       "id": gene,
+                       "step": step_num,
+                       "nodes": [f"{gene}_{step_num}"]
+                   })
+           
+           # Simple gene
+           else:
+               nodes.append({
+                   "id": step_str,
+                   "step": step_num,
+                   "nodes": [f"{step_str}_{step_num}"]
+               })
+           
+           step_num += 1
+       
+       return nodes, edges
+   ```
+
+5. **Match genes to definitions:**
+   - For each gene in parsed pathway, look up in `gene_df`
+   - Extract: KO terms, BLAST IDs, HMM profiles, EC numbers, notes
+   - Map old database names to standard types:
+     - `kofam113` or `kofam118` → `kofam`
+     - `gator_blast` or similar → `blast`
+     - `gator_hmm` or similar → `hmm`
+
+6. **Build edges:**
+   - Connect sequential steps: step N → step N+1
+   - For OR branches, connect ALL previous nodes to ALL alternatives
+   - For AND branches, both genes connect to next step
+
+7. **Ask user clarifying questions:**
+   - "Which genes should be marked as diagnostic markers?"
+   - "The original pathway doesn't specify min_fraction - should I use 0.75?"
+   - "I found gene X in the gene sheet but it has no detection methods - do you have KO/BLAST/HMM terms?"
+
+8. **Generate potato JSON:**
+   - Use standard database types in `databases` field
+   - Preserve all gene information from Excel
+   - Add proper DAG structure with edges
+   - Include notes from original Excel if present
+
+9. **Validate and report:**
+   - Show conversion summary:
+     - "Converted: urea_cycle (5 genes, 4 steps, 1 OR branch)"
+     - "Mapped: kofam113 → kofam (3 genes), gator_blast → blast (2 genes)"
+     - "Warning: Gene X had no detection methods - added empty databases field"
+   - Validate with `load_potato()` and `validate_potato()`
+
+### Example Conversion
+
+**GATOR Excel input:**
+```
+Pathway: Urea Cycle
+String: cps1 -> otc -> ass1 -> asl -> arg1
+Gene sheet:
+  cps1: K01948, K01949
+  otc: K00611
+  ass1: K01940
+  asl: K01755
+  arg1: K01476
+```
+
+**Potato JSON output:**
+```json
+{
+  "id": "urea_cycle",
+  "name": "Urea Cycle",
+  "source": "GATOR v1",
+  "tags": ["amino_acid", "nitrogen"],
+  "notes": "Converted from gator_db.xlsx. Classic urea cycle for ammonia detoxification.",
+  
+  "nodes": [
+    {
+      "id": "cps1",
+      "step": 1,
+      "nodes": ["cps1_1"],
+      "type": "enzyme",
+      "name": "carbamoyl-phosphate synthase",
+      "databases": {"kofam": ["K01948", "K01949"]},
+      "required": true
+    },
+    {
+      "id": "otc",
+      "step": 2,
+      "nodes": ["otc_2"],
+      "type": "enzyme",
+      "name": "ornithine carbamoyltransferase",
+      "databases": {"kofam": ["K00611"]},
+      "required": true
+    },
+    ...
+  ],
+  
+  "edges": [
+    {"from": "cps1_1", "to": "otc_2", "compound": "carbamoyl phosphate"},
+    {"from": "otc_2", "to": "ass1_3", "compound": "citrulline"},
+    ...
+  ],
+  
+  "scoring": {
+    "min_fraction": 0.75,
+    "notes": "Default threshold - original GATOR v1 didn't specify thresholds"
+  }
+}
+```
+
+### Common GATOR Conversion Issues
+
+**Issue 1: Gene names vs. symbols**
+- GATOR may use gene names (e.g., "argininosuccinate synthase") instead of symbols (e.g., "ass1")
+- **Solution:** Ask user to clarify: "Should I use gene symbol 'ass1' or the gene name?"
+
+**Issue 2: Missing detection methods**
+- Old GATOR entries may lack KO terms or BLAST references
+- **Solution:** Use KEGG API to look up KOs, or ask user: "Gene X has no detection methods in the Excel file - should I search for KO terms?"
+
+**Issue 3: Ambiguous syntax**
+- Sometimes `->` vs space is inconsistent
+- Parentheses may be missing around OR branches
+- **Solution:** Ask user to confirm: "I interpreted this as [X], is that correct?"
+
+**Issue 4: Custom database names**
+- GATOR used version-specific names like `kofam118` or custom names like `nifH_hmm`
+- **Solution:** Map to standard types automatically, report changes
+
+**Issue 5: Compound information**
+- GATOR typically didn't store compound/metabolite names
+- **Solution:** Use KEGG API to look up compounds between steps, or ask user for input/output compounds
+
+**Issue 6: Missing verified field**
+- Old GATOR exports and early potatoes don't have `verified` field
+- **Solution:** Always add `"verified": false` during conversion
+
+### Tips for GATOR Conversion
+
+**✓ DO:**
+- Parse carefully - test with simple pathway first
+- Validate step numbering (should be sequential 1, 2, 3...)
+- Check for duplicate gene IDs
+- Preserve biological notes from Excel if present
+- Report what was changed (database name mapping, added fields, etc.)
+
+**✗ DON'T:**
+- Assume all GATOR files have same structure (sheets may vary)
+- Skip validation - always run `validate_potato()` after conversion
+- Lose information - preserve everything from Excel even if not used yet
+- Create potatoes with empty `databases` fields - flag these for user attention
+- Set `verified: true` - ALWAYS use `verified: false` for converted potatoes
+
+### Batch Conversion
+
+If user wants to convert ALL pathways from GATOR:
+
+```r
+# Future function (not yet implemented):
+convert_gator_db(excel_path = "gator_db.xlsx", 
+                 output_dir = "inst/potatoes/")
+```
+
+For now, convert **one pathway at a time** and ask user to verify each before proceeding to next.
 
 ## Multiple Detection Methods
 
@@ -364,6 +664,52 @@ When building potatoes, **be proactive**:
 
 ## Handling Special Cases
 
+### Input/Output Compounds
+
+**For metabolic pathways:**
+- Use actual metabolite names: "D-glucose-6-phosphate", "pyruvate", "acetyl-CoA"
+- Include KEGG compound IDs when available: "C00092", "C00022"
+- `input.targets` = list of first step node IDs (e.g., `["geneA_1"]`)
+- `output.sources` = list of last step node IDs (e.g., `["geneZ_5"]`)
+
+**For transporters:**
+- Use location-qualified compound names:
+  - `"NH4_external"` and `"NH4_internal"` - ammonia transporter
+  - `"phosphate_periplasm"` and `"phosphate_cytoplasm"` - phosphate ABC transporter
+  - `"glucose_external"` and `"glucose_internal"` - sugar uptake
+- Use underscores for location qualifiers: `_external`, `_internal`, `_periplasm`, `_cytoplasm`
+- KEGG compound ID is still the same (e.g., both use "C00014" for ammonia)
+
+**Examples:**
+
+Metabolic pathway:
+```json
+"input": {
+  "compound": "D-glucose-6-phosphate",
+  "kegg_compound": "C00092",
+  "targets": ["zwf_1"]
+},
+"output": {
+  "compound": "pyruvate",
+  "kegg_compound": "C00022",
+  "sources": ["eda_4"]
+}
+```
+
+Transporter:
+```json
+"input": {
+  "compound": "NH4_external",
+  "kegg_compound": "C00014",
+  "targets": ["amtB_1"]
+},
+"output": {
+  "compound": "NH4_internal",
+  "kegg_compound": "C00014",
+  "sources": ["amtB_1"]
+}
+```
+
 ### Bifunctional Enzymes
 
 If the same enzyme catalyzes multiple reactions:
@@ -419,11 +765,13 @@ When uncertain, ask user: "Which genes are diagnostic markers?"
 
 Before saving, verify:
 
+- ✓ **CRITICAL:** `"verified": false` field present and set to false (NEVER true)
 - ✓ `id` is snake_case, unique
+- ✓ `input` and `output` fields present (recommended, especially for KEGG modules)
 - ✓ All `nodes` arrays match `step` field (single int → single node, array → multiple nodes)
 - ✓ All edge `from`/`to` reference valid node IDs (with _step suffix)
 - ✓ At least ONE gene has `marker: true`
-- ✓ All required fields present (id, name, source, nodes, edges, scoring)
+- ✓ All required fields present (id, name, source, verified, nodes, edges, scoring)
 - ✓ Step numbers are sequential starting at 1
 - ✓ Each gene has at least one detection method in `databases` field
 - ✓ No duplicate node IDs
@@ -447,16 +795,27 @@ validate_potato(pot)
 1. Write the JSON file with Write tool
 2. Load it with `load_potato()` via Bash tool running R
 3. Validate with `validate_potato()` 
-4. If errors occur, fix the JSON and repeat
+4. Test text view with `print_potato()` to quickly verify structure
+5. If errors occur, fix the JSON and repeat
 
 This will catch structural errors (invalid node references in edges, cycles, missing required fields, etc.). Fix any errors before presenting the final potato to the user.
+
+**Quick verification with print_potato:**
+```r
+library(potato)
+pot <- load_potato("inst/potatoes/{id}.json")
+print_potato(pot)  # Shows compact text view: [substrate] -> geneA -> (geneB|geneC)* -> [product]
+```
+
+This helps catch structural issues quickly before detailed validation.
 
 # Output Format
 
 Save as `inst/potatoes/{id}.json` with:
 - 2-space indentation
-- Sorted fields (id, name, source, tags, notes, nodes, edges, scoring)
+- Sorted fields (id, name, source, verified, tags, notes, input, output, nodes, edges, scoring)
 - Include helpful `notes` fields for biological context
+- **CRITICAL:** Always include `"verified": false` field
 
 # Example Interaction
 

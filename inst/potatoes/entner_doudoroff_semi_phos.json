@@ -1,0 +1,257 @@
+{
+  "id": "entner_doudoroff_semi_phos",
+  "name": "Entner-Doudoroff Pathway (Semi-Phosphorylative)",
+  "source": "KEGG M00308",
+  "tags": [
+    "metabolism",
+    "carbohydrate",
+    "glycolysis_alternative",
+    "archaea",
+    "thermophiles"
+  ],
+  "notes": "Semi-phosphorylative Entner-Doudoroff pathway (M00308): gluconate => glycerate-3P. Starts with unphosphorylated gluconate, then phosphorylates KDG to KDPG before cleavage. Found in archaea and some thermophilic bacteria. Diagnostic feature: kdgK (2-dehydro-3-deoxygluconokinase) phosphorylates KDG to KDPG, then eda cleaves KDPG. Produces G3P which is further oxidized to glycerate-3P. Hybrid pathway - starts non-phosphorylated, becomes phosphorylated mid-pathway.",
+  "nodes": [
+    {
+      "id": "gnaD",
+      "step": 1,
+      "nodes": [
+        "gnaD_1"
+      ],
+      "type": "enzyme",
+      "name": "gluconate dehydratase",
+      "databases": {
+        "kofam": [
+          "K05308"
+        ]
+      },
+      "ec": [
+        "4.2.1.140"
+      ],
+      "required": true,
+      "marker": false,
+      "notes": "Dehydrates gluconate to KDG (non-phosphorylated)"
+    },
+    {
+      "id": "kdgK",
+      "step": 2,
+      "nodes": [
+        "kdgK_2"
+      ],
+      "type": "enzyme",
+      "name": "2-dehydro-3-deoxygluconokinase",
+      "databases": {
+        "kofam": [
+          "K00874"
+        ]
+      },
+      "ec": [
+        "2.7.1.45"
+      ],
+      "required": true,
+      "marker": true,
+      "notes": "Diagnostic enzyme for semi-phosphorylative ED; phosphorylates KDG to KDPG"
+    },
+    {
+      "id": "kdgK_alt",
+      "step": 2,
+      "nodes": [
+        "kdgK_alt_2"
+      ],
+      "type": "enzyme",
+      "name": "2-dehydro-3-deoxygluconokinase",
+      "databases": {
+        "kofam": [
+          "K28886"
+        ]
+      },
+      "ec": [
+        "2.7.1.178"
+      ],
+      "required": true,
+      "marker": false,
+      "notes": "Alternative kdgK; also phosphorylates KDG to KDPG"
+    },
+    {
+      "id": "eda",
+      "step": 3,
+      "nodes": [
+        "eda_3"
+      ],
+      "type": "enzyme",
+      "name": "2-dehydro-3-deoxyphosphogluconate aldolase",
+      "databases": {
+        "kofam": [
+          "K01625"
+        ]
+      },
+      "ec": [
+        "4.1.2.14"
+      ],
+      "required": true,
+      "marker": true,
+      "notes": "Cleaves KDPG to G3P + pyruvate; same enzyme as classic ED"
+    },
+    {
+      "id": "eda_alt",
+      "step": 3,
+      "nodes": [
+        "eda_alt_3"
+      ],
+      "type": "enzyme",
+      "name": "2-dehydro-3-deoxyphosphogluconate aldolase",
+      "databases": {
+        "kofam": [
+          "K28887"
+        ]
+      },
+      "ec": [
+        "4.1.2.14"
+      ],
+      "required": true,
+      "marker": false,
+      "notes": "Alternative KDPG aldolase"
+    },
+    {
+      "id": "gapA",
+      "step": 4,
+      "nodes": [
+        "gapA_4"
+      ],
+      "type": "enzyme",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NAD+)",
+      "databases": {
+        "kofam": [
+          "K00134"
+        ]
+      },
+      "ec": [
+        "1.2.1.12"
+      ],
+      "required": false,
+      "marker": false,
+      "notes": "Oxidizes G3P to 1,3-bisphosphoglycerate; part of downstream processing"
+    },
+    {
+      "id": "gapA_alt",
+      "step": 4,
+      "nodes": [
+        "gapA_alt_4"
+      ],
+      "type": "enzyme",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NADP+)",
+      "databases": {
+        "kofam": [
+          "K00150"
+        ]
+      },
+      "ec": [
+        "1.2.1.59"
+      ],
+      "required": false,
+      "marker": false,
+      "notes": "Alternative GAPDH using NADP+ instead of NAD+"
+    },
+    {
+      "id": "pgk",
+      "step": 5,
+      "nodes": [
+        "pgk_5"
+      ],
+      "type": "enzyme",
+      "name": "phosphoglycerate kinase",
+      "databases": {
+        "kofam": [
+          "K00927"
+        ]
+      },
+      "ec": [
+        "2.7.2.3"
+      ],
+      "required": false,
+      "marker": false,
+      "notes": "Converts 1,3-bisphosphoglycerate to 3-phosphoglycerate"
+    }
+  ],
+  "edges": [
+    {
+      "from": "gnaD_1",
+      "to": "kdgK_2",
+      "compound": "2-keto-3-deoxy-gluconate (KDG)",
+      "kegg_compound": "C00679"
+    },
+    {
+      "from": "gnaD_1",
+      "to": "kdgK_alt_2",
+      "compound": "2-keto-3-deoxy-gluconate (KDG)",
+      "kegg_compound": "C00679"
+    },
+    {
+      "from": "kdgK_2",
+      "to": "eda_3",
+      "compound": "2-dehydro-3-deoxy-6-phosphogluconate (KDPG)",
+      "kegg_compound": "C04442",
+      "notes": "Phosphorylation step - diagnostic for semi-phosphorylative ED"
+    },
+    {
+      "from": "kdgK_2",
+      "to": "eda_alt_3",
+      "compound": "2-dehydro-3-deoxy-6-phosphogluconate (KDPG)",
+      "kegg_compound": "C04442"
+    },
+    {
+      "from": "kdgK_alt_2",
+      "to": "eda_3",
+      "compound": "2-dehydro-3-deoxy-6-phosphogluconate (KDPG)",
+      "kegg_compound": "C04442"
+    },
+    {
+      "from": "kdgK_alt_2",
+      "to": "eda_alt_3",
+      "compound": "2-dehydro-3-deoxy-6-phosphogluconate (KDPG)",
+      "kegg_compound": "C04442"
+    },
+    {
+      "from": "eda_3",
+      "to": "gapA_4",
+      "compound": "D-glyceraldehyde 3-phosphate",
+      "kegg_compound": "C00118"
+    },
+    {
+      "from": "eda_3",
+      "to": "gapA_alt_4",
+      "compound": "D-glyceraldehyde 3-phosphate",
+      "kegg_compound": "C00118"
+    },
+    {
+      "from": "eda_alt_3",
+      "to": "gapA_4",
+      "compound": "D-glyceraldehyde 3-phosphate",
+      "kegg_compound": "C00118"
+    },
+    {
+      "from": "eda_alt_3",
+      "to": "gapA_alt_4",
+      "compound": "D-glyceraldehyde 3-phosphate",
+      "kegg_compound": "C00118"
+    },
+    {
+      "from": "gapA_4",
+      "to": "pgk_5",
+      "compound": "1,3-bisphosphoglycerate",
+      "kegg_compound": "C00236"
+    },
+    {
+      "from": "gapA_alt_4",
+      "to": "pgk_5",
+      "compound": "1,3-bisphosphoglycerate",
+      "kegg_compound": "C00236"
+    }
+  ],
+  "scoring": {
+    "min_fraction": 0.6,
+    "method": "step_completion",
+    "marker_mode": "any",
+    "notes": "Core pathway (steps 1-3) required. Downstream G3P processing (steps 4-5) optional. Diagnostic marker kdgK distinguishes semi-phosphorylative from non-phosphorylative (which lacks phosphorylation) and classic ED (which starts phosphorylated)."
+  },
+  "verified": false
+}
