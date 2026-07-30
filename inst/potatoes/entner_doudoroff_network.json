@@ -1,0 +1,359 @@
+{
+  "id": "entner_doudoroff_network",
+  "name": "Entner-Doudoroff Pathway Network",
+  "source": "KEGG M00006, M00309, M00308, M00633",
+  "tags": [
+    "metabolism",
+    "carbohydrate",
+    "glycolysis_alternative"
+  ],
+  "notes": "Alternative glucose/gluconate degradation pathways. Four variants with different substrate entry points and phosphorylation strategies. Classic (M00006) uses glucose via phosphorylation. Non-phosphorylative (M00309) uses gluconate without phosphorylation. Semi-phosphorylative (M00308, M00633) use gluconate with mid-pathway phosphorylation.",
+
+  "nodes": [
+    {
+      "id": "glk",
+      "name": "glucokinase",
+      "databases": {
+        "kofam": ["K00845"]
+      },
+      "ec": ["2.7.1.2"],
+      "notes": "Phosphorylates glucose to glucose-6P"
+    },
+    {
+      "id": "zwf",
+      "name": "glucose-6-phosphate 1-dehydrogenase",
+      "databases": {
+        "kofam": ["K00036"]
+      },
+      "ec": ["1.1.1.49", "1.1.1.363"],
+      "notes": "Oxidizes G6P to 6-phosphoglucono-δ-lactone; also in pentose phosphate pathway"
+    },
+    {
+      "id": "pgl",
+      "name": "6-phosphogluconolactonase",
+      "databases": {
+        "kofam": ["K01057"]
+      },
+      "ec": ["3.1.1.31"],
+      "notes": "Lactonase; also in pentose phosphate pathway"
+    },
+    {
+      "id": "ybhE",
+      "name": "6-phosphogluconolactonase",
+      "databases": {
+        "kofam": ["K07404"]
+      },
+      "ec": ["3.1.1.31"],
+      "notes": "Alternative lactonase"
+    },
+    {
+      "id": "edd",
+      "name": "phosphogluconate dehydratase",
+      "databases": {
+        "kofam": ["K01690"]
+      },
+      "ec": ["4.2.1.12"],
+      "notes": "Dehydrates 6-phosphogluconate to KDPG"
+    },
+    {
+      "id": "eda",
+      "name": "2-dehydro-3-deoxyphosphogluconate aldolase",
+      "databases": {
+        "kofam": ["K01625"]
+      },
+      "ec": ["4.1.2.14"],
+      "notes": "KDPG aldolase; cleaves KDPG to G3P and pyruvate"
+    },
+    {
+      "id": "eda_alt",
+      "name": "2-dehydro-3-deoxyphosphogluconate aldolase",
+      "databases": {
+        "kofam": ["K28887"]
+      },
+      "ec": ["4.1.2.14"],
+      "notes": "Alternative KDPG aldolase"
+    },
+    {
+      "id": "gnaD",
+      "name": "gluconate dehydratase",
+      "databases": {
+        "kofam": ["K05308"]
+      },
+      "ec": ["4.2.1.140"],
+      "notes": "Dehydrates gluconate to KDG"
+    },
+    {
+      "id": "kdgA",
+      "name": "2-dehydro-3-deoxy-D-gluconate aldolase",
+      "databases": {
+        "kofam": ["K18127"]
+      },
+      "ec": ["4.1.2.51"],
+      "notes": "KDG aldolase (non-phosphorylated); cleaves KDG to pyruvate and glyceraldehyde"
+    },
+    {
+      "id": "gadh",
+      "name": "D-glyceraldehyde dehydrogenase (NADP+)",
+      "databases": {
+        "kofam": ["K18128"]
+      },
+      "ec": ["1.2.1.89"],
+      "notes": "Glyceraldehyde dehydrogenase using NADP+"
+    },
+    {
+      "id": "kdpgA",
+      "name": "2-dehydro-3-deoxy-phosphogluconate aldolase",
+      "databases": {
+        "kofam": ["K11395"]
+      },
+      "ec": ["4.1.2.55"],
+      "notes": "Alternative aldolase; can cleave non-phosphorylated KDG"
+    },
+    {
+      "id": "aor",
+      "name": "aldehyde:ferredoxin oxidoreductase",
+      "databases": {
+        "kofam": ["K03738"]
+      },
+      "ec": ["1.2.7.5"],
+      "notes": "Aldehyde oxidoreductase using ferredoxin"
+    },
+    {
+      "id": "cutABC",
+      "name": "glyceraldehyde dehydrogenase complex (cutABC)",
+      "databases": {
+        "kofam": ["K18020", "K18021", "K18022"]
+      },
+      "ec": ["1.2.99.8"],
+      "notes": "Three-subunit complex: cutA + cutB + cutC. All required for activity."
+    },
+    {
+      "id": "kdgK",
+      "name": "2-dehydro-3-deoxygluconokinase",
+      "databases": {
+        "kofam": ["K00874"]
+      },
+      "ec": ["2.7.1.45"],
+      "notes": "Phosphorylates KDG to KDPG"
+    },
+    {
+      "id": "kdgK_alt",
+      "name": "2-dehydro-3-deoxygluconokinase",
+      "databases": {
+        "kofam": ["K28886"]
+      },
+      "ec": ["2.7.1.178"],
+      "notes": "Alternative kinase; phosphorylates KDG to KDPG"
+    },
+    {
+      "id": "gapA",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NAD+)",
+      "databases": {
+        "kofam": ["K00134"]
+      },
+      "ec": ["1.2.1.12"],
+      "notes": "Oxidizes G3P to 1,3-bisphosphoglycerate"
+    },
+    {
+      "id": "gapA_alt",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NADP+)",
+      "databases": {
+        "kofam": ["K00150"]
+      },
+      "ec": ["1.2.1.59"],
+      "notes": "Alternative GAPDH using NADP+"
+    },
+    {
+      "id": "pgk",
+      "name": "phosphoglycerate kinase",
+      "databases": {
+        "kofam": ["K00927"]
+      },
+      "ec": ["2.7.2.3"],
+      "notes": "Converts 1,3-bisphosphoglycerate to 3-phosphoglycerate"
+    },
+    {
+      "id": "kdgK2",
+      "name": "2-dehydro-3-deoxygluconokinase",
+      "databases": {
+        "kofam": ["K18126"]
+      },
+      "ec": ["2.7.1.178"],
+      "notes": "Alternative kinase for archaeal variant; phosphorylates KDG to KDPG"
+    },
+    {
+      "id": "gapN",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NADP+)",
+      "databases": {
+        "kofam": ["K18978"]
+      },
+      "ec": ["1.2.1.90"],
+      "notes": "Non-phosphorylating GAPDH; converts G3P to 3-phosphoglycerate without ATP"
+    }
+  ],
+
+  "pathways": {
+    "classic": {
+      "name": "Classic ED (Phosphorylative)",
+      "type": "variant",
+      "kegg_module": "M00006",
+      "notes": "Glucose entry via phosphorylation. Fully phosphorylated pathway: D-glucose → pyruvate + glyceraldehyde-3P. Found in Pseudomonas, E. coli, many bacteria.",
+
+      "nodes": {
+        "glk": {"step": 1, "required": true, "marker": false},
+        "zwf": {"step": 2, "required": true, "marker": false},
+        "pgl": {"step": 3, "required": false, "marker": false},
+        "ybhE": {"step": 3, "required": false, "marker": false},
+        "edd": {"step": 4, "required": true, "marker": true},
+        "eda": {"step": 5, "required": true, "marker": true}
+      },
+
+      "edges": [
+        {"from": "glk", "to": "zwf", "compound": "D-glucose-6P", "kegg_compound": "C00668"},
+        {"from": "zwf", "to": "pgl", "compound": "6-phospho-D-glucono-1,5-lactone", "kegg_compound": "C01236"},
+        {"from": "zwf", "to": "ybhE", "compound": "6-phospho-D-glucono-1,5-lactone", "kegg_compound": "C01236"},
+        {"from": "pgl", "to": "edd", "compound": "6-phospho-D-gluconate", "kegg_compound": "C00345"},
+        {"from": "ybhE", "to": "edd", "compound": "6-phospho-D-gluconate", "kegg_compound": "C00345"},
+        {"from": "edd", "to": "eda", "compound": "2-dehydro-3-deoxy-D-gluconate-6P", "kegg_compound": "C04442"}
+      ],
+
+      "input": {
+        "compound": "D-glucose",
+        "kegg_compound": "C00031",
+        "targets": ["glk"]
+      },
+      "output": {
+        "compound": "pyruvate + glyceraldehyde-3P",
+        "kegg_compound": "C00022",
+        "sources": ["eda"]
+      },
+      "scoring": {
+        "min_fraction": 0.8,
+        "marker_mode": "any"
+      }
+    },
+
+    "non_phosphorylative": {
+      "name": "Non-Phosphorylative ED",
+      "type": "variant",
+      "kegg_module": "M00309",
+      "notes": "Gluconate entry without phosphorylation. D-gluconate → pyruvate + glyceraldehyde. Found in halophiles, thermophiles, some archaea.",
+
+      "nodes": {
+        "gnaD": {"step": 1, "required": true, "marker": true},
+        "kdgA": {"step": 2, "required": true, "marker": true},
+        "gadh": {"step": 3, "required": true, "marker": false},
+        "kdpgA": {"step": 4, "required": true, "marker": false},
+        "aor": {"step": 5, "required": true, "marker": false},
+        "cutABC": {"step": 6, "required": false, "marker": false}
+      },
+
+      "edges": [
+        {"from": "gnaD", "to": "kdgA", "compound": "2-dehydro-3-deoxy-D-gluconate", "kegg_compound": "C00679"},
+        {"from": "kdgA", "to": "gadh", "compound": "pyruvate + D-glyceraldehyde"},
+        {"from": "gadh", "to": "kdpgA", "compound": "D-glyceraldehyde"},
+        {"from": "kdpgA", "to": "aor"},
+        {"from": "aor", "to": "cutABC"}
+      ],
+
+      "input": {
+        "compound": "D-gluconate",
+        "kegg_compound": "C00257",
+        "targets": ["gnaD"]
+      },
+      "output": {
+        "compound": "pyruvate + D-glyceraldehyde",
+        "sources": ["kdgA"]
+      },
+      "scoring": {
+        "min_fraction": 0.75,
+        "marker_mode": "any"
+      }
+    },
+
+    "semi_phosphorylative": {
+      "name": "Semi-Phosphorylative ED",
+      "type": "variant",
+      "kegg_module": "M00308",
+      "notes": "Hybrid pathway: starts with unphosphorylated gluconate, phosphorylates KDG mid-pathway. D-gluconate → glycerate-3P. Found in archaea and thermophilic bacteria.",
+
+      "nodes": {
+        "gnaD": {"step": 1, "required": true, "marker": true},
+        "kdgK": {"step": 2, "required": true, "marker": true},
+        "kdgK_alt": {"step": 2, "required": true, "marker": true},
+        "eda": {"step": 3, "required": true, "marker": false},
+        "eda_alt": {"step": 3, "required": true, "marker": false},
+        "gapA": {"step": 4, "required": true, "marker": false},
+        "gapA_alt": {"step": 4, "required": true, "marker": false},
+        "pgk": {"step": 5, "required": true, "marker": false}
+      },
+
+      "edges": [
+        {"from": "gnaD", "to": "kdgK", "compound": "2-dehydro-3-deoxy-D-gluconate", "kegg_compound": "C00679"},
+        {"from": "gnaD", "to": "kdgK_alt", "compound": "2-dehydro-3-deoxy-D-gluconate", "kegg_compound": "C00679"},
+        {"from": "kdgK", "to": "eda", "compound": "2-dehydro-3-deoxy-D-gluconate-6P", "kegg_compound": "C04442"},
+        {"from": "kdgK", "to": "eda_alt", "compound": "2-dehydro-3-deoxy-D-gluconate-6P", "kegg_compound": "C04442"},
+        {"from": "kdgK_alt", "to": "eda", "compound": "2-dehydro-3-deoxy-D-gluconate-6P", "kegg_compound": "C04442"},
+        {"from": "kdgK_alt", "to": "eda_alt", "compound": "2-dehydro-3-deoxy-D-gluconate-6P", "kegg_compound": "C04442"},
+        {"from": "eda", "to": "gapA", "compound": "glyceraldehyde-3P", "kegg_compound": "C00118"},
+        {"from": "eda", "to": "gapA_alt", "compound": "glyceraldehyde-3P", "kegg_compound": "C00118"},
+        {"from": "eda_alt", "to": "gapA", "compound": "glyceraldehyde-3P", "kegg_compound": "C00118"},
+        {"from": "eda_alt", "to": "gapA_alt", "compound": "glyceraldehyde-3P", "kegg_compound": "C00118"},
+        {"from": "gapA", "to": "pgk", "compound": "1,3-bisphospho-D-glycerate", "kegg_compound": "C00236"},
+        {"from": "gapA_alt", "to": "pgk", "compound": "1,3-bisphospho-D-glycerate", "kegg_compound": "C00236"}
+      ],
+
+      "input": {
+        "compound": "D-gluconate",
+        "kegg_compound": "C00257",
+        "targets": ["gnaD"]
+      },
+      "output": {
+        "compound": "3-phospho-D-glycerate",
+        "kegg_compound": "C00197",
+        "sources": ["pgk"]
+      },
+      "scoring": {
+        "min_fraction": 0.75,
+        "marker_mode": "any"
+      }
+    },
+
+    "semi_phosphorylative_alt": {
+      "name": "Semi-Phosphorylative ED (Alternative)",
+      "type": "variant",
+      "kegg_module": "M00633",
+      "notes": "Crenarchaeota-specific semi-phosphorylative variant. Uses alternative enzymes kdgK2 and kdpgA. D-gluconate → glyceraldehyde-3P. Found in Sulfolobus, Thermoplasma, Thermococcales.",
+
+      "nodes": {
+        "gnaD": {"step": 1, "required": true, "marker": true},
+        "kdgK2": {"step": 2, "required": true, "marker": true},
+        "kdpgA": {"step": 3, "required": true, "marker": true},
+        "gapN": {"step": 4, "required": true, "marker": false}
+      },
+
+      "edges": [
+        {"from": "gnaD", "to": "kdgK2", "compound": "2-dehydro-3-deoxy-D-gluconate", "kegg_compound": "C00679"},
+        {"from": "kdgK2", "to": "kdpgA", "compound": "2-dehydro-3-deoxy-D-gluconate-6P", "kegg_compound": "C04442"},
+        {"from": "kdpgA", "to": "gapN", "compound": "glyceraldehyde-3P", "kegg_compound": "C00118"}
+      ],
+
+      "input": {
+        "compound": "D-gluconate",
+        "kegg_compound": "C00257",
+        "targets": ["gnaD"]
+      },
+      "output": {
+        "compound": "glyceraldehyde-3P",
+        "kegg_compound": "C00118",
+        "sources": ["gapN"]
+      },
+      "scoring": {
+        "min_fraction": 0.75,
+        "marker_mode": "any"
+      }
+    }
+  },
+
+  "verified": false
+}

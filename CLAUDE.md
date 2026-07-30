@@ -165,6 +165,7 @@ Each potato is a self-contained pathway definition with genes and topology:
 
 **Important notes:**
 - **Verified field:** Agents and Claude should ALWAYS set `"verified": false` and NEVER change it to true. Only humans verify potatoes.
+- **Active field:** Optional `"active": false` marks deprecated potatoes that shouldn't be loaded by default
 - **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names like `kofam118`, `gator_blast`)
 - **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database), NOT separate `pfam` field
 - **HMM profile names:** Use NAME from HMM file header (e.g., `NAME mlrA`), not filename
@@ -172,6 +173,200 @@ Each potato is a self-contained pathway definition with genes and topology:
 - **No legacy fields:** Don't use `ko`, `blast_terms`, `hmm_path`, etc. Use `databases` only
 - **Notes fields:** Use liberally to document biological context, alternatives, caveats, marker rationale
 - **Input/output:** For transporters moving compounds across membranes, use location qualifiers like "_external", "_internal", "_periplasm"
+
+---
+
+## Multi-Pathway Schema (New in v0.9.0)
+
+**Design Philosophy:** Related pathways that share metabolic context should be consolidated into network potatoes with multiple sub-pathways. This provides biological context that isolated potatoes cannot capture.
+
+### When to Use Multi-Pathway Schema
+
+**Use multi-pathway networks when:**
+- Pathways are **alternative routes** to the same biological outcome (e.g., Mo vs V nitrogenase)
+- Pathways share **metabolic intermediates** and spatial context (e.g., ED pathway variants)
+- Finding one variant **explains the absence** of another (e.g., "ED classic absent because ED semi-phos present")
+- Pathways **overlay spatially** but serve different purposes (e.g., TCA + glyoxylate shunt)
+
+**Keep as separate potatoes when:**
+- Pathways are functionally unrelated
+- No shared genes or metabolic context
+- Independent detection is more informative
+
+### Multi-Pathway Structure
+
+```json
+{
+  "id": "entner_doudoroff_network",
+  "name": "Entner-Doudoroff Pathway Network",
+  "source": "KEGG M00006, M00309, M00308, M00633",
+  "active": true,
+  "verified": false,
+  "tags": ["metabolism", "carbohydrate"],
+  "notes": "Four ED variants with different phosphorylation strategies.",
+  
+  "nodes": [
+    {
+      "id": "gnaD",
+      "name": "gluconate dehydratase",
+      "databases": {"kofam": ["K05308"]},
+      "ec": ["4.2.1.140"],
+      "notes": "Shared by 3 ED variants"
+    },
+    {
+      "id": "edd",
+      "name": "phosphogluconate dehydratase",
+      "databases": {"kofam": ["K01690"]},
+      "ec": ["4.2.1.12"]
+    }
+    // ... all 20 unique genes (detection methods only)
+  ],
+  
+  "pathways": {
+    "classic": {
+      "name": "Classic ED (Phosphorylative)",
+      "type": "variant",
+      "kegg_module": "M00006",
+      "notes": "Fully phosphorylated pathway",
+      
+      "nodes": {
+        "glk": {"step": 1, "required": true, "marker": false},
+        "zwf": {"step": 2, "required": true, "marker": false},
+        "pgl": {"step": 3, "required": false, "marker": false},
+        "ybhE": {"step": 3, "required": false, "marker": false},
+        "edd": {"step": 4, "required": true, "marker": true},
+        "eda": {"step": 5, "required": true, "marker": true}
+      },
+      
+      "edges": [
+        {"from": "glk", "to": "zwf", "compound": "D-glucose-6P"},
+        {"from": "zwf", "to": "pgl", "compound": "6-phospho-D-glucono-1,5-lactone"},
+        {"from": "zwf", "to": "ybhE", "compound": "6-phospho-D-glucono-1,5-lactone"},
+        {"from": "pgl", "to": "edd", "compound": "6-phospho-D-gluconate"},
+        {"from": "ybhE", "to": "edd", "compound": "6-phospho-D-gluconate"},
+        {"from": "edd", "to": "eda", "compound": "KDPG"}
+      ],
+      
+      "input": {
+        "compound": "D-glucose",
+        "kegg_compound": "C00031",
+        "targets": ["glk"]
+      },
+      "output": {
+        "compound": "pyruvate + glyceraldehyde-3P",
+        "sources": ["eda"]
+      },
+      "scoring": {
+        "min_fraction": 0.8,
+        "marker_mode": "any"
+      }
+    },
+    
+    "non_phosphorylative": {
+      "name": "Non-Phosphorylative ED",
+      "type": "variant",
+      "kegg_module": "M00309",
+      // ... similar structure
+    }
+  }
+}
+```
+
+### Key Principles
+
+**1. Genes Defined Once**
+- Global `nodes` array: Detection methods, EC numbers, enzyme names
+- Pathway-specific `nodes`: Step number, required/marker status (contextual)
+- Same gene can be step 1 in one pathway, step 3 in another
+- Same gene can be marker in one pathway, not in another
+
+**2. Pathway Types**
+- `"type": "variant"` - Alternative routes to same outcome (Mo vs V nitrogenase, ED variants)
+- `"type": "independent"` - Different purpose, shares metabolic space (TCA vs glyoxylate shunt)
+
+**3. Pathway-Specific Attributes**
+- `step`, `required`, `marker` - All pathway-specific, defined per pathway
+- `edges` - Each pathway has its own topology
+- `input`/`output` - Each pathway has its own substrates/products
+- `scoring` - Each pathway scored independently
+
+**4. Shared Genes**
+- Gene `gnaD` appears in 3 ED pathways at step 1
+- Detecting `gnaD` once satisfies all 3 pathways
+- Each pathway evaluates completion independently
+
+### Scoring Multi-Pathway Networks
+
+**Current implementation (to be updated):**
+Each pathway scored independently, results show per-pathway status:
+
+```
+potato: entner_doudoroff_network
+  pathway: classic (variant) - present (6/6 genes, 1.0)
+  pathway: non_phosphorylative (variant) - absent (2/6 genes, 0.33)
+  pathway: semi_phosphorylative (variant) - present (7/8 genes, 0.875)
+  pathway: semi_phosphorylative_alt (variant) - absent (1/4 genes, 0.25)
+
+interpretation: ED capability via 2 variants (classic + semi_phos)
+                Glucose AND gluconate utilization
+```
+
+**Benefits over separate potatoes:**
+- Context: "ED classic absent" + "ED semi present" → explains the gap
+- Efficiency: Shared gene detected once, counts for multiple pathways
+- Biology: Shows metabolic flexibility vs. single strategy
+
+### Visualization Implications
+
+**Network plots** can show:
+- All pathways overlaid with color-coding
+- Shared nodes highlighted
+- Active pathways in bold, inactive grayed out
+- Multiple substrate entry points visible
+
+**Planned features:**
+- Toggle individual pathways on/off in visualization
+- Highlight path-specific edges
+- Show which genes satisfy multiple pathways
+
+### Example: TCA + Glyoxylate Network
+
+```json
+{
+  "id": "tca_network",
+  "pathways": {
+    "tca_forward": {
+      "type": "variant",
+      "notes": "Oxidative TCA for respiration",
+      "nodes": {
+        "citrate_synthase": {"step": 1, "marker": true},
+        "aconitase": {"step": 2, "marker": false}
+      }
+    },
+    "tca_reverse": {
+      "type": "variant",
+      "notes": "Reductive TCA for carbon fixation",
+      "nodes": {
+        "atp_citrate_lyase": {"step": 1, "marker": true},
+        "aconitase": {"step": 2, "marker": false}
+      }
+    },
+    "glyoxylate_shunt": {
+      "type": "independent",
+      "notes": "C2 assimilation bypassing CO2 loss",
+      "nodes": {
+        "aceA": {"step": 1, "marker": true},
+        "aceB": {"step": 2, "marker": true}
+      }
+    }
+  }
+}
+```
+
+**Biological interpretation:**
+- Forward TCA + glyoxylate → can grow on acetate/fatty acids
+- Reverse TCA alone → carbon fixation (chemolithoautotroph)
+- Forward + reverse → flexible metabolism
 
 ---
 
@@ -465,19 +660,19 @@ All features above have been implemented and basic testing done on:
   - Custom HMM profiles (e.g., mlr) typically don't have TC
   - Falls back to global e-value threshold when TC absent
 
-## Current Working Functions (v0.7.1)
+## Current Working Functions (v0.7.1, v0.9.0 in progress)
 
 ### User Workflow Functions
 - `initialize_potato_sack(path)` - Create project folder structure
 - `create_sack(path = NULL)` - Construct PotatoSack S7 object from directory
-- `validate_potato(potato)` - Validate potato structure and schema
+- `validate_potato(potato)` - Validate potato structure and schema (⚠️ needs update for multi-pathway)
 - `add_genomes(sack, path)` - Register .faa/.fasta files with sack
 - `run_kofam(sack, potato_names, conda_env, workers, overwrite)` - Run kofam annotation
 - Standard R: `saveRDS(sack, "file.rds")` and `readRDS("file.rds")`
 
 ### Potato Functions
-- `load_potato(path)` - Load single potato JSON
-- `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory
+- `load_potato(path)` - Load single potato JSON (⚠️ needs update for multi-pathway)
+- `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory (⚠️ needs active flag filter)
 - `load_test_potato()` - Load example test potato
 - `print_potato(potato, compact, show_compounds, show_ko, show_ec)` - Text-based pathway view
   - Compact notation: `*` = marker, `^` = optional, `{n}` = complex, `(A|B)` = alternatives
@@ -1315,7 +1510,16 @@ write.csv(sack@results %>% unnest(kofam), "kofam_hits.csv")
 - Required vs optional gene handling
 - Pathway-level confidence scores (not just fraction)
 
-**Future (v0.9.0+):**
+**In Progress (v0.9.0):**
+- Multi-pathway schema implementation
+  - ✅ Schema design finalized (pathways field, variant/independent types)
+  - ✅ ED network potato created (entner_doudoroff_network.json)
+  - ✅ Active flag for deprecating old potatoes
+  - ⚠️ Validation system needs update
+  - ⚠️ Scoring system needs update (score pathways independently)
+  - ⚠️ Visualization needs multi-pathway support
+
+**Future (v0.10.0+):**
 - LLM agent for potato building
 - LLM agent for result interpretation
 - Advanced DAG traversal algorithms
@@ -1323,4 +1527,36 @@ write.csv(sack@results %>% unnest(kofam), "kofam_hits.csv")
 
 ---
 
-Last updated: 2026-07-29
+## Current Potato Inventory
+
+### Active Potatoes (loaded by default)
+
+**Single-pathway potatoes:**
+- `bhac.json` - Glyoxylate BHAC pathway
+- `glyoxylate_cycle.json` - Glyoxylate cycle
+- `microcystin_degradation.json` - Microcystin degradation (mlrABCD)
+- `nitrogen_fixation_mo.json` - Nitrogen fixation (Mo-dependent)
+- `nitrogen_fixation_v.json` - Nitrogen fixation (V-dependent)
+- `test_glycolysis.json` - Test pathway (3 steps)
+
+**Multi-pathway networks:**
+- `entner_doudoroff_network.json` - ED pathway network (4 variants: classic, non_phosphorylative, semi_phosphorylative, semi_phosphorylative_alt)
+
+### Inactive Potatoes (active: false, kept for reference)
+
+- `entner_doudoroff_classic.json` - DEPRECATED: Consolidated into network
+- `entner_doudoroff_np.json` - DEPRECATED: Consolidated into network
+- `entner_doudoroff_semi_phos.json` - DEPRECATED: Consolidated into network
+- `entner_doudoroff_semi_phos_alt.json` - DEPRECATED: Consolidated into network
+
+**Note:** Inactive potatoes can still be loaded explicitly with `load_potato()`, but won't be included in `load_potatoes()` by default.
+
+### Future Consolidations
+
+Candidates for multi-pathway networks:
+- TCA + glyoxylate shunt + reverse TCA
+- Nitrogen fixation (already split into Mo/V variants, could be unified network)
+
+---
+
+Last updated: 2026-07-30

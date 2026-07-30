@@ -1,6 +1,7 @@
 {
   "id": "entner_doudoroff_semi_phos_alt",
   "name": "Entner-Doudoroff Pathway (Semi-Phosphorylative, Alternative)",
+  "active": false,
   "source": "KEGG M00633",
   "tags": [
     "metabolism",
@@ -10,7 +11,21 @@
     "crenarchaeota",
     "thermococcales"
   ],
-  "notes": "Alternative semi-phosphorylative Entner-Doudoroff pathway (M00633): gluconate => G3P. Found specifically in crenarchaeota (Sulfolobus, Thermoplasma, Thermococcales). Similar to M00308 but uses alternative enzymes: kdgK2 (K18126) for kinase step and kdpgA (K11395) for aldolase. Branches with non-phosphorylative ED (M00309) at gnaD. Diagnostic feature: combination of kdgK2 phosphorylation with kdpgA aldolase. Common in thermophilic archaea.",
+  "notes": "DEPRECATED: Consolidated into entner_doudoroff_network.json. This standalone version kept for reference. Alternative semi-phosphorylative Entner-Doudoroff pathway (M00633): gluconate => G3P. Found specifically in crenarchaeota (Sulfolobus, Thermoplasma, Thermococcales). Similar to M00308 but uses alternative enzymes: kdgK2 (K18126) for kinase step and kdpgA (K11395) for aldolase. Branches with non-phosphorylative ED (M00309) at gnaD. Diagnostic feature: combination of kdgK2 phosphorylation with kdpgA aldolase. Common in thermophilic archaea.",
+  "input": {
+    "compound": "D-gluconate",
+    "kegg_compound": "C00257",
+    "targets": [
+      "gnaD_1"
+    ]
+  },
+  "output": {
+    "compound": "glyceraldehyde-3P",
+    "kegg_compound": "C00118",
+    "sources": [
+      "gapN_4"
+    ]
+  },
   "nodes": [
     {
       "id": "gnaD",

@@ -7,7 +7,20 @@
     "secondary_metabolism",
     "bioremediation"
   ],
-  "notes": "Stepwise microcystin-LR degradation pathway found in most MC-degrading bacteria via the mlrABCD gene cluster. Microcystinase (mlrA) cleaves cyclic MC-LR (highly toxic) into linearized form (160× less toxic), serine hydrolase (mlrB) cleaves linear MC-LR into tetrapeptide (20× less toxic), and metalloprotease (mlrC) further degrades tetrapeptide into small fragments like ADDA. MlrD is a PTR2 family peptide transporter (membrane protein) whose exact role in MC degradation remains under investigation but likely involves transport of degradation intermediates or products.",
+  "notes": "DEPRECATED: Old single-pathway schema. Will be converted to multi-pathway network. Stepwise microcystin-LR degradation pathway found in most MC-degrading bacteria via the mlrABCD gene cluster. Microcystinase (mlrA) cleaves cyclic MC-LR (highly toxic) into linearized form (160× less toxic), serine hydrolase (mlrB) cleaves linear MC-LR into tetrapeptide (20× less toxic), and metalloprotease (mlrC) further degrades tetrapeptide into small fragments like ADDA. MlrD is a PTR2 family peptide transporter (membrane protein) whose exact role in MC degradation remains under investigation but likely involves transport of degradation intermediates or products.",
+  "input": {
+    "compound": "microcystin-LR (cyclic)",
+    "kegg_compound": "C05371",
+    "targets": [
+      "mlrA_1"
+    ]
+  },
+  "output": {
+    "compound": "ADDA and small peptides",
+    "targets": [
+      "mlrC_3"
+    ]
+  },
   "nodes": [
     {
       "id": "mlrA",
@@ -120,5 +133,6 @@
     "marker_mode": "any",
     "notes": "Pathway is present if mlrA + mlrB + mlrC are detected (core degradation pathway). mlrD is optional. mlrA is diagnostic marker."
   },
-  "verified": false
+  "verified": false,
+  "active": false
 }

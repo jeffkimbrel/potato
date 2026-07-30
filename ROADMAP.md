@@ -58,141 +58,174 @@ potato/
 
 ## File Formats
 
-### 1. Potato JSON Structure
+### 1. Potato JSON Structure (v0.8.0 - v0.9.0)
 
-Each potato is a self-contained pathway definition stored as a DAG.
+**Two schema versions:**
+1. **Single-pathway potatoes** (current, v0.8.0) - One pathway per file
+2. **Multi-pathway networks** (NEW, v0.9.0) - Related pathways in one file
+
+#### Single-Pathway Schema (v0.8.0)
 
 ```json
 {
-  "id": "leucine_biosynthesis",
-  "name": "Leucine Biosynthesis",
-  "source": "KEGG M00570",
+  "id": "microcystin_degradation",
+  "name": "Microcystin Degradation",
+  "source": "Literature (Bourne et al. 1996)",
+  "active": true,
   "verified": false,
-  "tags": ["amino_acid_metabolism", "branched_chain"],
-  "notes": "Canonical leucine biosynthesis pathway",
+  "tags": ["toxin_degradation"],
+  "notes": "mlrABCD gene cluster",
   
   "input": {
-    "compound": "pyruvate",
-    "kegg_compound": "C00022",
-    "targets": ["ilvB_1"]
+    "compound": "microcystin-LR (cyclic)",
+    "kegg_compound": "C05371",
+    "targets": ["mlrA_1"]
   },
   
   "output": {
-    "compound": "L-leucine",
-    "kegg_compound": "C00123",
-    "sources": ["leuA_5"]
+    "compound": "ADDA + small peptides",
+    "sources": ["mlrC_3"]
   },
   
   "nodes": [
     {
-      "id": "ilvB",
+      "id": "mlrA",
+      "step": 1,
+      "nodes": ["mlrA_1"],
       "type": "enzyme",
-      "name": "acetolactate synthase catalytic subunit",
-      "ko": ["K01652", "K01653"],
-      "pfam": ["PF00205"],
-      "ec": ["2.2.1.6"],
-      "hmm": ["ilvB.hmm"],
-      "blast_db": "ilvB_refs.faa",
-      "required": true,
-      "specificity": 0.75,
-      "appears_in": ["leucine_biosynthesis", "valine_biosynthesis", "isoleucine_biosynthesis"],
-      "thresholds": {
-        "kofam_score": 1.0,
-        "kofam_evalue": 1e-10,
-        "blast_evalue": 1e-20,
-        "blast_bitscore": 100,
-        "blast_pident": 30,
-        "hmm_evalue": 1e-15,
-        "hmm_bitscore": 50,
-        "hmm_domain_evalue": 1e-10
+      "name": "microcystinase",
+      "databases": {
+        "kofam": ["K20071"],
+        "hmm": ["mlrA_aligned"],
+        "blast": ["mlrA_AF411068_partial", "QVQ24103.1_mlrA"]
       },
-      "reaction": {
-        "type": "C-C bond formation",
-        "substrate": "pyruvate",
-        "product": "2-acetolactate"
-      }
-    },
-    {
-      "id": "ilvH",
-      "type": "enzyme",
-      "name": "acetolactate synthase small subunit",
-      "ko": ["K01654"],
-      "required": false,
-      "specificity": 0.80,
-      "thresholds": {
-        "kofam_score": 1.0,
-        "blast_evalue": 1e-15
-      }
-    },
-    {
-      "id": "ilvM",
-      "type": "enzyme", 
-      "name": "acetolactate synthase small subunit (alternative)",
-      "ko": ["K11258"],
-      "required": false,
-      "specificity": 0.80
-    },
-    {
-      "id": "ilvC",
-      "type": "enzyme",
-      "name": "ketol-acid reductoisomerase",
-      "ko": ["K00053"],
-      "pfam": ["PF07991"],
-      "ec": ["1.1.1.86"],
+      "ec": ["3.4.99.-"],
       "required": true,
-      "specificity": 0.85
+      "marker": true,
+      "notes": "Diagnostic enzyme - cleaves cyclic MC-LR"
+    },
+    {
+      "id": "mlrB",
+      "step": 2,
+      "nodes": ["mlrB_2"],
+      "type": "enzyme",
+      "name": "serine hydrolase",
+      "databases": {
+        "hmm": ["mlrB_aligned"],
+        "blast": ["mlrB_AF411069_partial"]
+      },
+      "required": true,
+      "marker": false
     }
   ],
   
   "edges": [
-    {
-      "from": "ilvB",
-      "to": "ilvH",
-      "compound": "complex formation",
-      "kegg_compound": null
-    },
-    {
-      "from": "ilvB", 
-      "to": "ilvM",
-      "compound": "complex formation (alternative)",
-      "kegg_compound": null
-    },
-    {
-      "from": "ilvH",
-      "to": "ilvC",
-      "compound": "2-acetolactate",
-      "kegg_compound": "C06010"
-    },
-    {
-      "from": "ilvM",
-      "to": "ilvC", 
-      "compound": "2-acetolactate",
-      "kegg_compound": "C06010"
-    }
+    {"from": "mlrA_1", "to": "mlrB_2", "compound": "linear microcystin-LR"}
   ],
   
   "scoring": {
     "min_fraction": 0.75,
-    "required_nodes": ["ilvB", "ilvC"],
-    "use_specificity_weighting": true
+    "marker_mode": "any"
+  }
+}
+```
+
+#### Multi-Pathway Network Schema (v0.9.0 - NEW)
+
+For related pathways sharing metabolic context:
+
+```json
+{
+  "id": "entner_doudoroff_network",
+  "name": "Entner-Doudoroff Pathway Network",
+  "source": "KEGG M00006, M00309, M00308, M00633",
+  "active": true,
+  "verified": false,
+  "tags": ["metabolism", "carbohydrate"],
+  "notes": "Four ED variants with different phosphorylation strategies",
+  
+  "nodes": [
+    {
+      "id": "gnaD",
+      "name": "gluconate dehydratase",
+      "databases": {"kofam": ["K05308"]},
+      "ec": ["4.2.1.140"],
+      "notes": "Shared by 3 ED variants"
+    },
+    {
+      "id": "edd",
+      "name": "phosphogluconate dehydratase",
+      "databases": {"kofam": ["K01690"]},
+      "ec": ["4.2.1.12"]
+    }
+  ],
+  
+  "pathways": {
+    "classic": {
+      "name": "Classic ED (Phosphorylative)",
+      "type": "variant",
+      "kegg_module": "M00006",
+      "notes": "Fully phosphorylated pathway",
+      
+      "nodes": {
+        "glk": {"step": 1, "required": true, "marker": false},
+        "zwf": {"step": 2, "required": true, "marker": false},
+        "edd": {"step": 4, "required": true, "marker": true},
+        "eda": {"step": 5, "required": true, "marker": true}
+      },
+      
+      "edges": [
+        {"from": "glk", "to": "zwf", "compound": "D-glucose-6P"},
+        {"from": "zwf", "to": "edd", "compound": "6-phosphogluconate"},
+        {"from": "edd", "to": "eda", "compound": "KDPG"}
+      ],
+      
+      "input": {
+        "compound": "D-glucose",
+        "kegg_compound": "C00031",
+        "targets": ["glk"]
+      },
+      "output": {
+        "compound": "pyruvate + glyceraldehyde-3P",
+        "sources": ["eda"]
+      },
+      "scoring": {
+        "min_fraction": 0.8,
+        "marker_mode": "any"
+      }
+    },
+    
+    "non_phosphorylative": {
+      "name": "Non-Phosphorylative ED",
+      "type": "variant",
+      "kegg_module": "M00309",
+      "nodes": {
+        "gnaD": {"step": 1, "required": true, "marker": true},
+        "kdgA": {"step": 2, "required": true, "marker": true}
+      },
+      "edges": [
+        {"from": "gnaD", "to": "kdgA", "compound": "KDG"}
+      ],
+      "scoring": {"min_fraction": 0.75}
+    }
   }
 }
 ```
 
 **Key Features:**
-- **Nodes**: Enzyme definitions with detection methods (KO, PFAM, EC, HMM, BLAST)
-- **Edges**: Connections between enzymes, decorated with metabolite info
-- **Scoring**: Pathway-specific thresholds and requirements
-- **Specificity**: Pre-computed across potato database (how unique is this gene?)
-- **Thresholds**: Per-gene score cutoffs (e-value, bitscore, percent identity, etc.)
-- **Reaction metadata**: Enables LLM reasoning about functional analogs (optional)
+- **Active flag**: `"active": false` deprecates old potatoes (kept for reference, not loaded by default)
+- **Genes defined once**: Global `nodes` array has detection methods
+- **Pathway-specific attributes**: Each pathway defines `step`, `required`, `marker` for its own context
+- **Pathway types**: `"variant"` (alternative routes) vs `"independent"` (different purposes, shared space)
+- **Standard database types**: `kofam`, `blast`, `hmm` only (no custom names)
+- **Compounds on edges**: Optional metabolite information
+- **Per-pathway scoring**: Each pathway scored independently
 
-**Threshold Philosophy:**
-- Each gene can specify custom thresholds for each detection method
-- If not specified, use sensible defaults from tools.json or built-in
-- Allows stricter thresholds for high-confidence genes (e.g., `blast_evalue: 1e-50`)
-- Allows looser thresholds for divergent genes (e.g., `blast_pident: 25`)
-- Tool-specific: kofam score, blast e-value/bitscore/pident, HMM e-value/bitscore
+**Threshold Philosophy (v0.8.0):**
+- **Kofam**: Uses per-gene thresholds from KEGG automatically
+- **HMM**: Uses per-profile TC (trusted cutoff) when available, else global e-value
+- **BLAST**: Uses global e-value and bitscore thresholds
+- **Optional per-gene overrides**: `thresholds` field in nodes (use sparingly)
 
 ### 2. Tool Configuration (`tools.json`)
 
@@ -451,6 +484,81 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
   - [x] Updated agent instructions to validate EC numbers against substrate chemistry
 - [ ] Unit tests for scoring logic
 - [ ] **HMM TC testing**: Add bacteriorhodopsin potato (uses PFAM with TC) to test per-profile trusted cutoff thresholds
+
+### Phase 0.9: Multi-Pathway Schema (IN PROGRESS - v0.9.0)
+
+**Goal:** Support related pathways in single network potatoes for biological context.
+
+#### 0.9.1 Schema Design ✓ (COMPLETE)
+- [x] Design multi-pathway JSON structure
+  - [x] Global `nodes` array (genes defined once with detection methods)
+  - [x] `pathways` field (each pathway has its own step/required/marker context)
+  - [x] Pathway types: `"variant"` vs `"independent"`
+  - [x] Per-pathway edges, input/output, scoring
+- [x] Add `active` flag to deprecate consolidated potatoes
+- [x] Document schema in CLAUDE.md
+- [x] Create example: `entner_doudoroff_network.json` (4 ED variants)
+- [x] Mark old ED potatoes as `active: false`
+
+#### 0.9.2 Code Updates (IN PROGRESS)
+- [ ] Update `load_potato()` to handle both schemas
+  - [ ] Detect single-pathway vs multi-pathway
+  - [ ] Parse `pathways` field into internal representation
+  - [ ] Maintain backward compatibility
+- [ ] Update `load_potatoes()` to filter by `active` flag
+  - [ ] Default: only load active potatoes
+  - [ ] Optional `include_inactive = TRUE` parameter
+- [ ] Update `validate_potato()` for multi-pathway schema
+  - [ ] Validate pathway-specific node references
+  - [ ] Check edges reference valid nodes within pathway
+  - [ ] Verify step numbers within each pathway
+  - [ ] Check marker genes exist per pathway
+- [ ] Update `score_pathways()` to score independently
+  - [ ] For single-pathway: score as before
+  - [ ] For multi-pathway: score each pathway separately
+  - [ ] Results show per-pathway scores
+  - [ ] Aggregate network-level interpretation
+- [ ] Update `print_potato()` for multi-pathway
+  - [ ] Show network summary
+  - [ ] Option to print individual pathways
+  - [ ] Compact view for each pathway
+
+#### 0.9.3 Visualization Updates
+- [ ] Update `plot_potato()` for multi-pathway networks
+  - [ ] Option to show all pathways overlaid
+  - [ ] Option to show single pathway
+  - [ ] Color-code pathway-specific nodes/edges
+  - [ ] Highlight shared nodes
+- [ ] Update pathway heatmap for networks
+  - [ ] Rows = pathways (not potatoes)
+  - [ ] Show variant completion status
+- [ ] Add network-level summary plots
+
+#### 0.9.4 Build-Potato Agent Updates
+- [ ] Update agent instructions for building networks
+  - [ ] When to use multi-pathway vs single
+  - [ ] How to structure variants
+  - [ ] Biological context for network decisions
+- [ ] Add validation step for networks
+- [ ] Update examples
+
+#### 0.9.5 Consolidate Existing Potatoes
+- [ ] Create `tca_network.json`
+  - [ ] TCA forward (variant)
+  - [ ] TCA reverse (variant)
+  - [ ] Glyoxylate shunt (independent)
+- [ ] Review nitrogen fixation potatoes
+  - [ ] Consider network: Mo vs V variants
+  - [ ] Or keep separate (already minimal overlap)
+- [ ] Identify other candidates
+
+### Phase 0.9 Complete When:
+- [ ] Can load and validate both single and multi-pathway potatoes
+- [ ] Scoring works correctly for networks (per-pathway results)
+- [ ] Visualization shows network context
+- [ ] At least 2 network potatoes created and tested
+- [ ] Build-potato agent can create networks
+- [ ] Documentation updated
 
 ### Phase 2: Database Management
 

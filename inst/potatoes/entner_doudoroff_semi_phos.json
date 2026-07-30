@@ -1,6 +1,7 @@
 {
   "id": "entner_doudoroff_semi_phos",
   "name": "Entner-Doudoroff Pathway (Semi-Phosphorylative)",
+  "active": false,
   "source": "KEGG M00308",
   "tags": [
     "metabolism",
@@ -9,7 +10,21 @@
     "archaea",
     "thermophiles"
   ],
-  "notes": "Semi-phosphorylative Entner-Doudoroff pathway (M00308): gluconate => glycerate-3P. Starts with unphosphorylated gluconate, then phosphorylates KDG to KDPG before cleavage. Found in archaea and some thermophilic bacteria. Diagnostic feature: kdgK (2-dehydro-3-deoxygluconokinase) phosphorylates KDG to KDPG, then eda cleaves KDPG. Produces G3P which is further oxidized to glycerate-3P. Hybrid pathway - starts non-phosphorylated, becomes phosphorylated mid-pathway.",
+  "notes": "DEPRECATED: Consolidated into entner_doudoroff_network.json. This standalone version kept for reference. Semi-phosphorylative Entner-Doudoroff pathway (M00308): gluconate => glycerate-3P. Starts with unphosphorylated gluconate, then phosphorylates KDG to KDPG before cleavage. Found in archaea and some thermophilic bacteria. Diagnostic feature: kdgK (2-dehydro-3-deoxygluconokinase) phosphorylates KDG to KDPG, then eda cleaves KDPG. Produces G3P which is further oxidized to glycerate-3P. Hybrid pathway - starts non-phosphorylated, becomes phosphorylated mid-pathway.",
+  "input": {
+    "compound": "D-gluconate",
+    "kegg_compound": "C00257",
+    "targets": [
+      "gnaD_1"
+    ]
+  },
+  "output": {
+    "compound": "glycerate-3P",
+    "kegg_compound": "C00197",
+    "sources": [
+      "pgk_5"
+    ]
+  },
   "nodes": [
     {
       "id": "gnaD",

@@ -7,19 +7,19 @@
     "energy_metabolism",
     "molybdenum"
   ],
-  "notes": "Molybdenum-dependent nitrogen fixation via nitrogenase enzyme complex. The most common nitrogenase system. Reduces N2 to NH3 using the nifHDK complex with a molybdenum-iron cofactor (FeMo-co). nifH is the Fe protein (electron donor), nifD and nifK form the MoFe protein (catalytic component).",
+  "notes": "DEPRECATED: Old single-pathway schema. Will be converted to multi-pathway network. Molybdenum-dependent nitrogen fixation via nitrogenase enzyme complex. The most common nitrogenase system. Reduces N2 to NH3 using the nifHDK complex with a molybdenum-iron cofactor (FeMo-co). nifH is the Fe protein (electron donor), nifD and nifK form the MoFe protein (catalytic component).",
   "input": {
     "compound": "N2",
     "kegg_compound": "C00697",
     "targets": [
-      "nifH_1"
+      "nifHDK_1"
     ]
   },
   "output": {
     "compound": "2 NH3",
     "kegg_compound": "C00014",
     "sources": [
-      "nifDK_3"
+      "nifHDK_1"
     ]
   },
   "nodes": [
@@ -53,5 +53,6 @@
     "marker_mode": "any",
     "notes": "All three genes (nifH, nifD, nifK) required for functional Mo-nitrogenase. All are markers."
   },
-  "verified": false
+  "verified": false,
+  "active": false
 }

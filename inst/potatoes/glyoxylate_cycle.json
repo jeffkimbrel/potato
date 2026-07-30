@@ -6,7 +6,21 @@
     "carbon_metabolism",
     "central_metabolism"
   ],
-  "notes": "Glyoxylate cycle - allows net synthesis of carbohydrates from fatty acids via acetyl-CoA. Bypasses CO2-releasing steps of TCA cycle.",
+  "notes": "DEPRECATED: Old single-pathway schema. Will be converted to multi-pathway network. Glyoxylate cycle - allows net synthesis of carbohydrates from fatty acids via acetyl-CoA. Bypasses CO2-releasing steps of TCA cycle.",
+  "input": {
+    "compound": "acetyl-CoA",
+    "kegg_compound": "C00024",
+    "targets": [
+      "gltA_1"
+    ]
+  },
+  "output": {
+    "compound": "oxaloacetate",
+    "kegg_compound": "C00036",
+    "sources": [
+      "mdh_5"
+    ]
+  },
   "nodes": [
     {
       "id": "gltA",
@@ -339,5 +353,6 @@
     "method": "step_completion",
     "notes": "Pathway is complete if at least ONE enzyme from each of the 5 steps is present. Step 3 (isocitrate lyase) is the diagnostic enzyme for glyoxylate cycle."
   },
-  "verified": false
+  "verified": false,
+  "active": false
 }

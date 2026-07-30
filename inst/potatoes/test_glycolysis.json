@@ -6,7 +6,21 @@
     "test",
     "central_metabolism"
   ],
-  "notes": "Simple 3-gene linear pathway for testing potato infrastructure",
+  "notes": "DEPRECATED: Old single-pathway schema. Will be converted to multi-pathway network. Simple 3-gene linear pathway for testing potato infrastructure",
+  "input": {
+    "compound": "glyceraldehyde-3P",
+    "kegg_compound": "C00118",
+    "targets": [
+      "gapA_1"
+    ]
+  },
+  "output": {
+    "compound": "2-phosphoglycerate",
+    "kegg_compound": "C00631",
+    "sources": [
+      "eno_3"
+    ]
+  },
   "nodes": [
     {
       "id": "gapA",
@@ -25,7 +39,7 @@
         "1.2.1.12"
       ],
       "required": true,
-      "is_marker": false
+      "marker": false
     },
     {
       "id": "pgk",
@@ -44,7 +58,7 @@
         "2.7.2.3"
       ],
       "required": true,
-      "is_marker": false
+      "marker": false
     },
     {
       "id": "eno",
@@ -65,7 +79,7 @@
         "4.2.1.11"
       ],
       "required": true,
-      "is_marker": false
+      "marker": false
     }
   ],
   "edges": [
@@ -85,5 +99,6 @@
   "scoring": {
     "min_fraction": 1.0
   },
-  "verified": false
+  "verified": false,
+  "active": false
 }

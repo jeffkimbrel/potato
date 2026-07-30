@@ -13,6 +13,8 @@ Potato(
   source = character(0),
   notes = character(0),
   scoring = list(),
+  input = list(),
+  output = list(),
   json_path = character(0),
   graph = NULL
 )

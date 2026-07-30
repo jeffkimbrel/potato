@@ -7,19 +7,19 @@
     "energy_metabolism",
     "vanadium"
   ],
-  "notes": "Vanadium-dependent nitrogen fixation via alternative nitrogenase enzyme complex. Less common than Mo-nitrogenase, found when molybdenum is scarce. Reduces N2 to NH3 using vnfHDGK complex with a vanadium-iron cofactor (FeV-co). Similar structure to Mo-nitrogenase but with vanadium instead of molybdenum.",
+  "notes": "DEPRECATED: Old single-pathway schema. Will be converted to multi-pathway network. Vanadium-dependent nitrogen fixation via alternative nitrogenase enzyme complex. Less common than Mo-nitrogenase, found when molybdenum is scarce. Reduces N2 to NH3 using vnfHDGK complex with a vanadium-iron cofactor (FeV-co). Similar structure to Mo-nitrogenase but with vanadium instead of molybdenum.",
   "input": {
     "compound": "N2",
     "kegg_compound": "C00697",
     "targets": [
-      "vnfH_1"
+      "vnfDKGH_1"
     ]
   },
   "output": {
     "compound": "2 NH3",
     "kegg_compound": "C00014",
     "sources": [
-      "vnfDGK_4"
+      "vnfDKGH_1"
     ]
   },
   "nodes": [
@@ -51,5 +51,6 @@
     "marker_mode": "any",
     "notes": "All genes (vnfH, vnfD, vnfK, vnfG) required for functional V-nitrogenase. All are markers for V-dependent system."
   },
-  "verified": false
+  "verified": false,
+  "active": false
 }

@@ -1,6 +1,7 @@
 {
   "id": "entner_doudoroff_np",
   "name": "Entner-Doudoroff Pathway (Non-Phosphorylative)",
+  "active": false,
   "source": "KEGG M00309",
   "tags": [
     "metabolism",
@@ -10,7 +11,7 @@
     "archaea",
     "halophiles"
   ],
-  "notes": "Non-phosphorylative Entner-Doudoroff pathway: gluconate => glycerate. Operates on completely unphosphorylated intermediates (gluconate → KDG → glyceraldehyde → glycerate). Distinguished by gnaD (gluconate dehydratase) and kdgA (KDG aldolase, EC 4.1.2.51) which cleaves non-phosphorylated KDG. Found in archaea (Sulfolobus, Thermoplasma, halophiles) and some bacteria. Includes downstream glyceraldehyde processing (cutA/B/C complex, gadh, or aor) to complete pathway to glycerate. KEGG M00309 starts with gluconate - upstream glucose activation is a separate pathway.",
+  "notes": "DEPRECATED: Consolidated into entner_doudoroff_network.json. This standalone version kept for reference. Non-phosphorylative Entner-Doudoroff pathway: gluconate => glycerate. Operates on completely unphosphorylated intermediates (gluconate → KDG → glyceraldehyde → glycerate). Distinguished by gnaD (gluconate dehydratase) and kdgA (KDG aldolase, EC 4.1.2.51) which cleaves non-phosphorylated KDG. Found in archaea (Sulfolobus, Thermoplasma, halophiles) and some bacteria. Includes downstream glyceraldehyde processing (cutA/B/C complex, gadh, or aor) to complete pathway to glycerate. KEGG M00309 starts with gluconate - upstream glucose activation is a separate pathway.",
   "nodes": [
     {
       "id": "gnaD",

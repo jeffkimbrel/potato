@@ -7,7 +7,21 @@
     "test"
   ],
   "source": "GATOR v1 database",
-  "notes": "Beta-hydroxyaspartate cycle for glyoxylate metabolism. Converts glyoxylate to aspartate via beta-hydroxyaspartate intermediate.",
+  "notes": "DEPRECATED: Old single-pathway schema. Will be converted to multi-pathway network. Beta-hydroxyaspartate cycle for glyoxylate metabolism. Converts glyoxylate to aspartate via beta-hydroxyaspartate intermediate.",
+  "input": {
+    "compound": "glyoxylate",
+    "kegg_compound": "C00048",
+    "targets": [
+      "bhcA_1"
+    ]
+  },
+  "output": {
+    "compound": "aspartate",
+    "kegg_compound": "C00049",
+    "sources": [
+      "bhcD_4"
+    ]
+  },
   "nodes": [
     {
       "id": "bhcA",
@@ -17,7 +31,7 @@
       ],
       "type": "enzyme",
       "name": "Aspartate-Glyoxylate Aminotransferase",
-      "is_marker": true,
+      "marker": true,
       "required": true,
       "ec": [
         "2.6.1.35"
@@ -39,7 +53,7 @@
       ],
       "type": "enzyme",
       "name": "Beta-hydroxyaspartate aldolase",
-      "is_marker": false,
+      "marker": false,
       "required": true,
       "ec": [
         "4.1.3.41"
@@ -61,7 +75,7 @@
       ],
       "type": "enzyme",
       "name": "serine/threonine dehydratase",
-      "is_marker": false,
+      "marker": false,
       "required": true,
       "databases": {
         "kofam": [
@@ -80,7 +94,7 @@
       ],
       "type": "enzyme",
       "name": "ornithine cyclodeaminase",
-      "is_marker": false,
+      "marker": false,
       "required": true,
       "databases": {
         "kofam": [
@@ -99,7 +113,7 @@
       ],
       "type": "enzyme",
       "name": "bhc operon transcriptional regulator",
-      "is_marker": false,
+      "marker": false,
       "required": false,
       "databases": {
         "blast": [
@@ -123,11 +137,17 @@
       "from": "bhcB_3",
       "to": "bhcD_4",
       "compound": "iminosuccinate"
+    },
+    {
+      "from": "bhcD_4",
+      "to": "bhcR_5",
+      "notes": "bhcR is a transcriptional regulator (not enzymatic step)"
     }
   ],
   "scoring": {
     "min_fraction": 1.0,
     "marker_mode": "any"
   },
-  "verified": false
+  "verified": false,
+  "active": false
 }

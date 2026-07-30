@@ -4,14 +4,22 @@
 \alias{plot_potato}
 \title{Plot potato pathway as a directed acyclic graph}
 \usage{
-plot_potato(potato, sack = NULL, genome_name = NULL, layout = "sugiyama")
+plot_potato(
+  potato,
+  sack = NULL,
+  genome_name = NULL,
+  show_compounds = FALSE,
+  layout = "sugiyama"
+)
 }
 \arguments{
-\item{potato}{Potato S7 object}
+\item{potato}{Potato S7 object or path to potato JSON file}
 
 \item{sack}{Optional PotatoSack object (for highlighting detected genes)}
 
 \item{genome_name}{Optional genome name (requires sack)}
+
+\item{show_compounds}{Show compound nodes in bipartite graph (default: FALSE)}
 
 \item{layout}{Layout algorithm: "sugiyama" (hierarchical), "fr" (force-directed), "tree"}
 }

@@ -1,6 +1,7 @@
 {
   "id": "entner_doudoroff_classic",
   "name": "Entner-Doudoroff Pathway (Classic/Phosphorylative)",
+  "active": false,
   "source": "KEGG M00008",
   "tags": [
     "metabolism",
@@ -10,7 +11,7 @@
     "gram_negative",
     "pseudomonas"
   ],
-  "notes": "Classic Entner-Doudoroff pathway (M00008): glucose-6P => glyceraldehyde-3P + pyruvate. The original and most common ED pathway variant, found primarily in aerobic Gram-negative bacteria (Pseudomonas, E. coli) and some archaea. Fully phosphorylated throughout. Converts G6P to glyceraldehyde-3P + pyruvate via KDPG intermediate. Yields one ATP per glucose (vs two in EMP) but generates NADPH for biosynthesis. Diagnostic enzymes edd and eda distinguish this from EMP glycolysis and pentose phosphate pathway. Upstream glucokinase optional since G6P can come from other sources.",
+  "notes": "DEPRECATED: Consolidated into entner_doudoroff_network.json. This standalone version kept for reference. Classic Entner-Doudoroff pathway (M00008): glucose-6P => glyceraldehyde-3P + pyruvate. The original and most common ED pathway variant, found primarily in aerobic Gram-negative bacteria (Pseudomonas, E. coli) and some archaea. Fully phosphorylated throughout. Converts G6P to glyceraldehyde-3P + pyruvate via KDPG intermediate. Yields one ATP per glucose (vs two in EMP) but generates NADPH for biosynthesis. Diagnostic enzymes edd and eda distinguish this from EMP glycolysis and pentose phosphate pathway. Upstream glucokinase optional since G6P can come from other sources.",
   "input": {
     "compound": "D-glucose-6-phosphate",
     "kegg_compound": "C00092",

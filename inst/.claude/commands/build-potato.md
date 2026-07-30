@@ -142,6 +142,269 @@ Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
 - Sufficient for most presence/absence calls, especially with incomplete MAGs
 - Each pathway can have different `min_fraction` (e.g., 1.0 for strict, 0.5 for permissive)
 
+# Multi-Pathway Network Potatoes (NEW in v0.9.0)
+
+## When to Build Multi-Pathway Networks
+
+**Use multi-pathway networks when:**
+- Pathways are **alternative routes** to same biological outcome (e.g., Mo vs V nitrogenase, ED pathway variants)
+- Pathways **share metabolic context** and intermediates (e.g., ED variants all process sugars)
+- Finding one variant **explains absence** of another ("No ED classic because organism uses ED semi-phos")
+- Pathways **overlay spatially** but serve different purposes (e.g., TCA cycle + glyoxylate shunt)
+
+**Keep as separate potatoes when:**
+- Pathways are functionally unrelated
+- No shared genes or metabolic context
+- Independent detection is more informative
+
+## Multi-Pathway Schema Structure
+
+### Global Nodes (Detection Methods Only)
+
+Genes defined once at top level with detection methods:
+
+```json
+{
+  "id": "pathway_network",
+  "name": "Pathway Network Name",
+  "nodes": [
+    {
+      "id": "geneA",
+      "name": "enzyme name",
+      "databases": {
+        "kofam": ["K00001"],
+        "hmm": ["PF00001"],
+        "blast": ["ref_seq_1"]
+      },
+      "ec": ["1.1.1.1"],
+      "notes": "Biological context"
+    }
+  ]
+}
+```
+
+**Important:** No `step`, `required`, `marker` at global level. These are pathway-specific.
+
+### Pathways Field
+
+Each pathway defines its own topology and attributes:
+
+```json
+"pathways": {
+  "pathway_id": {
+    "name": "Pathway Name",
+    "type": "variant",
+    "kegg_module": "M00123",
+    "notes": "Biological context",
+    
+    "nodes": {
+      "geneA": {"step": 1, "required": true, "marker": true},
+      "geneB": {"step": 2, "required": false, "marker": false}
+    },
+    
+    "edges": [
+      {"from": "geneA", "to": "geneB", "compound": "metabolite"}
+    ],
+    
+    "input": {
+      "compound": "substrate",
+      "kegg_compound": "C00001",
+      "targets": ["geneA"]
+    },
+    "output": {
+      "compound": "product",
+      "kegg_compound": "C00002",
+      "sources": ["geneB"]
+    },
+    
+    "scoring": {
+      "min_fraction": 0.75,
+      "marker_mode": "any"
+    }
+  }
+}
+```
+
+### Pathway Types
+
+**Type: "variant"**
+- Alternative routes to same biological outcome
+- Examples:
+  - Mo-nitrogenase vs V-nitrogenase (both fix N2 → NH3)
+  - ED classic vs ED non-phosphorylative (both process sugars → pyruvate)
+  - Forward TCA vs reverse TCA (same cycle, different direction)
+
+**Type: "independent"**
+- Different purposes, but share metabolic space
+- Examples:
+  - TCA cycle (respiration) + glyoxylate shunt (C2 assimilation)
+  - Not variants of each other - independent functions
+  - Detecting both provides biological context
+
+### Key Rules for Networks
+
+1. **Genes defined once** - Detection methods in global `nodes`
+2. **Pathway context varies** - Same gene can be:
+   - Step 1 in one pathway, step 3 in another
+   - Marker in one pathway, not in another
+   - Required in one pathway, optional in another
+3. **Edges per pathway** - Each pathway has own topology
+4. **Shared genes** - Gene detected once, counts for all pathways using it
+5. **Independent scoring** - Each pathway scored separately
+
+## Building Multi-Pathway Networks
+
+### Step-by-Step Process
+
+**1. Identify related pathways**
+- Look for KEGG modules that share genes or metabolic space
+- Check literature for pathway variants
+- Ask user: "Are these alternative strategies or independent functions?"
+
+**2. Collect all genes**
+- Gather genes from all pathways
+- Remove duplicates - create single global list
+- Use consistent gene IDs across pathways
+
+**3. Define detection methods globally**
+```json
+"nodes": [
+  {
+    "id": "gnaD",
+    "name": "gluconate dehydratase",
+    "databases": {"kofam": ["K05308"]},
+    "notes": "Appears in 3 ED variants"
+  }
+]
+```
+
+**4. Define each pathway**
+For each pathway in the network:
+- Assign pathway `type` ("variant" or "independent")
+- Map genes to steps within THIS pathway
+- Mark pathway-specific markers
+- Define pathway-specific edges
+- Set pathway-specific scoring
+
+**5. Ask user about relationships**
+- "Are these alternative routes to same outcome (variants)?"
+- "Or do they serve different purposes (independent)?"
+- "Which genes are diagnostic for EACH pathway individually?"
+
+**6. Validate network**
+- Check all pathway node IDs exist in global nodes
+- Verify no orphan edges (references to non-existent nodes)
+- Ensure each pathway has at least one marker
+- Validate step numbers per pathway
+
+### Example: ED Pathway Network
+
+**User says:** "Build potato for Entner-Doudoroff pathways"
+
+**You respond:**
+```
+There are 4 ED pathway variants in KEGG - I recommend building a network potato:
+
+1. **Classic (M00006):** Glucose → pyruvate (fully phosphorylated)
+2. **Non-phosphorylative (M00309):** Gluconate → pyruvate (no phosphorylation)
+3. **Semi-phosphorylative (M00308):** Gluconate → glycerate-3P (hybrid)
+4. **Semi-phosphorylative alt (M00633):** Archaeal variant with alternative enzymes
+
+These are variants (same outcome via different chemistry). Building as network provides context:
+- User sees "ED classic absent but ED semi present" → explains the gap
+- Shared gene gnaD detected once, counts for 3 pathways
+- Visualizations show metabolic flexibility
+
+Shall I build this as a network with 4 variants?
+```
+
+**User:** "Yes"
+
+**You build:**
+- 20 unique genes in global nodes (zwf, pgl, gnaD, kdgK, eda, etc.)
+- 4 pathways in `pathways` field (classic, non_phosphorylative, semi_phosphorylative, semi_phosphorylative_alt)
+- Each pathway has its own step numbering, markers, edges
+- All pathways marked `type: "variant"`
+
+### Example: TCA + Glyoxylate Network
+
+**User says:** "Build TCA cycle and glyoxylate shunt"
+
+**You respond:**
+```
+These should be a network potato - but they're NOT variants:
+
+- **TCA forward (variant):** Oxidative TCA for respiration
+- **TCA reverse (variant):** Reductive TCA for carbon fixation (different enzymes/direction)
+- **Glyoxylate shunt (independent):** Bypasses TCA CO2 loss for C2 assimilation
+
+Forward TCA and reverse TCA are variants (same cycle, different purposes).
+Glyoxylate is independent (different function, overlays TCA spatially).
+
+Biological context:
+- Forward TCA + glyoxylate → can grow on acetate/fatty acids
+- Reverse TCA alone → carbon fixation (chemolithoautotroph)
+
+Shall I build this as a network with 2 TCA variants + 1 independent pathway?
+```
+
+### Common Mistakes to Avoid
+
+**❌ Don't put unrelated pathways in network:**
+- Nitrogen fixation + photosynthesis = NOT a network (unrelated)
+- Keep networks focused on metabolic neighborhood
+
+**❌ Don't define `step`/`marker` in global nodes:**
+```json
+// WRONG
+"nodes": [
+  {"id": "geneA", "step": 1, "marker": true, ...}
+]
+
+// RIGHT
+"nodes": [
+  {"id": "geneA", "name": "...", "databases": {...}}
+],
+"pathways": {
+  "pathway1": {
+    "nodes": {
+      "geneA": {"step": 1, "marker": true}
+    }
+  }
+}
+```
+
+**❌ Don't create networks with only 1 pathway:**
+- If only 1 pathway, use single-pathway schema
+- Networks are for related pathways only
+
+**❌ Don't mix detection methods across schema versions:**
+- Either all pathways in network, or separate single-pathway potatoes
+- Don't have half-consolidated networks
+
+## When to Consolidate Existing Potatoes
+
+**Candidates for consolidation:**
+- Multiple potatoes with overlapping genes (ED pathways)
+- Potatoes representing variants (Mo/V nitrogenase)
+- Pathway + its modifications (TCA + glyoxylate)
+
+**Process:**
+1. Identify related potatoes
+2. Ask user: "Should these be consolidated into a network?"
+3. Create network potato
+4. Mark old potatoes as `active: false`
+5. Add deprecation note in old potato `notes` field
+
+**Example deprecation:**
+```json
+{
+  "id": "entner_doudoroff_classic",
+  "active": false,
+  "notes": "DEPRECATED: Consolidated into entner_doudoroff_network.json. This standalone version kept for reference."
+}
+```
+
 # Workflow Options
 
 ## CRITICAL: Determine Context First
