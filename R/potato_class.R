@@ -51,31 +51,48 @@ Potato <- S7::new_class(
 
 #' Load a potato from JSON
 #'
+#' Loads multi-pathway network potatoes (new schema). Does not support deprecated
+#' single-pathway schema.
+#'
 #' @param path Path to potato JSON file
-#' @return Potato object
+#' @return Potato object (for multi-pathway networks, stores pathways in edges slot)
 #' @export
 load_potato <- function(path) {
   if (!file.exists(path)) {
     stop("Potato file not found: ", path, call. = FALSE)
   }
 
-  # Don't simplify vectors - keep list structure
   data <- jsonlite::read_json(path, simplifyVector = FALSE)
 
-  # Convert nodes to list of lists (keep structure)
+  # Check if deprecated single-pathway potato
+  is_network <- !is.null(data$pathways) && is.list(data$pathways)
+
+  if (!is_network) {
+    # Check if marked as inactive/deprecated
+    if (!is.null(data$active) && data$active == FALSE) {
+      warning("Potato '", data$id, "' is deprecated (active: false). ",
+              "Consider using the updated multi-pathway network version.",
+              call. = FALSE)
+    } else {
+      stop("Single-pathway schema is no longer supported. ",
+           "Only multi-pathway network potatoes can be loaded.",
+           call. = FALSE)
+    }
+  }
+
+  # Load multi-pathway network
   nodes <- if (is.null(data$nodes)) list() else data$nodes
-
-  # Convert edges to list of lists
-  edges <- if (is.null(data$edges)) list() else data$edges
-
-  # Flatten simple vectors
   tags <- if (is.null(data$tags)) character(0) else unlist(data$tags)
+
+  # Store pathways in edges slot (temporary until Potato class updated)
+  # This maintains compatibility with existing S7 class structure
+  edges <- if (is.null(data$pathways)) list() else data$pathways
 
   Potato(
     id = data$id,
     name = data$name,
     nodes = nodes,
-    edges = edges,
+    edges = edges,  # Contains pathways for network potatoes
     tags = tags,
     source = if (is.null(data$source)) "" else data$source,
     notes = if (is.null(data$notes)) "" else data$notes,
@@ -83,18 +100,22 @@ load_potato <- function(path) {
     input = if (is.null(data$input)) list() else data$input,
     output = if (is.null(data$output)) list() else data$output,
     json_path = path,
-    graph = NULL  # Build on demand
+    graph = NULL
   )
 }
 
 
 #' Load multiple potatoes from directory
 #'
+#' By default, only loads active potatoes (active != false). Set include_inactive = TRUE
+#' to load deprecated potatoes.
+#'
 #' @param dir Directory containing potato JSON files
 #' @param tags Optional character vector of tags to filter by
+#' @param include_inactive Logical. If TRUE, loads deprecated potatoes (active: false)
 #' @return Named list of Potato objects
 #' @export
-load_potatoes <- function(dir, tags = NULL) {
+load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
   if (!dir.exists(dir)) {
     stop("Directory not found: ", dir, call. = FALSE)
   }
@@ -103,15 +124,36 @@ load_potatoes <- function(dir, tags = NULL) {
 
   potatoes <- lapply(json_files, function(filepath) {
     tryCatch({
+      # Read JSON to check active flag before loading
+      data <- jsonlite::read_json(filepath, simplifyVector = FALSE)
+
+      # Skip inactive potatoes unless requested
+      if (!include_inactive && !is.null(data$active) && data$active == FALSE) {
+        return(NULL)
+      }
+
+      # Skip single-pathway potatoes that aren't marked inactive
+      is_network <- !is.null(data$pathways) && is.list(data$pathways)
+      if (!is_network && (is.null(data$active) || data$active == TRUE)) {
+        warning("Skipping ", basename(filepath), ": single-pathway schema not supported (should be marked active: false)", call. = FALSE)
+        return(NULL)
+      }
+
+      # Load the potato
       load_potato(filepath)
     }, error = function(e) {
-      warning("Failed to load ", basename(filepath), ": ", e$message)
+      warning("Failed to load ", basename(filepath), ": ", e$message, call. = FALSE)
       NULL
     })
   })
 
-  # Remove NULLs from failed loads
+  # Remove NULLs from skipped/failed loads
   potatoes <- potatoes[!sapply(potatoes, is.null)]
+
+  if (length(potatoes) == 0) {
+    message("No active potatoes found in ", dir)
+    return(list())
+  }
 
   # Name by ID
   names(potatoes) <- sapply(potatoes, function(p) p@id)
@@ -234,45 +276,83 @@ build_potato_graph <- function(potato) {
 #' Validate potato structure
 #'
 #' Validates a potato JSON structure for common errors and required fields.
+#' Handles both multi-pathway networks (new schema) and deprecated single-pathway potatoes.
 #' Users should run this on custom potatoes before using them for annotation.
 #'
-#' @param potato Potato object
+#' @param potato Potato object or list (raw JSON data)
 #' @param strict Logical. If TRUE, performs additional strict checks (default FALSE)
 #' @return List with 'valid' (logical), 'errors' (character vector), and 'warnings' (character vector)
 #' @export
 validate_potato <- function(potato, strict = FALSE) {
-  S7::check_is_S7(potato)
+  # Handle both Potato S7 objects and raw JSON lists
+  if (inherits(potato, "Potato") || (is.list(potato) && "id" %in% names(potato))) {
+    if (inherits(potato, "Potato")) {
+      data <- list(
+        id = potato@id,
+        name = potato@name,
+        nodes = potato@nodes,
+        edges = potato@edges,
+        tags = potato@tags,
+        source = potato@source,
+        scoring = potato@scoring
+      )
+    } else {
+      data <- potato
+    }
+  } else {
+    stop("potato must be a Potato object or list", call. = FALSE)
+  }
 
   errors <- character(0)
   warnings <- character(0)
 
   # Check required fields
-  if (nchar(potato@id) == 0) {
+  if (is.null(data$id) || nchar(data$id) == 0) {
     errors <- c(errors, "Missing required field: 'id'")
   }
-  if (nchar(potato@name) == 0) {
+  if (is.null(data$name) || nchar(data$name) == 0) {
     errors <- c(errors, "Missing required field: 'name'")
   }
 
-  # Check ID format (alphanumeric, underscores, hyphens only)
-  if (!grepl("^[a-zA-Z0-9_-]+$", potato@id)) {
+  # Check ID format
+  if (!is.null(data$id) && !grepl("^[a-zA-Z0-9_-]+$", data$id)) {
     warnings <- c(warnings, "Potato ID should contain only letters, numbers, underscores, and hyphens")
   }
 
+  # Detect if this is a multi-pathway network
+  is_network <- !is.null(data$pathways) && is.list(data$pathways)
+
+  if (is_network) {
+    # Validate multi-pathway network schema
+    result <- validate_multi_pathway(data, strict)
+    return(result)
+  } else {
+    # Validate single-pathway schema (deprecated)
+    result <- validate_single_pathway(data, strict)
+    return(result)
+  }
+}
+
+#' Validate single-pathway potato (deprecated schema)
+#' @keywords internal
+validate_single_pathway <- function(data, strict) {
+  errors <- character(0)
+  warnings <- character(0)
+
   # Check nodes
-  if (length(potato@nodes) == 0) {
+  if (is.null(data$nodes) || length(data$nodes) == 0) {
     errors <- c(errors, "Potato has no nodes")
   }
 
   # Check node IDs are unique
-  node_ids <- sapply(potato@nodes, function(n) n$id)
+  node_ids <- sapply(data$nodes, function(n) n$id)
   if (length(node_ids) != length(unique(node_ids))) {
     errors <- c(errors, "Duplicate node IDs found")
   }
 
   # Validate each node
-  for (i in seq_along(potato@nodes)) {
-    node <- potato@nodes[[i]]
+  for (i in seq_along(data$nodes)) {
+    node <- data$nodes[[i]]
     node_prefix <- sprintf("Node %d (%s)", i, node$id %||% "unnamed")
 
     # Required node fields
@@ -282,85 +362,58 @@ validate_potato <- function(potato, strict = FALSE) {
     if (is.null(node$type)) {
       errors <- c(errors, sprintf("%s: missing 'type'", node_prefix))
     } else if (!node$type %in% c("enzyme", "compound", "transporter")) {
-      warnings <- c(warnings, sprintf("%s: type '%s' is non-standard (expected 'enzyme', 'compound', or 'transporter')",
-                                      node_prefix, node$type))
+      warnings <- c(warnings, sprintf("%s: type '%s' is non-standard", node_prefix, node$type))
     }
 
-    # Check enzyme nodes have detection methods via databases field
+    # Check enzyme nodes have detection methods
     if (!is.null(node$type) && node$type == "enzyme") {
       has_databases <- !is.null(node$databases) && length(node$databases) > 0
 
       if (!has_databases) {
-        errors <- c(errors, sprintf("%s: enzyme missing 'databases' field",
-                                    node_prefix))
+        errors <- c(errors, sprintf("%s: enzyme missing 'databases' field", node_prefix))
       }
 
-      # Validate databases field structure
+      # Validate databases field
       if (has_databases) {
         if (!is.list(node$databases)) {
           errors <- c(errors, sprintf("%s: 'databases' must be a list", node_prefix))
         } else {
-          # Check each database entry - only allow standard types
           valid_db_types <- c("kofam", "blast", "hmm", "patric")
           for (db_name in names(node$databases)) {
-            db_terms <- node$databases[[db_name]]
-
-            # Error on non-standard database type
             if (!db_name %in% valid_db_types) {
-              errors <- c(errors, sprintf("%s: invalid database type '%s' (allowed: %s)",
-                                          node_prefix, db_name, paste(valid_db_types, collapse = ", ")))
+              errors <- c(errors, sprintf("%s: invalid database type '%s'", node_prefix, db_name))
             }
 
+            db_terms <- node$databases[[db_name]]
             if (!is.character(db_terms) && !is.list(db_terms)) {
-              errors <- c(errors, sprintf("%s: database '%s' terms must be character vector or list",
-                                          node_prefix, db_name))
+              errors <- c(errors, sprintf("%s: database '%s' terms must be character vector", node_prefix, db_name))
             }
 
-            # Validate KO format for kofam
+            # Validate KO format
             if (db_name == "kofam") {
               ko_ids <- if (is.list(db_terms)) unlist(db_terms) else db_terms
               invalid_ko <- ko_ids[!grepl("^K[0-9]{5}$", ko_ids)]
               if (length(invalid_ko) > 0) {
-                warnings <- c(warnings, sprintf("%s: invalid KO format in 'kofam': %s (should be K##### e.g., K00001)",
-                                                node_prefix, paste(invalid_ko, collapse = ", ")))
+                warnings <- c(warnings, sprintf("%s: invalid KO format: %s", node_prefix, paste(invalid_ko, collapse = ", ")))
               }
             }
           }
         }
       }
 
-      # Check required field type
+      # Check field types
       if (!is.null(node$required) && !is.logical(node$required)) {
-        errors <- c(errors, sprintf("%s: 'required' must be TRUE/FALSE, not '%s'",
-                                    node_prefix, node$required))
+        errors <- c(errors, sprintf("%s: 'required' must be TRUE/FALSE", node_prefix))
       }
-
-      # Check marker field type
       if (!is.null(node$marker) && !is.logical(node$marker)) {
-        errors <- c(errors, sprintf("%s: 'marker' must be TRUE/FALSE, not '%s'",
-                                    node_prefix, node$marker))
+        errors <- c(errors, sprintf("%s: 'marker' must be TRUE/FALSE", node_prefix))
       }
-
-      # Validate thresholds
-      if (!is.null(node$thresholds)) {
-        valid_threshold_names <- c("kofam_score", "kofam_evalue", "blast_evalue",
-                                   "blast_bitscore", "blast_pident", "hmm_evalue",
-                                   "hmm_bitscore", "hmm_domain_evalue")
-        invalid_thresholds <- setdiff(names(node$thresholds), valid_threshold_names)
-        if (length(invalid_thresholds) > 0) {
-          warnings <- c(warnings, sprintf("%s: unknown threshold names: %s",
-                                          node_prefix, paste(invalid_thresholds, collapse = ", ")))
-        }
-      }
-
     }
   }
 
-  # Collect all valid node IDs (both gene IDs and DAG node IDs)
-  all_valid_ids <- node_ids  # Start with gene IDs
-
-  # Add DAG node IDs from nodes array
-  for (node in potato@nodes) {
+  # Collect valid node IDs
+  all_valid_ids <- node_ids
+  for (node in data$nodes) {
     if (!is.null(node$nodes)) {
       dag_node_ids <- if (is.list(node$nodes)) unlist(node$nodes) else node$nodes
       all_valid_ids <- c(all_valid_ids, dag_node_ids)
@@ -368,78 +421,240 @@ validate_potato <- function(potato, strict = FALSE) {
   }
   all_valid_ids <- unique(all_valid_ids)
 
-  # Check edges reference valid nodes
-  for (i in seq_along(potato@edges)) {
-    edge <- potato@edges[[i]]
-
-    if (is.null(edge$from)) {
-      errors <- c(errors, sprintf("Edge %d: missing 'from' field", i))
-    } else if (!edge$from %in% all_valid_ids) {
-      errors <- c(errors, sprintf("Edge %d: 'from' references non-existent node '%s'", i, edge$from))
-    }
-
-    if (is.null(edge$to)) {
-      errors <- c(errors, sprintf("Edge %d: missing 'to' field", i))
-    } else if (!edge$to %in% all_valid_ids) {
-      errors <- c(errors, sprintf("Edge %d: 'to' references non-existent node '%s'", i, edge$to))
+  # Validate edges
+  if (!is.null(data$edges)) {
+    for (i in seq_along(data$edges)) {
+      edge <- data$edges[[i]]
+      if (is.null(edge$from)) {
+        errors <- c(errors, sprintf("Edge %d: missing 'from'", i))
+      } else if (!edge$from %in% all_valid_ids) {
+        errors <- c(errors, sprintf("Edge %d: 'from' references non-existent node '%s'", i, edge$from))
+      }
+      if (is.null(edge$to)) {
+        errors <- c(errors, sprintf("Edge %d: missing 'to'", i))
+      } else if (!edge$to %in% all_valid_ids) {
+        errors <- c(errors, sprintf("Edge %d: 'to' references non-existent node '%s'", i, edge$to))
+      }
     }
   }
 
-  # Check for cycles (DAG requirement)
-  if (length(errors) == 0 && length(potato@edges) > 0) {
+  # Check for cycles
+  if (length(errors) == 0 && !is.null(data$edges) && length(data$edges) > 0) {
     tryCatch({
-      g <- build_potato_graph(potato)
+      edge_list <- do.call(rbind, lapply(data$edges, function(e) c(e$from, e$to)))
+      g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
       if (!igraph::is_dag(g)) {
-        errors <- c(errors, "Potato contains cycles (must be a directed acyclic graph)")
+        errors <- c(errors, "Potato contains cycles (must be DAG)")
       }
     }, error = function(e) {
-      errors <- c(errors, sprintf("Graph construction failed: %s", e$message))
+      errors <- c(errors, sprintf("Graph validation failed: %s", e$message))
     })
   }
 
-  # Check for at least one marker gene if marker_mode is specified
-  if (!is.null(potato@scoring$marker_mode)) {
-    marker_nodes <- Filter(function(n) !is.null(n$marker) && n$marker == TRUE, potato@nodes)
+  # Check marker genes
+  if (!is.null(data$scoring$marker_mode)) {
+    marker_nodes <- Filter(function(n) !is.null(n$marker) && n$marker == TRUE, data$nodes)
     if (length(marker_nodes) == 0) {
-      warnings <- c(warnings, "Scoring has marker_mode specified but no nodes have marker=true")
+      warnings <- c(warnings, "marker_mode specified but no marker genes found")
     }
-
-    # Validate marker_mode value
-    if (!potato@scoring$marker_mode %in% c("any", "all")) {
-      errors <- c(errors, "scoring.marker_mode must be 'any' or 'all'")
+    if (!data$scoring$marker_mode %in% c("any", "all")) {
+      errors <- c(errors, "marker_mode must be 'any' or 'all'")
     }
   }
 
-  # Strict mode checks
+  # Strict checks
   if (strict) {
-    # Check for source attribution
-    if (nchar(potato@source) == 0) {
-      warnings <- c(warnings, "No 'source' specified (good practice to cite pathway origin)")
+    if (is.null(data$source) || nchar(data$source) == 0) {
+      warnings <- c(warnings, "No source specified")
     }
-
-    # Check for tags
-    if (length(potato@tags) == 0) {
-      warnings <- c(warnings, "No tags specified (tags help organize potato collections)")
-    }
-
-    # Check for scoring parameters
-    if (length(potato@scoring) == 0) {
-      warnings <- c(warnings, "No scoring parameters specified")
-    }
-
-    # Recommend marker genes for complex pathways
-    enzyme_count <- length(Filter(function(n) !is.null(n$type) && n$type == "enzyme", potato@nodes))
-    marker_count <- length(Filter(function(n) !is.null(n$marker) && n$marker == TRUE, potato@nodes))
-    if (enzyme_count >= 5 && marker_count == 0) {
-      warnings <- c(warnings, "Complex pathway (5+ enzymes) without marker genes - consider designating key diagnostic genes")
+    if (is.null(data$tags) || length(data$tags) == 0) {
+      warnings <- c(warnings, "No tags specified")
     }
   }
 
-  list(
-    valid = length(errors) == 0,
-    errors = errors,
-    warnings = warnings
-  )
+  list(valid = length(errors) == 0, errors = errors, warnings = warnings)
+}
+
+#' Validate multi-pathway network potato (new schema)
+#' @keywords internal
+validate_multi_pathway <- function(data, strict) {
+  errors <- character(0)
+  warnings <- character(0)
+
+  # Check nodes array exists
+  if (is.null(data$nodes) || length(data$nodes) == 0) {
+    errors <- c(errors, "Multi-pathway network has no global nodes")
+  }
+
+  # Check node IDs are unique
+  node_ids <- sapply(data$nodes, function(n) n$id)
+  if (length(node_ids) != length(unique(node_ids))) {
+    errors <- c(errors, "Duplicate node IDs in global nodes array")
+  }
+
+  # Validate global nodes (detection methods only, no step/required/marker)
+  for (i in seq_along(data$nodes)) {
+    node <- data$nodes[[i]]
+    node_prefix <- sprintf("Global node %d (%s)", i, node$id %||% "unnamed")
+
+    if (is.null(node$id)) {
+      errors <- c(errors, sprintf("%s: missing 'id'", node_prefix))
+    }
+    if (is.null(node$type)) {
+      errors <- c(errors, sprintf("%s: missing 'type'", node_prefix))
+    }
+
+    # Global nodes should NOT have pathway-specific attributes
+    if (!is.null(node$step)) {
+      errors <- c(errors, sprintf("%s: 'step' belongs in pathway-specific nodes, not global", node_prefix))
+    }
+    if (!is.null(node$required)) {
+      errors <- c(errors, sprintf("%s: 'required' belongs in pathway-specific nodes, not global", node_prefix))
+    }
+    if (!is.null(node$marker)) {
+      errors <- c(errors, sprintf("%s: 'marker' belongs in pathway-specific nodes, not global", node_prefix))
+    }
+
+    # Validate databases field
+    if (!is.null(node$type) && node$type == "enzyme") {
+      if (is.null(node$databases) || length(node$databases) == 0) {
+        errors <- c(errors, sprintf("%s: enzyme missing 'databases' field", node_prefix))
+      } else {
+        valid_db_types <- c("kofam", "blast", "hmm", "patric")
+        for (db_name in names(node$databases)) {
+          if (!db_name %in% valid_db_types) {
+            errors <- c(errors, sprintf("%s: invalid database type '%s'", node_prefix, db_name))
+          }
+
+          # Validate KO format
+          if (db_name == "kofam") {
+            ko_ids <- unlist(node$databases[[db_name]])
+            invalid_ko <- ko_ids[!grepl("^K[0-9]{5}$", ko_ids)]
+            if (length(invalid_ko) > 0) {
+              warnings <- c(warnings, sprintf("%s: invalid KO format: %s", node_prefix, paste(invalid_ko, collapse = ", ")))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  # Validate pathways field
+  if (is.null(data$pathways) || !is.list(data$pathways) || length(data$pathways) == 0) {
+    errors <- c(errors, "Multi-pathway network must have 'pathways' field with at least one pathway")
+  } else {
+    # Validate each pathway
+    for (pathway_id in names(data$pathways)) {
+      pathway <- data$pathways[[pathway_id]]
+      path_prefix <- sprintf("Pathway '%s'", pathway_id)
+
+      # Check pathway has nodes
+      if (is.null(pathway$nodes) || length(pathway$nodes) == 0) {
+        errors <- c(errors, sprintf("%s: no nodes defined", path_prefix))
+      }
+
+      # Check pathway type
+      if (is.null(pathway$type)) {
+        warnings <- c(warnings, sprintf("%s: missing 'type' field (should be 'variant' or 'independent')", path_prefix))
+      } else if (!pathway$type %in% c("variant", "independent")) {
+        errors <- c(errors, sprintf("%s: type must be 'variant' or 'independent', got '%s'", path_prefix, pathway$type))
+      }
+
+      # Validate pathway-specific node references
+      if (!is.null(pathway$nodes)) {
+        for (node_id in names(pathway$nodes)) {
+          if (!node_id %in% node_ids) {
+            errors <- c(errors, sprintf("%s: node '%s' not found in global nodes array", path_prefix, node_id))
+          }
+
+          node_attrs <- pathway$nodes[[node_id]]
+
+          # Check required attributes
+          if (is.null(node_attrs$step)) {
+            errors <- c(errors, sprintf("%s node '%s': missing 'step'", path_prefix, node_id))
+          }
+          if (is.null(node_attrs$required)) {
+            warnings <- c(warnings, sprintf("%s node '%s': missing 'required' (recommended)", path_prefix, node_id))
+          }
+          if (is.null(node_attrs$marker)) {
+            warnings <- c(warnings, sprintf("%s node '%s': missing 'marker' (recommended)", path_prefix, node_id))
+          }
+
+          # Validate types
+          if (!is.null(node_attrs$required) && !is.logical(node_attrs$required)) {
+            errors <- c(errors, sprintf("%s node '%s': 'required' must be TRUE/FALSE", path_prefix, node_id))
+          }
+          if (!is.null(node_attrs$marker) && !is.logical(node_attrs$marker)) {
+            errors <- c(errors, sprintf("%s node '%s': 'marker' must be TRUE/FALSE", path_prefix, node_id))
+          }
+        }
+      }
+
+      # Validate pathway edges
+      if (!is.null(pathway$edges)) {
+        pathway_node_ids <- names(pathway$nodes)
+        for (i in seq_along(pathway$edges)) {
+          edge <- pathway$edges[[i]]
+          if (is.null(edge$from)) {
+            errors <- c(errors, sprintf("%s edge %d: missing 'from'", path_prefix, i))
+          } else if (!edge$from %in% pathway_node_ids) {
+            errors <- c(errors, sprintf("%s edge %d: 'from' node '%s' not in pathway nodes", path_prefix, i, edge$from))
+          }
+          if (is.null(edge$to)) {
+            errors <- c(errors, sprintf("%s edge %d: missing 'to'", path_prefix, i))
+          } else if (!edge$to %in% pathway_node_ids) {
+            errors <- c(errors, sprintf("%s edge %d: 'to' node '%s' not in pathway nodes", path_prefix, i, edge$to))
+          }
+        }
+
+        # Check for cycles in this pathway
+        if (length(errors) == 0) {
+          tryCatch({
+            edge_list <- do.call(rbind, lapply(pathway$edges, function(e) c(e$from, e$to)))
+            g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
+            if (!igraph::is_dag(g)) {
+              errors <- c(errors, sprintf("%s: contains cycles (must be DAG)", path_prefix))
+            }
+          }, error = function(e) {
+            errors <- c(errors, sprintf("%s: graph validation failed: %s", path_prefix, e$message))
+          })
+        }
+      }
+
+      # Check pathway scoring
+      if (is.null(pathway$scoring)) {
+        warnings <- c(warnings, sprintf("%s: missing 'scoring' field", path_prefix))
+      } else {
+        if (!is.null(pathway$scoring$marker_mode)) {
+          if (!pathway$scoring$marker_mode %in% c("any", "all")) {
+            errors <- c(errors, sprintf("%s: marker_mode must be 'any' or 'all'", path_prefix))
+          }
+          # Check for marker genes
+          marker_count <- sum(sapply(pathway$nodes, function(n) !is.null(n$marker) && n$marker == TRUE))
+          if (marker_count == 0) {
+            warnings <- c(warnings, sprintf("%s: marker_mode specified but no marker genes", path_prefix))
+          }
+        }
+      }
+    }
+  }
+
+  # Check that edges field is absent (edges belong in pathways)
+  if (!is.null(data$edges) && length(data$edges) > 0) {
+    errors <- c(errors, "Multi-pathway network should not have global 'edges' field (edges belong in individual pathways)")
+  }
+
+  # Strict checks
+  if (strict) {
+    if (is.null(data$source) || nchar(data$source) == 0) {
+      warnings <- c(warnings, "No source specified")
+    }
+    if (is.null(data$tags) || length(data$tags) == 0) {
+      warnings <- c(warnings, "No tags specified")
+    }
+  }
+
+  list(valid = length(errors) == 0, errors = errors, warnings = warnings)
 }
 
 #' Print validation results
