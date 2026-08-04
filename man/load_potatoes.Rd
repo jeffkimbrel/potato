@@ -4,16 +4,19 @@
 \alias{load_potatoes}
 \title{Load multiple potatoes from directory}
 \usage{
-load_potatoes(dir, tags = NULL)
+load_potatoes(dir, tags = NULL, include_inactive = FALSE)
 }
 \arguments{
 \item{dir}{Directory containing potato JSON files}
 
 \item{tags}{Optional character vector of tags to filter by}
+
+\item{include_inactive}{Logical. If TRUE, loads inactive potatoes (active: false)}
 }
 \value{
 Named list of Potato objects
 }
 \description{
-Load multiple potatoes from directory
+By default, only loads active potatoes (active != false). Set include_inactive = TRUE
+to load inactive potatoes.
 }

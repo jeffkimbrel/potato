@@ -113,7 +113,7 @@ score_pathways <- function(sack,
           all_scores[[length(all_scores) + 1]] <- pathway_score
         }
       } else {
-        # Single-pathway potato (deprecated, but still score if loaded)
+        # Single-pathway potato (legacy schema)
         potato_score <- score_single_pathway(
           potato = potato,
           genome_name = genome_name,

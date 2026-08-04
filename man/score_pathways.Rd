@@ -24,14 +24,18 @@ score_pathways(
 \item{hmm_evalue}{E-value threshold for HMM hits without TC (default: 1e-10)}
 }
 \value{
-Modified PotatoSack with scores in @scores
+Modified PotatoSack with scores in @scores. For multi-pathway networks,
+scores tibble includes 'pathway' and 'pathway_name' columns with one row per
+pathway per genome.
 }
 \description{
 Applies quality thresholds to annotation hits and calculates pathway-level
-completion scores. Handles OR branches (alternative genes) and required vs
-optional genes.
+completion scores. For multi-pathway networks, scores each pathway independently.
 }
 \details{
+Handles OR branches (alternative genes), required vs optional genes, and
+multi-pathway networks where genes are shared across pathways.
+
 Threshold priority:
 \itemize{
 \item Kofam: Uses per-gene threshold from KEGG (can override with kofam_threshold)

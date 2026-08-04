@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** v0.8.0 - Complete annotation pipeline with scoring, visualization, and analysis tools. HMM trusted cutoff support, per-pathway threshold visualization, near-miss pathway detection, conda path auto-detection, text-based pathway printing, potato verification system.
+**Current Status:** v0.9.0 (in progress) - Multi-pathway networks, interactive visNetwork visualization with curated layouts, coordinate export/import system, pathway filtering, dual coordinate systems for compound/enzyme-only views.
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -56,6 +56,29 @@ Metabolites decorate edges, not structural nodes.
 **Why:** Simple scoring logic + biological context for LLM reasoning
 
 ---
+
+## Development Workflow
+
+**CRITICAL: Always use devtools::load_all() when testing**
+
+We are developing the package and potatoes simultaneously. The installed version is ALWAYS out of date.
+
+```r
+# CORRECT - loads latest code from R/ directory
+devtools::load_all()
+pot <- load_potato("inst/potatoes/my_potato.json")
+
+# WRONG - uses old installed version
+library(potato)
+pot <- load_potato("inst/potatoes/my_potato.json")
+```
+
+When testing any R functions, prefix your Rscript commands with `devtools::load_all()`:
+
+```bash
+# Example testing pattern
+Rscript -e "devtools::load_all(); pot <- load_potato('inst/potatoes/test.json'); validate_potato(pot)"
+```
 
 ## Technology Stack
 
@@ -575,7 +598,7 @@ sack <- readRDS("sack.rds")  # Standard R load
 
 ---
 
-## Complete Workflow Status (v0.7.0)
+## Complete Workflow Status (v0.9.0 in progress)
 
 ### Fully Implemented and Tested ✓
 
@@ -617,14 +640,35 @@ sack <- readRDS("sack.rds")  # Standard R load
 - ✅ Determine presence/absence based on min_fraction threshold
 - ✅ Store results in `sack@scores` tibble
 
-**Visualization (v0.7.0 - v0.7.1)**
-- ✅ `plot_potato()` - ggraph network plot with step-based layout
+**Visualization (v0.7.0 - v0.9.0)**
+- ✅ `plot_potato()` - Dual-mode visualization system
+  - **Static mode** (`interactive = FALSE`): ggraph network plots
+    - Force-directed layouts for multi-pathway networks
+    - Step-based layouts for single-pathway potatoes
+    - Pathway convex hulls with ggforce
+    - Publication-quality PDF/PNG export
+  - **Interactive mode** (`interactive = TRUE`): visNetwork plots
+    - Drag-and-drop node positioning
+    - Full viewport display (100vh)
+    - Export coordinates to JSON
+    - Zoom, pan, highlight on hover
+    - Navigation controls
+  - **Curated layouts**: Supports embedded x,y coordinates in potato JSON
+    - Dual coordinate systems: `x,y` (enzyme-only) and `x_compounds,y_compounds` (with compounds)
+    - Hybrid approach: uses curated coords where available, layout algorithm for new nodes
+    - Auto-detection of coordinate type when importing
+  - **Pathway filtering**: `pathway` parameter to show single pathway from multi-pathway network
+  - **Compound display**: `show_compounds` toggle for bipartite graphs
+    - Deduplicated compounds (same compound appears once)
+    - Compounds positioned between connected enzymes
+    - Different shapes: triangles for compounds, circles for genes
 - ✅ `plot_pathway_heatmap()` - ggplot2 tile heatmap across genomes
 - ✅ `plot_genome_pathways()` - ggplot2 horizontal bars for one genome
   - Shows per-pathway threshold markers (red vertical bars)
   - Each pathway displays its actual min_fraction threshold
 - ✅ `plot_pathway_summary()` - ggplot2 stacked bars (pathways per genome)
 - ✅ `export_potato_dot()` - Export to graphviz format
+- ✅ `update_potato_coordinates()` - Import visNetwork coordinates to potato JSON
 - ✅ All plots use tidyverse/ggplot2 (no base graphics)
 - ✅ `potato_theme()` - Consistent theming with transparent backgrounds
 
@@ -632,6 +676,30 @@ sack <- readRDS("sack.rds")  # Standard R load
 - ✅ `summarize_missing_genes()` - Identify genes systematically missing across genomes
 - ✅ `find_near_miss_pathways()` - Find pathways just below detection threshold
 - ✅ `plot_near_miss_pathways()` - Visualize near-miss status with color coding
+
+**Multi-Pathway Networks (v0.9.0)**
+- ✅ Multi-pathway JSON schema implemented
+  - Global `nodes` array: gene definitions with detection methods
+  - `pathways` object: pathway-specific attributes (step, required, marker, edges)
+  - Pathway types: "variant" (alternatives) vs "independent" (different purposes)
+- ✅ Gene-based graph structure
+  - Same gene appears once, shared across pathways
+  - Edges deduplicated automatically
+  - No step-based node IDs (uses bare gene IDs)
+- ✅ `print_potato()` handles multi-pathway networks
+  - Prints each pathway with compact notation
+  - Shows alternatives, markers, optional genes
+- ✅ `validate_potato()` works with multi-pathway networks
+  - Validates global nodes + pathway-specific attributes
+  - Checks for cycles, missing references
+- ✅ Potato hashing for version tracking
+  - `potato_hash` column in annotation results
+  - Only functional fields hashed (excludes metadata)
+  - Tracks which potato version was used for annotation
+- ✅ Example: `entner_doudoroff_network.json`
+  - 4 ED pathway variants + gluconate transport + galactose catabolism
+  - 23 unique genes, 6 pathways
+  - Demonstrates pathway overlap and metabolic flexibility
 
 ### Ready for Testing
 All features above have been implemented and basic testing done on:
@@ -644,6 +712,7 @@ All features above have been implemented and basic testing done on:
 ### Not Yet Implemented
 - Gene specificity weighting in scoring
 - Marker gene emphasis in scoring
+- Multi-pathway scoring (currently score single-pathway potatoes only)
 - Threshold sensitivity analysis (high-priority - see ROADMAP Phase 3.4)
 - LLM agents (builder, converter, analysis)
 - Multi-sack comparisons
@@ -671,17 +740,24 @@ All features above have been implemented and basic testing done on:
 - Standard R: `saveRDS(sack, "file.rds")` and `readRDS("file.rds")`
 
 ### Potato Functions
-- `load_potato(path)` - Load single potato JSON (⚠️ needs update for multi-pathway)
-- `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory (⚠️ needs active flag filter)
+- `load_potato(path)` - Load single potato JSON (multi-pathway networks supported)
+- `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory (filters active=false)
 - `load_test_potato()` - Load example test potato
 - `print_potato(potato, compact, show_compounds, show_ko, show_ec)` - Text-based pathway view
+  - Handles both single-pathway and multi-pathway networks
   - Compact notation: `*` = marker, `^` = optional, `{n}` = complex, `(A|B)` = alternatives
   - Example: `[D-glucose-6-P] -> zwf -> (pgl^ | ybhE^) -> edd* -> eda*`
+  - Multi-pathway: prints each pathway separately with its topology
 - `get_enzyme_nodes(potato)` - Extract enzyme nodes
 - `get_detection_terms(potato, database_name)` - Extract KO/blast/hmm terms
 - `get_marker_genes(potato)` - Extract marker gene nodes
-- `build_potato_graph(potato)` - Build igraph DAG
+- `build_potato_graph(potato)` - Build igraph DAG (gene-based for multi-pathway)
+- `build_bipartite_graph(potato)` - Build bipartite graph with compound nodes
 - `print_validation(validation_result)` - Pretty print validation
+- `compute_potato_hash(potato)` - Generate MD5 hash of functional fields
+- `update_potato_coordinates(potato_path, coords_path, with_compounds)` - Import coordinates
+  - Auto-detects if coordinates include compounds
+  - Saves to x/y or x_compounds/y_compounds fields
 
 ### Annotation Functions
 - `run_kofam(sack, potato_names, conda_env, workers, overwrite)` - Kofam annotation

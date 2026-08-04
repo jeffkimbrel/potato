@@ -16,6 +16,17 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_ko 
     potato <- load_potato(potato)
   }
 
+  # Check if multi-pathway network
+  is_network <- !is.null(potato@edges) &&
+                is.list(potato@edges) &&
+                length(names(potato@edges)) > 0 &&
+                !is.null(potato@edges[[1]]$type)
+
+  if (is_network) {
+    print_multi_pathway_network(potato, show_ko = show_ko, show_ec = show_ec)
+    return(invisible(potato))
+  }
+
   if (compact) {
     print_pathway_compact(potato, show_ko = show_ko, show_ec = show_ec)
     return(invisible(potato))
@@ -117,6 +128,102 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_ko 
     cli::cli_rule("Notes")
     cli::cli_text(potato@notes)
   }
+
+  invisible(potato)
+}
+
+
+#' Print multi-pathway network (internal)
+#' @noRd
+print_multi_pathway_network <- function(potato, show_ko = FALSE, show_ec = FALSE) {
+
+  cli::cli_h1(potato@name)
+  cli::cli_text("Source: {.field {potato@source}}")
+  cli::cli_text("Tags: {.val {paste(potato@tags, collapse = ', ')}}")
+  cli::cli_text("")
+  cli::cli_alert_info("Multi-pathway network with {length(potato@edges)} pathway{?s}")
+  cli::cli_rule()
+
+  # Print each pathway
+  pathways <- potato@edges  # In network potatoes, edges slot contains pathways
+
+  for (pathway_id in names(pathways)) {
+    pathway <- pathways[[pathway_id]]
+
+    cli::cli_h2(pathway$name %||% pathway_id)
+    cli::cli_text("Type: {.field {pathway$type}}")
+    if (!is.null(pathway$kegg_module)) {
+      cli::cli_text("KEGG: {.field {pathway$kegg_module}}")
+    }
+    if (!is.null(pathway$notes)) {
+      cli::cli_text("{.emph {pathway$notes}}")
+    }
+    cli::cli_text("")
+
+    # Build compact pathway string for this pathway
+    pathway_nodes <- pathway$nodes
+
+    # Get steps from pathway-specific nodes
+    steps <- list()
+    for (node_id in names(pathway_nodes)) {
+      node_attrs <- pathway_nodes[[node_id]]
+      step_num <- node_attrs$step
+      if (is.list(step_num)) step_num <- step_num[[1]]
+
+      if (is.null(steps[[as.character(step_num)]])) {
+        steps[[as.character(step_num)]] <- list()
+      }
+
+      # Merge global node data with pathway-specific attributes
+      global_node <- Find(function(n) n$id == node_id, potato@nodes)
+      merged_node <- global_node
+      merged_node$step <- node_attrs$step
+      merged_node$required <- node_attrs$required
+      merged_node$marker <- node_attrs$marker
+
+      steps[[as.character(step_num)]][[length(steps[[as.character(step_num)]]) + 1]] <- merged_node
+    }
+
+    # Sort by step
+    step_numbers <- as.integer(names(steps))
+    steps <- steps[order(step_numbers)]
+
+    # Build compact string
+    parts <- character()
+
+    if (!is.null(pathway$input)) {
+      parts <- c(parts, paste0("[", pathway$input$compound, "]"))
+    }
+
+    for (step_name in names(steps)) {
+      step_nodes <- steps[[step_name]]
+
+      if (length(step_nodes) == 1) {
+        node <- step_nodes[[1]]
+        gene_str <- format_gene_compact(node, show_ko, show_ec)
+        parts <- c(parts, gene_str)
+      } else {
+        # Multiple alternatives
+        alt_genes <- sapply(step_nodes, function(node) format_gene_compact(node, show_ko, show_ec))
+        parts <- c(parts, paste0("(", paste(alt_genes, collapse = " | "), ")"))
+      }
+    }
+
+    if (!is.null(pathway$output)) {
+      parts <- c(parts, paste0("[", pathway$output$compound, "]"))
+    }
+
+    # Print pathway flow
+    pathway_str <- paste(parts, collapse = " -> ")
+    cli::cli_text("  {pathway_str}")
+    cli::cli_text("")
+  }
+
+  cli::cli_rule()
+  cli::cli_text("{.emph * = marker gene}")
+  cli::cli_text("{.emph ^ = optional}")
+  cli::cli_text("{.emph {{n}} = complex with n subunits}")
+  cli::cli_text("")
 
   invisible(potato)
 }

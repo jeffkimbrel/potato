@@ -2,15 +2,15 @@
 % Please edit documentation in R/visualize.R
 \name{export_potato_dot}
 \alias{export_potato_dot}
-\title{Export potato graph to graphviz DOT format}
+\title{Export potato DAG to graphviz DOT format}
 \usage{
-export_potato_dot(potato, file)
+export_potato_dot(potato, file = NULL)
 }
 \arguments{
-\item{potato}{Potato S7 object}
+\item{potato}{Potato object}
 
-\item{file}{Output file path}
+\item{file}{Output file path (optional, returns string if NULL)}
 }
 \description{
-Export potato graph to graphviz DOT format
+Export potato DAG to graphviz DOT format
 }

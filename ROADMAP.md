@@ -1,12 +1,12 @@
 # POTATO v1 - Development Roadmap
 
-**Current Version:** v0.8.0 (2026-07-30)
+**Current Version:** v0.9.0 (in progress, 2026-08-04)
 
-**Status:** Complete annotation pipeline with scoring, visualization, text-based pathway views, and LLM-assisted potato building. Ready for real-world testing and potato database expansion.
+**Status:** Multi-pathway networks implemented with interactive visNetwork visualization. Curated layout system with coordinate export/import. Ready for multi-pathway scoring implementation.
 
-**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways → visualize results → analyze near-misses
+**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (single-pathway only) → interactive/static visualization with curated layouts → analyze near-misses
 
-**What's next:** Gene specificity weighting, threshold sensitivity analysis, more verified potatoes
+**What's next:** Multi-pathway scoring, gene specificity weighting, threshold sensitivity analysis
 
 ---
 
@@ -500,39 +500,65 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 - [x] Create example: `entner_doudoroff_network.json` (4 ED variants)
 - [x] Mark old ED potatoes as `active: false`
 
-#### 0.9.2 Code Updates (IN PROGRESS)
-- [ ] Update `load_potato()` to handle both schemas
-  - [ ] Detect single-pathway vs multi-pathway
-  - [ ] Parse `pathways` field into internal representation
-  - [ ] Maintain backward compatibility
-- [ ] Update `load_potatoes()` to filter by `active` flag
-  - [ ] Default: only load active potatoes
-  - [ ] Optional `include_inactive = TRUE` parameter
-- [ ] Update `validate_potato()` for multi-pathway schema
-  - [ ] Validate pathway-specific node references
-  - [ ] Check edges reference valid nodes within pathway
-  - [ ] Verify step numbers within each pathway
-  - [ ] Check marker genes exist per pathway
-- [ ] Update `score_pathways()` to score independently
+#### 0.9.2 Code Updates ✓ (COMPLETE)
+- [x] Update `load_potato()` to handle both schemas
+  - [x] Detect single-pathway vs multi-pathway
+  - [x] Parse `pathways` field into internal representation
+  - [x] Maintain backward compatibility
+- [x] Update `load_potatoes()` to filter by `active` flag
+  - [x] Default: only load active potatoes
+  - [x] Optional `include_inactive = TRUE` parameter
+- [x] Update `validate_potato()` for multi-pathway schema
+  - [x] Validate pathway-specific node references
+  - [x] Check edges reference valid nodes within pathway
+  - [x] Verify step numbers within each pathway
+  - [x] Check marker genes exist per pathway
+- [ ] Update `score_pathways()` to score independently (TODO)
   - [ ] For single-pathway: score as before
   - [ ] For multi-pathway: score each pathway separately
   - [ ] Results show per-pathway scores
   - [ ] Aggregate network-level interpretation
-- [ ] Update `print_potato()` for multi-pathway
-  - [ ] Show network summary
-  - [ ] Option to print individual pathways
-  - [ ] Compact view for each pathway
+- [x] Update `print_potato()` for multi-pathway
+  - [x] Show network summary
+  - [x] Option to print individual pathways
+  - [x] Compact view for each pathway
+- [x] Add potato hashing for version tracking
+  - [x] `compute_potato_hash()` generates MD5 of functional fields
+  - [x] `potato_hash` column added to annotation results
 
-#### 0.9.3 Visualization Updates
-- [ ] Update `plot_potato()` for multi-pathway networks
-  - [ ] Option to show all pathways overlaid
-  - [ ] Option to show single pathway
-  - [ ] Color-code pathway-specific nodes/edges
-  - [ ] Highlight shared nodes
-- [ ] Update pathway heatmap for networks
+#### 0.9.3 Visualization Updates ✓ (COMPLETE)
+- [x] Replace plotly with visNetwork for interactive mode
+  - [x] Full viewport display (100vh)
+  - [x] Drag-and-drop node positioning
+  - [x] Export coordinates to JSON
+  - [x] JavaScript function: `exportCoordinates()`
+  - [x] Zoom, pan, highlight on hover
+  - [x] Navigation controls
+- [x] Update `plot_potato()` for multi-pathway networks
+  - [x] Option to show all pathways overlaid
+  - [x] Option to show single pathway (`pathway` parameter)
+  - [x] Gene-based graph structure (not step-based)
+  - [x] Shared nodes appear once
+  - [x] Force-directed layout for multi-pathway (KK, FR, sugiyama)
+- [x] Curated layout system
+  - [x] Support embedded x,y coordinates in potato JSON
+  - [x] `update_potato_coordinates()` imports coordinates
+  - [x] Auto-detection of compound vs enzyme-only layouts
+  - [x] Dual coordinate systems: `x,y` and `x_compounds,y_compounds`
+  - [x] Hybrid approach: curated coords + layout for new nodes
+- [x] Compound visualization improvements
+  - [x] Deduplicate compounds (same compound appears once)
+  - [x] Position compounds between connected enzymes
+  - [x] Different shapes: triangles for compounds, circles for genes
+  - [x] Bipartite graph support (`show_compounds` parameter)
+- [x] Static mode improvements
+  - [x] Pathway convex hulls with ggforce (multi-pathway)
+  - [x] Force-directed layouts for multi-pathway
+  - [x] No warnings when switching between interactive/static
+- [ ] Update pathway heatmap for networks (TODO)
   - [ ] Rows = pathways (not potatoes)
   - [ ] Show variant completion status
-- [ ] Add network-level summary plots
+- [ ] Add network-level summary plots (TODO)
 
 #### 0.9.4 Build-Potato Agent Updates
 - [ ] Update agent instructions for building networks
@@ -542,7 +568,13 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 - [ ] Add validation step for networks
 - [ ] Update examples
 
-#### 0.9.5 Consolidate Existing Potatoes
+#### 0.9.5 Consolidate Existing Potatoes (IN PROGRESS)
+- [x] Expand `entner_doudoroff_network.json`
+  - [x] 4 ED pathway variants
+  - [x] Gluconate transport (independent)
+  - [x] Galactose catabolism (independent)
+  - [x] 23 unique genes, 6 pathways
+  - [x] Mark old ED potatoes as `active: false`
 - [ ] Create `tca_network.json`
   - [ ] TCA forward (variant)
   - [ ] TCA reverse (variant)
@@ -553,12 +585,15 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 - [ ] Identify other candidates
 
 ### Phase 0.9 Complete When:
-- [ ] Can load and validate both single and multi-pathway potatoes
-- [ ] Scoring works correctly for networks (per-pathway results)
-- [ ] Visualization shows network context
-- [ ] At least 2 network potatoes created and tested
-- [ ] Build-potato agent can create networks
-- [ ] Documentation updated
+- [x] Can load and validate both single and multi-pathway potatoes
+- [ ] Scoring works correctly for networks (per-pathway results) - **NEXT PRIORITY**
+- [x] Visualization shows network context
+  - [x] Interactive visNetwork with coordinate export
+  - [x] Static ggraph with pathway hulls
+  - [x] Pathway filtering parameter
+- [x] At least 1 network potato created and tested (ED network with 6 pathways)
+- [ ] Build-potato agent can create networks (deferred)
+- [x] Documentation updated (CLAUDE.md, ROADMAP.md)
 
 ### Phase 2: Database Management
 
@@ -872,6 +907,14 @@ When building a potato, agent asks:
 - [ ] LLM: "I know of a bifunctional enzyme that shortcuts A → B → C to A → C"
 - [ ] Suggest new edges/nodes to existing potatoes
 - [ ] User reviews, accepts/rejects
+
+#### 5.5 Alternative Visualization Libraries (Future Consideration)
+- [ ] **g6R** - Explore as alternative to visNetwork for pathway-based clustering
+  - Automatic pathway-based node coloring via combos
+  - More modern graph rendering (AntV G6)
+  - May provide better visual grouping for multi-pathway networks
+  - Note: visNetwork works well currently, this is a "nice to have" for future enhancement
+  - Reference: https://www.cynkra.com/blog/2025-07-10-g6R/
 
 ---
 

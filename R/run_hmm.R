@@ -68,6 +68,9 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     potatoes <- sack@potatoes[potato_names]
   }
 
+  # Compute potato hashes for version tracking
+  potato_hashes <- get_potato_hashes(potatoes)
+
   # Convert potato S7 objects to raw list
   potato_data <- lapply(potatoes, function(p) {
     list(
@@ -187,7 +190,7 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     }
 
     # Match to potato nodes
-    hmm_hits_to_tibble(parsed, potato_data, tc_values)
+    hmm_hits_to_tibble(parsed, potato_data, potato_hashes, tc_values)
   })
 
   # Add to sack results
@@ -201,7 +204,7 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
 
 #' Convert HMM hits to tibble (internal)
 #' @noRd
-hmm_hits_to_tibble <- function(parsed_hits, potato_data, tc_values) {
+hmm_hits_to_tibble <- function(parsed_hits, potato_data, potato_hashes, tc_values) {
   # Build map of HMM profile name -> potato nodes
   profile_to_nodes <- list()
   for (potato_id in names(potato_data)) {
@@ -214,6 +217,7 @@ hmm_hits_to_tibble <- function(parsed_hits, potato_data, tc_values) {
           }
           profile_to_nodes[[profile_name]][[length(profile_to_nodes[[profile_name]]) + 1]] <- list(
             potato = potato_id,
+            potato_hash = potato_hashes[[potato_id]],
             node_id = node$id,
             step = node$step
           )
@@ -236,6 +240,7 @@ hmm_hits_to_tibble <- function(parsed_hits, potato_data, tc_values) {
       for (node_info in nodes) {
         rows[[length(rows) + 1]] <- list(
           potato = node_info$potato,
+          potato_hash = node_info$potato_hash,
           node_id = node_info$node_id,
           step = node_info$step,
           target = hit$target,
@@ -252,6 +257,7 @@ hmm_hits_to_tibble <- function(parsed_hits, potato_data, tc_values) {
   if (length(rows) == 0) {
     return(tibble::tibble(
       potato = character(),
+      potato_hash = character(),
       node_id = character(),
       step = integer(),
       target = character(),

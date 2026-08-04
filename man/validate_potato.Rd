@@ -7,7 +7,7 @@
 validate_potato(potato, strict = FALSE)
 }
 \arguments{
-\item{potato}{Potato object}
+\item{potato}{Potato object or list (raw JSON data)}
 
 \item{strict}{Logical. If TRUE, performs additional strict checks (default FALSE)}
 }
@@ -16,5 +16,6 @@ List with 'valid' (logical), 'errors' (character vector), and 'warnings' (charac
 }
 \description{
 Validates a potato JSON structure for common errors and required fields.
+Handles both multi-pathway networks (new schema) and single-pathway potatoes (legacy schema).
 Users should run this on custom potatoes before using them for annotation.
 }

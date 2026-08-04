@@ -10,8 +10,9 @@ load_potato(path)
 \item{path}{Path to potato JSON file}
 }
 \value{
-Potato object
+Potato object (for multi-pathway networks, stores pathways in edges slot)
 }
 \description{
-Load a potato from JSON
+Loads multi-pathway network potatoes (new schema). Does not support
+single-pathway schema.
 }

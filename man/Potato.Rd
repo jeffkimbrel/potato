@@ -16,7 +16,8 @@ Potato(
   input = list(),
   output = list(),
   json_path = character(0),
-  graph = NULL
+  graph = NULL,
+  compound_coordinates = list()
 )
 }
 \arguments{

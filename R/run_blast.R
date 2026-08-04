@@ -80,6 +80,9 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     potatoes <- sack@potatoes[potato_names]
   }
 
+  # Compute potato hashes for version tracking
+  potato_hashes <- get_potato_hashes(potatoes)
+
   # Convert potato S7 objects to raw list
   potato_data <- lapply(potatoes, function(p) {
     list(
@@ -204,7 +207,7 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     }
 
     # Match to potato nodes
-    blast_hits_to_tibble(parsed, potato_data)
+    blast_hits_to_tibble(parsed, potato_data, potato_hashes)
   })
 
   # Add to sack results
@@ -218,7 +221,7 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
 
 #' Convert BLAST hits to tibble (internal)
 #' @noRd
-blast_hits_to_tibble <- function(parsed_hits, potato_data) {
+blast_hits_to_tibble <- function(parsed_hits, potato_data, potato_hashes) {
   # Build map of BLAST subject ID -> potato nodes
   subject_to_nodes <- list()
   for (potato_id in names(potato_data)) {
@@ -231,6 +234,7 @@ blast_hits_to_tibble <- function(parsed_hits, potato_data) {
           }
           subject_to_nodes[[subject_id]][[length(subject_to_nodes[[subject_id]]) + 1]] <- list(
             potato = potato_id,
+            potato_hash = potato_hashes[[potato_id]],
             node_id = node$id,
             step = node$step
           )
@@ -249,6 +253,7 @@ blast_hits_to_tibble <- function(parsed_hits, potato_data) {
       for (node_info in nodes) {
         rows[[length(rows) + 1]] <- list(
           potato = node_info$potato,
+          potato_hash = node_info$potato_hash,
           node_id = node_info$node_id,
           step = node_info$step,
           query = hit$query,
@@ -265,6 +270,7 @@ blast_hits_to_tibble <- function(parsed_hits, potato_data) {
   if (length(rows) == 0) {
     return(tibble::tibble(
       potato = character(),
+      potato_hash = character(),
       node_id = character(),
       step = integer(),
       query = character(),

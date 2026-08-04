@@ -21,7 +21,11 @@
         "2.7.1.2"
       ],
       "notes": "Phosphorylates glucose to glucose-6P",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 1077,
+      "y": 700,
+      "x_compounds": 1262,
+      "y_compounds": 591
     },
     {
       "id": "zwf",
@@ -36,7 +40,11 @@
         "1.1.1.363"
       ],
       "notes": "Oxidizes G6P to 6-phosphoglucono-δ-lactone; also in pentose phosphate pathway",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 902,
+      "y": 700,
+      "x_compounds": 1007,
+      "y_compounds": 591
     },
     {
       "id": "pgl",
@@ -50,7 +58,11 @@
         "3.1.1.31"
       ],
       "notes": "Lactonase; also in pentose phosphate pathway",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 752,
+      "y": 700,
+      "x_compounds": 759,
+      "y_compounds": 591
     },
     {
       "id": "ybhE",
@@ -64,7 +76,11 @@
         "3.1.1.31"
       ],
       "notes": "Alternative lactonase",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 914,
+      "y": 476,
+      "x_compounds": 889.5,
+      "y_compounds": 438
     },
     {
       "id": "edd",
@@ -78,7 +94,11 @@
         "4.2.1.12"
       ],
       "notes": "Dehydrates 6-phosphogluconate to KDPG",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 661,
+      "y": 317,
+      "x_compounds": 661,
+      "y_compounds": 330
     },
     {
       "id": "eda",
@@ -92,7 +112,11 @@
         "4.1.2.14"
       ],
       "notes": "KDPG aldolase; cleaves KDPG to G3P and pyruvate",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 600,
+      "y": 181,
+      "x_compounds": 626,
+      "y_compounds": 190
     },
     {
       "id": "eda_alt",
@@ -106,7 +130,11 @@
         "4.1.2.14"
       ],
       "notes": "Alternative KDPG aldolase",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 479,
+      "y": 181,
+      "x_compounds": 503,
+      "y_compounds": 190
     },
     {
       "id": "gnaD",
@@ -119,8 +147,12 @@
       "ec": [
         "4.2.1.140"
       ],
-      "notes": "Dehydrates gluconate to KDG",
-      "type": "enzyme"
+      "notes": "Bifunctional dehydratase that acts on gluconate (→KDG, R01538) in spED/npED and on galactonate (→KDGal, R03033) in archaeal spED. The entry dehydratase for all gluconate/galactonate ED modules.",
+      "type": "enzyme",
+      "x": 266.5,
+      "y": 591,
+      "x_compounds": 266,
+      "y_compounds": 591
     },
     {
       "id": "kdgA",
@@ -133,8 +165,12 @@
       "ec": [
         "4.1.2.51"
       ],
-      "notes": "KDG aldolase (non-phosphorylated); cleaves KDG to pyruvate and glyceraldehyde",
-      "type": "enzyme"
+      "notes": "Cleaves KDG to D-glyceraldehyde + pyruvate (R08570); specific for non-phosphorylated KDG substrate. Alternative to kdpgA (K11395) for this step in npED (M00309).",
+      "type": "enzyme",
+      "x": -4,
+      "y": 416,
+      "x_compounds": 73,
+      "y_compounds": 330
     },
     {
       "id": "gadh",
@@ -147,8 +183,12 @@
       "ec": [
         "1.2.1.89"
       ],
-      "notes": "Glyceraldehyde dehydrogenase using NADP+",
-      "type": "enzyme"
+      "notes": "NADP+-dependent dehydrogenase that oxidizes D-glyceraldehyde to glycerate (R10615). One of three alternative enzymes for this step in npED (M00309), alongside cutABC (FAD-dependent) and aor (ferredoxin-dependent).",
+      "type": "enzyme",
+      "x": -100,
+      "y": 126,
+      "x_compounds": -42.5,
+      "y_compounds": 55
     },
     {
       "id": "kdpgA",
@@ -162,7 +202,11 @@
         "4.1.2.55"
       ],
       "notes": "Alternative aldolase; can cleave non-phosphorylated KDG",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 266.5,
+      "y": 254,
+      "x_compounds": 266,
+      "y_compounds": 246
     },
     {
       "id": "aor",
@@ -175,8 +219,12 @@
       "ec": [
         "1.2.7.5"
       ],
-      "notes": "Aldehyde oxidoreductase using ferredoxin",
-      "type": "enzyme"
+      "notes": "Ferredoxin-dependent oxidoreductase that oxidizes D-glyceraldehyde to glycerate (R08571). Characteristic of hyperthermophilic archaea (Sulfolobus, Thermoplasma, Pyrobaculum) where ferredoxin-based electron transfer is energetically favorable at high temperatures. One of three alternatives for this step in npED.",
+      "type": "enzyme",
+      "x": 92,
+      "y": 126,
+      "x_compounds": 178,
+      "y_compounds": 55
     },
     {
       "id": "cutABC",
@@ -191,8 +239,12 @@
       "ec": [
         "1.2.99.8"
       ],
-      "notes": "Three-subunit complex: cutA + cutB + cutC. All required for activity.",
-      "type": "enzyme"
+      "notes": "Three-subunit FAD-containing glyceraldehyde dehydrogenase complex (cutA/K18020 + cutB/K18021 + cutC/K18022) that oxidizes D-glyceraldehyde to glycerate (R10324). Physiological electron acceptor unknown. One of three alternatives for this step in npED (M00309).",
+      "type": "enzyme",
+      "x": -4,
+      "y": 126,
+      "x_compounds": 73,
+      "y_compounds": 55
     },
     {
       "id": "kdgK",
@@ -206,7 +258,11 @@
         "2.7.1.45"
       ],
       "notes": "Phosphorylates KDG to KDPG",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 492,
+      "y": 476,
+      "x_compounds": 503,
+      "y_compounds": 476
     },
     {
       "id": "kdgK_alt",
@@ -220,7 +276,11 @@
         "2.7.1.178"
       ],
       "notes": "Alternative kinase; phosphorylates KDG to KDPG",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 587,
+      "y": 476,
+      "x_compounds": 587,
+      "y_compounds": 476
     },
     {
       "id": "gapA",
@@ -234,7 +294,11 @@
         "1.2.1.12"
       ],
       "notes": "Oxidizes G3P to 1,3-bisphosphoglycerate",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 566,
+      "y": -140,
+      "x_compounds": 566,
+      "y_compounds": -140
     },
     {
       "id": "gapA_alt",
@@ -248,7 +312,11 @@
         "1.2.1.59"
       ],
       "notes": "Alternative GAPDH using NADP+",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 752,
+      "y": -70,
+      "x_compounds": 759,
+      "y_compounds": -74
     },
     {
       "id": "pgk",
@@ -262,7 +330,11 @@
         "2.7.2.3"
       ],
       "notes": "Converts 1,3-bisphosphoglycerate to 3-phosphoglycerate",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 933,
+      "y": -281,
+      "x_compounds": 833,
+      "y_compounds": -296
     },
     {
       "id": "kdgK2",
@@ -276,7 +348,11 @@
         "2.7.1.178"
       ],
       "notes": "Alternative kinase for archaeal variant; phosphorylates KDG to KDPG",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 403,
+      "y": 476,
+      "x_compounds": 403,
+      "y_compounds": 476
     },
     {
       "id": "gapN",
@@ -290,7 +366,101 @@
         "1.2.1.90"
       ],
       "notes": "Non-phosphorylating GAPDH; converts G3P to 3-phosphoglycerate without ATP",
-      "type": "enzyme"
+      "type": "enzyme",
+      "x": 343,
+      "y": -25,
+      "x_compounds": 343,
+      "y_compounds": -25
+    },
+    {
+      "id": "gck",
+      "name": "glycerate 2-kinase",
+      "databases": {
+        "kofam": [
+          "K11529"
+        ]
+      },
+      "ec": [
+        "2.7.1.165"
+      ],
+      "notes": "Phosphorylates glycerate to 2-phosphoglycerate; the final phosphorylation step of the npED pathway providing entry into lower glycolysis at the enolase step",
+      "type": "enzyme",
+      "x": 151,
+      "y": -196,
+      "x_compounds": 73,
+      "y_compounds": -214
+    },
+    {
+      "id": "gdh",
+      "name": "glucose 1-dehydrogenase",
+      "databases": {
+        "kofam": [
+          "K00034"
+        ]
+      },
+      "ec": [
+        "1.1.1.47"
+      ],
+      "notes": "Oxidizes glucose to D-glucono-1,5-lactone using NAD(P)+; the upstream entry step producing gluconolactone for spED and npED variants. Can use either NAD+ or NADP+ as cofactor.",
+      "type": "enzyme",
+      "x": -135,
+      "y": 734.5,
+      "x_compounds": -142,
+      "y_compounds": 591
+    },
+    {
+      "id": "gnl",
+      "name": "gluconolactonase",
+      "databases": {
+        "kofam": [
+          "K01053"
+        ]
+      },
+      "ec": [
+        "3.1.1.17"
+      ],
+      "notes": "Hydrolyzes D-glucono-1,5-lactone to D-gluconate; the upstream lactonase for spED and npED entry. Distinct from pgl (K01057) which acts on the phosphorylated lactone in PPP/pED. This reaction can also occur spontaneously but at a much lower rate.",
+      "type": "enzyme",
+      "x": 126,
+      "y": 734.5,
+      "x_compounds": 73,
+      "y_compounds": 591
+    },
+    {
+      "id": "gntP",
+      "name": "gluconate transporter (GntP family)",
+      "databases": {
+        "kofam": [
+          "K16321"
+        ]
+      },
+      "ec": [],
+      "notes": "H+/gluconate symporter of the GntP family; imports extracellular gluconate into the cytoplasm for ED catabolism. Proton-motive force driven.",
+      "type": "transporter"
+    },
+    {
+      "id": "gntT",
+      "name": "gluconate transporter (Gnt-I family)",
+      "databases": {
+        "kofam": [
+          "K06155"
+        ]
+      },
+      "ec": [],
+      "notes": "H+/gluconate symporter of the Gnt-I family; alternative gluconate importer. Also in GntP superfamily.",
+      "type": "transporter"
+    },
+    {
+      "id": "idnT",
+      "name": "idonate/gluconate transporter (Gnt-II family)",
+      "databases": {
+        "kofam": [
+          "K06157"
+        ]
+      },
+      "ec": [],
+      "notes": "H+/idonate (and gluconate) symporter of the Gnt-II family; broader substrate specificity including both idonate and gluconate. Also in GntP superfamily.",
+      "type": "transporter"
     }
   ],
   "pathways": {
@@ -392,76 +562,147 @@
       "name": "Non-Phosphorylative ED",
       "type": "variant",
       "kegg_module": "M00309",
-      "notes": "Gluconate entry without phosphorylation. D-gluconate → pyruvate + glyceraldehyde. Found in halophiles, thermophiles, some archaea.",
+      "notes": "Gluconate entry without phosphorylation. Extended pathway with optional upstream glucose oxidation: glucose → gluconolactone → gluconate → pyruvate + 2-phosphoglycerate. Three alternative glyceraldehyde dehydrogenases (gadh/cutABC/aor) produce glycerate, which is phosphorylated by glycerate kinase to enter lower glycolysis.",
       "nodes": {
-        "gnaD": {
+        "gdh": {
           "step": 1,
+          "required": false,
+          "marker": false
+        },
+        "gnl": {
+          "step": 2,
+          "required": false,
+          "marker": false
+        },
+        "gnaD": {
+          "step": 3,
           "required": true,
           "marker": true
         },
         "kdgA": {
-          "step": 2,
-          "required": true,
+          "step": 4,
+          "required": false,
           "marker": true
-        },
-        "gadh": {
-          "step": 3,
-          "required": true,
-          "marker": false
         },
         "kdpgA": {
           "step": 4,
-          "required": true,
+          "required": false,
+          "marker": false
+        },
+        "gadh": {
+          "step": 5,
+          "required": false,
+          "marker": false
+        },
+        "cutABC": {
+          "step": 5,
+          "required": false,
           "marker": false
         },
         "aor": {
           "step": 5,
-          "required": true,
+          "required": false,
           "marker": false
         },
-        "cutABC": {
+        "gck": {
           "step": 6,
-          "required": false,
+          "required": true,
           "marker": false
         }
       },
       "edges": [
         {
+          "from": "gdh",
+          "to": "gnl",
+          "compound": "D-glucono-1,5-lactone",
+          "kegg_compound": "C00198"
+        },
+        {
+          "from": "gnl",
+          "to": "gnaD",
+          "compound": "D-gluconate",
+          "kegg_compound": "C00257"
+        },
+        {
           "from": "gnaD",
           "to": "kdgA",
-          "compound": "2-dehydro-3-deoxy-D-gluconate",
+          "compound": "2-dehydro-3-deoxy-D-gluconate (KDG)",
+          "kegg_compound": "C00679"
+        },
+        {
+          "from": "gnaD",
+          "to": "kdpgA",
+          "compound": "2-dehydro-3-deoxy-D-gluconate (KDG)",
           "kegg_compound": "C00679"
         },
         {
           "from": "kdgA",
           "to": "gadh",
-          "compound": "pyruvate + D-glyceraldehyde"
+          "compound": "D-glyceraldehyde",
+          "kegg_compound": "C00577"
         },
         {
-          "from": "gadh",
-          "to": "kdpgA",
-          "compound": "D-glyceraldehyde"
+          "from": "kdgA",
+          "to": "cutABC",
+          "compound": "D-glyceraldehyde",
+          "kegg_compound": "C00577"
+        },
+        {
+          "from": "kdgA",
+          "to": "aor",
+          "compound": "D-glyceraldehyde",
+          "kegg_compound": "C00577"
         },
         {
           "from": "kdpgA",
-          "to": "aor"
+          "to": "gadh",
+          "compound": "D-glyceraldehyde",
+          "kegg_compound": "C00577"
+        },
+        {
+          "from": "kdpgA",
+          "to": "cutABC",
+          "compound": "D-glyceraldehyde",
+          "kegg_compound": "C00577"
+        },
+        {
+          "from": "kdpgA",
+          "to": "aor",
+          "compound": "D-glyceraldehyde",
+          "kegg_compound": "C00577"
+        },
+        {
+          "from": "gadh",
+          "to": "gck",
+          "compound": "glycerate",
+          "kegg_compound": "C00258"
+        },
+        {
+          "from": "cutABC",
+          "to": "gck",
+          "compound": "glycerate",
+          "kegg_compound": "C00258"
         },
         {
           "from": "aor",
-          "to": "cutABC"
+          "to": "gck",
+          "compound": "glycerate",
+          "kegg_compound": "C00258"
         }
       ],
       "input": {
-        "compound": "D-gluconate",
-        "kegg_compound": "C00257",
+        "compound": "D-glucose (optional) or D-gluconate",
+        "kegg_compound": "C00031",
         "targets": [
+          "gdh",
           "gnaD"
         ]
       },
       "output": {
-        "compound": "pyruvate + D-glyceraldehyde",
+        "compound": "pyruvate + 2-phosphoglycerate",
+        "kegg_compound": "C00631",
         "sources": [
-          "kdgA"
+          "gck"
         ]
       },
       "scoring": {
@@ -674,7 +915,164 @@
         "min_fraction": 0.75,
         "marker_mode": "any"
       }
+    },
+    "gluconate_transport": {
+      "name": "Gluconate Transport",
+      "type": "independent",
+      "kegg_module": {},
+      "notes": "Gluconate import from extracellular environment via GntP-family H+/gluconate symporters. Critical for organisms utilizing environmental gluconate for ED catabolism. All three transporters are H+-coupled and belong to the GntP superfamily.",
+      "nodes": {
+        "gntP": {
+          "step": 1,
+          "required": false,
+          "marker": true
+        },
+        "gntT": {
+          "step": 1,
+          "required": false,
+          "marker": true
+        },
+        "idnT": {
+          "step": 1,
+          "required": false,
+          "marker": true
+        }
+      },
+      "edges": [],
+      "input": {
+        "compound": "D-gluconate_exterior",
+        "kegg_compound": "C00257",
+        "targets": [
+          "gntP",
+          "gntT",
+          "idnT"
+        ]
+      },
+      "output": {
+        "compound": "D-gluconate_interior",
+        "kegg_compound": "C00257",
+        "sources": [
+          "gntP",
+          "gntT",
+          "idnT"
+        ]
+      },
+      "scoring": {
+        "min_fraction": 1,
+        "marker_mode": "any"
+      }
+    },
+    "galactose_catabolism": {
+      "name": "Galactose Catabolism (ED Entry)",
+      "type": "independent",
+      "kegg_module": {},
+      "notes": "Galactose oxidation to galactonate, then entry into ED via bifunctional gnaD. The galactonate → KDGal conversion is catalyzed by the same gnaD enzyme that handles gluconate → KDG. KDGal is then cleaved by kdpgA (which handles both KDPG and KDGal substrates) to pyruvate + glyceraldehyde, feeding into the npED glyceraldehyde oxidation step. This pathway is characteristic of marine and soil organisms that encounter galactose from polysaccharide degradation (agar, carrageenan, pectin).",
+      "nodes": {
+        "gnaD": {
+          "step": 1,
+          "required": true,
+          "marker": true
+        },
+        "kdpgA": {
+          "step": 2,
+          "required": true,
+          "marker": false
+        }
+      },
+      "edges": [
+        {
+          "from": "gnaD",
+          "to": "kdpgA",
+          "compound": "2-dehydro-3-deoxy-D-galactonate (KDGal)",
+          "kegg_compound": "C01216"
+        }
+      ],
+      "input": {
+        "compound": "D-galactonate",
+        "kegg_compound": "C00879",
+        "targets": [
+          "gnaD"
+        ]
+      },
+      "output": {
+        "compound": "pyruvate + D-glyceraldehyde",
+        "kegg_compound": "C00022",
+        "sources": [
+          "kdpgA"
+        ]
+      },
+      "scoring": {
+        "min_fraction": 1,
+        "marker_mode": "any"
+      }
     }
   },
-  "verified": false
+  "verified": false,
+  "compound_coordinates": {
+    "COMPOUND_D_glucose_6P": {
+      "id": "COMPOUND_D_glucose_6P",
+      "x": 1140,
+      "y": 591
+    },
+    "COMPOUND_6_phospho_D_glucono_1_5_lactone": {
+      "id": "COMPOUND_6_phospho_D_glucono_1_5_lactone",
+      "x": 889.5,
+      "y": 591
+    },
+    "COMPOUND_6_phospho_D_gluconate": {
+      "id": "COMPOUND_6_phospho_D_gluconate",
+      "x": 759,
+      "y": 438
+    },
+    "COMPOUND_2_dehydro_3_deoxy_D_gluconate_6P": {
+      "id": "COMPOUND_2_dehydro_3_deoxy_D_gluconate_6P",
+      "x": 503,
+      "y": 330
+    },
+    "COMPOUND_D_glucono_1_5_lactone": {
+      "id": "COMPOUND_D_glucono_1_5_lactone",
+      "x": -42.5,
+      "y": 591
+    },
+    "COMPOUND_D_gluconate": {
+      "id": "COMPOUND_D_gluconate",
+      "x": 178,
+      "y": 591
+    },
+    "COMPOUND_2_dehydro_3_deoxy_D_gluconate__KDG_": {
+      "id": "COMPOUND_2_dehydro_3_deoxy_D_gluconate__KDG_",
+      "x": 178,
+      "y": 395.5
+    },
+    "COMPOUND_D_glyceraldehyde": {
+      "id": "COMPOUND_D_glyceraldehyde",
+      "x": 73,
+      "y": 190
+    },
+    "COMPOUND_glycerate": {
+      "id": "COMPOUND_glycerate",
+      "x": 73,
+      "y": -74
+    },
+    "COMPOUND_2_dehydro_3_deoxy_D_gluconate": {
+      "id": "COMPOUND_2_dehydro_3_deoxy_D_gluconate",
+      "x": 503,
+      "y": 591
+    },
+    "COMPOUND_glyceraldehyde_3P": {
+      "id": "COMPOUND_glyceraldehyde_3P",
+      "x": 503,
+      "y": 55
+    },
+    "COMPOUND_1_3_bisphospho_D_glycerate": {
+      "id": "COMPOUND_1_3_bisphospho_D_glycerate",
+      "x": 719,
+      "y": -167
+    },
+    "COMPOUND_2_dehydro_3_deoxy_D_galactonate__KDGal_": {
+      "id": "COMPOUND_2_dehydro_3_deoxy_D_galactonate__KDGal_",
+      "x": 305,
+      "y": 395.5
+    }
+  }
 }

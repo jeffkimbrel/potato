@@ -34,7 +34,8 @@ Potato <- S7::new_class(
     input = S7::class_list,
     output = S7::class_list,
     json_path = S7::class_character,
-    graph = S7::class_any
+    graph = S7::class_any,
+    compound_coordinates = S7::class_list
   ),
   validator = function(self) {
     # Basic validation
@@ -51,7 +52,7 @@ Potato <- S7::new_class(
 
 #' Load a potato from JSON
 #'
-#' Loads multi-pathway network potatoes (new schema). Does not support deprecated
+#' Loads multi-pathway network potatoes (new schema). Does not support
 #' single-pathway schema.
 #'
 #' @param path Path to potato JSON file
@@ -64,13 +65,13 @@ load_potato <- function(path) {
 
   data <- jsonlite::read_json(path, simplifyVector = FALSE)
 
-  # Check if deprecated single-pathway potato
+  # Check if single-pathway potato
   is_network <- !is.null(data$pathways) && is.list(data$pathways)
 
   if (!is_network) {
-    # Check if marked as inactive/deprecated
+    # Check if marked as inactive
     if (!is.null(data$active) && data$active == FALSE) {
-      warning("Potato '", data$id, "' is deprecated (active: false). ",
+      warning("Potato '", data$id, "' is inactive (active: false). ",
               "Consider using the updated multi-pathway network version.",
               call. = FALSE)
     } else {
@@ -100,7 +101,8 @@ load_potato <- function(path) {
     input = if (is.null(data$input)) list() else data$input,
     output = if (is.null(data$output)) list() else data$output,
     json_path = path,
-    graph = NULL
+    graph = NULL,
+    compound_coordinates = if (is.null(data$compound_coordinates)) list() else data$compound_coordinates
   )
 }
 
@@ -108,11 +110,11 @@ load_potato <- function(path) {
 #' Load multiple potatoes from directory
 #'
 #' By default, only loads active potatoes (active != false). Set include_inactive = TRUE
-#' to load deprecated potatoes.
+#' to load inactive potatoes.
 #'
 #' @param dir Directory containing potato JSON files
 #' @param tags Optional character vector of tags to filter by
-#' @param include_inactive Logical. If TRUE, loads deprecated potatoes (active: false)
+#' @param include_inactive Logical. If TRUE, loads inactive potatoes (active: false)
 #' @return Named list of Potato objects
 #' @export
 load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
@@ -249,34 +251,122 @@ get_marker_genes <- function(potato) {
 build_potato_graph <- function(potato) {
   S7::check_is_S7(potato)
 
-  if (length(potato@edges) == 0) {
-    # Graph with just nodes, no edges
-    # Use the 'nodes' field which has id_step format, not just 'id'
-    node_names <- unlist(sapply(potato@nodes, function(n) n$nodes))
-    g <- igraph::make_empty_graph(n = length(node_names), directed = TRUE)
-    igraph::V(g)$name <- node_names
+  # Check if this is a multi-pathway network
+  is_network <- !is.null(potato@edges) &&
+                is.list(potato@edges) &&
+                length(names(potato@edges)) > 0 &&
+                !is.null(potato@edges[[1]]$type)
+
+  if (is_network) {
+    # Multi-pathway network: create gene-based graph (not step-based)
+    # Genes are shared across pathways - same gene appears once
+    edge_pathways <- list()  # Key: "from_gene|to_gene", Value: list of pathway info
+
+    for (pathway_id in names(potato@edges)) {
+      pathway <- potato@edges[[pathway_id]]
+
+      if (is.null(pathway$edges) || length(pathway$edges) == 0) {
+        next
+      }
+
+      # For multi-pathway networks, use gene IDs directly (not id_step)
+      # This creates a connected graph where genes are shared
+      for (edge in pathway$edges) {
+        from_id <- edge$from
+        to_id <- edge$to
+
+        edge_key <- paste0(from_id, "|", to_id)
+
+        # Add this pathway to the edge's pathway list
+        if (is.null(edge_pathways[[edge_key]])) {
+          edge_pathways[[edge_key]] <- list(
+            from = from_id,
+            to = to_id,
+            pathways = character(),
+            pathway_names = character(),
+            pathway_types = character()
+          )
+        }
+
+        edge_pathways[[edge_key]]$pathways <- c(edge_pathways[[edge_key]]$pathways, pathway_id)
+        edge_pathways[[edge_key]]$pathway_names <- c(edge_pathways[[edge_key]]$pathway_names, pathway$name %||% pathway_id)
+        edge_pathways[[edge_key]]$pathway_types <- c(edge_pathways[[edge_key]]$pathway_types, pathway$type)
+      }
+    }
+
+    if (length(edge_pathways) == 0) {
+      # No edges in any pathway - create graph with just nodes
+      # Collect all unique gene IDs
+      all_gene_ids <- character()
+      for (pathway_id in names(potato@edges)) {
+        pathway <- potato@edges[[pathway_id]]
+        all_gene_ids <- c(all_gene_ids, names(pathway$nodes))
+      }
+      all_gene_ids <- unique(all_gene_ids)
+
+      g <- igraph::make_empty_graph(n = length(all_gene_ids), directed = TRUE)
+      igraph::V(g)$name <- all_gene_ids
+      igraph::V(g)$node_type <- "enzyme"
+      return(g)
+    }
+
+    # Build edge list from unique edges
+    edge_list <- do.call(rbind, lapply(edge_pathways, function(e) {
+      c(e$from, e$to)
+    }))
+
+    g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
+
+    # Add edge attributes for pathway membership
+    igraph::E(g)$pathways <- sapply(edge_pathways, function(e) paste(e$pathways, collapse = ","))
+    igraph::E(g)$pathway_names <- sapply(edge_pathways, function(e) paste(e$pathway_names, collapse = ","))
+    igraph::E(g)$n_pathways <- sapply(edge_pathways, function(e) length(e$pathways))
+    igraph::E(g)$is_shared <- sapply(edge_pathways, function(e) length(e$pathways) > 1)
+
+    # Add node attributes for pathway membership and type
+    node_pathway_membership <- sapply(igraph::V(g)$name, function(gene_id) {
+      pathways <- character()
+      for (pathway_id in names(potato@edges)) {
+        if (gene_id %in% names(potato@edges[[pathway_id]]$nodes)) {
+          pathways <- c(pathways, potato@edges[[pathway_id]]$name %||% pathway_id)
+        }
+      }
+      paste(pathways, collapse = ", ")
+    })
+    igraph::V(g)$pathway_membership <- node_pathway_membership
+
+    # Mark all nodes as enzymes (multi-pathway networks don't have compound nodes in the graph)
+    igraph::V(g)$node_type <- "enzyme"
+
+    return(g)
+
+  } else {
+    # Single-pathway potato (legacy schema)
+    if (length(potato@edges) == 0) {
+      # Graph with just nodes, no edges
+      # Use the 'nodes' field which has id_step format, not just 'id'
+      node_names <- unlist(sapply(potato@nodes, function(n) n$nodes))
+      g <- igraph::make_empty_graph(n = length(node_names), directed = TRUE)
+      igraph::V(g)$name <- node_names
+      return(g)
+    }
+
+    # Build edge list
+    edge_list <- do.call(rbind, lapply(potato@edges, function(e) {
+      c(e$from, e$to)
+    }))
+
+    # Create graph
+    g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
     return(g)
   }
-
-  # Build edge list
-  edge_list <- do.call(rbind, lapply(potato@edges, function(e) {
-    c(e$from, e$to)
-  }))
-
-  # Create graph
-  g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
-
-  # That's it - just return the basic graph structure
-  # Can add attributes later if needed
-
-  g
 }
 
 
 #' Validate potato structure
 #'
 #' Validates a potato JSON structure for common errors and required fields.
-#' Handles both multi-pathway networks (new schema) and deprecated single-pathway potatoes.
+#' Handles both multi-pathway networks (new schema) and single-pathway potatoes (legacy schema).
 #' Users should run this on custom potatoes before using them for annotation.
 #'
 #' @param potato Potato object or list (raw JSON data)
@@ -285,17 +375,33 @@ build_potato_graph <- function(potato) {
 #' @export
 validate_potato <- function(potato, strict = FALSE) {
   # Handle both Potato S7 objects and raw JSON lists
-  if (inherits(potato, "Potato") || (is.list(potato) && "id" %in% names(potato))) {
-    if (inherits(potato, "Potato")) {
+  # S7 objects have class c("potato::Potato", "S7_object")
+  is_s7_potato <- "S7_object" %in% class(potato)
+  is_list_with_id <- is.list(potato) && "id" %in% names(potato)
+
+  if (is_s7_potato || is_list_with_id) {
+    if (is_s7_potato) {
+      # Extract data from S7 object
+      # NOTE: For multi-pathway networks, edges slot contains pathways
       data <- list(
         id = potato@id,
         name = potato@name,
         nodes = potato@nodes,
-        edges = potato@edges,
         tags = potato@tags,
         source = potato@source,
         scoring = potato@scoring
       )
+
+      # Check if edges slot contains pathways (multi-pathway network)
+      # Pathways have names and first element has a 'type' field
+      if (!is.null(potato@edges) &&
+          is.list(potato@edges) &&
+          length(names(potato@edges)) > 0 &&
+          !is.null(potato@edges[[1]]$type)) {
+        data$pathways <- potato@edges
+      } else {
+        data$edges <- potato@edges
+      }
     } else {
       data <- potato
     }
@@ -327,13 +433,13 @@ validate_potato <- function(potato, strict = FALSE) {
     result <- validate_multi_pathway(data, strict)
     return(result)
   } else {
-    # Validate single-pathway schema (deprecated)
+    # Validate single-pathway schema (legacy format)
     result <- validate_single_pathway(data, strict)
     return(result)
   }
 }
 
-#' Validate single-pathway potato (deprecated schema)
+#' Validate single-pathway potato (legacy schema)
 #' @keywords internal
 validate_single_pathway <- function(data, strict) {
   errors <- character(0)
