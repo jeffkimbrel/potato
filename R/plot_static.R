@@ -35,39 +35,14 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
   shape_map <- c("circle" = 19, "triangle" = 17, "diamond" = 18, "square" = 15)
   prep$node_status$shape_code <- shape_map[prep$node_status$node_shape]
 
-  # For multi-pathway networks: assign pathway colors to nodes
-  if (prep$is_multi_pathway) {
-    # Generate colors for pathways
-    pathway_names <- sapply(prep$potato@edges, function(p) p$name %||% "")
-    pathway_colors <- jakR2::palette_jak(n = length(pathway_names), p = "sunset")
-    names(pathway_colors) <- pathway_names
-
-    # Assign each enzyme node to its pathway(s)
-    prep$node_status$pathway_for_color <- sapply(seq_len(nrow(prep$node_status)), function(i) {
-      node_name <- prep$node_status$name[i]
-
-      # Compounds get gray (neutral)
-      if (prep$node_status$is_compound_node[i]) {
-        return("Compound")
-      }
-
-      # Find which pathway this gene belongs to
-      for (pathway_id in names(prep$potato@edges)) {
-        pathway <- prep$potato@edges[[pathway_id]]
-        if (node_name %in% names(pathway$nodes)) {
-          return(pathway$name %||% pathway_id)
-        }
-      }
-      return("Unknown")
-    })
-  } else {
-    # Single pathway: use detection status for enzymes, gray for compounds
-    prep$node_status$pathway_for_color <- ifelse(
-      prep$node_status$is_compound_node,
-      "Compound",
-      prep$node_status$status
-    )
-  }
+  # Assign color status to each node
+  # Nodes are ONLY colored by detection status (never by pathway)
+  # Pathway colors are reserved for hulls only
+  prep$node_status$color_status <- ifelse(
+    prep$node_status$is_compound_node,
+    "Compound",  # Compounds always gray
+    if (prep$has_genome) prep$node_status$status else "NoGenome"  # Detection status or generic gray
+  )
 
   # Create ggraph with manual layout - flip Y axis to match visNetwork screen coordinates
   p <- ggraph::ggraph(prep$g, layout = "manual", x = node_coords$x, y = -node_coords$y)
@@ -104,7 +79,11 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
     if (length(pathway_nodes) > 0) {
       pathway_hull_data <- do.call(rbind, pathway_nodes)
 
-      if (requireNamespace("ggforce", quietly = TRUE)) {
+      # Filter to pathways with 2+ genes (geom_mark_hull needs multiple points)
+      pathway_gene_counts <- table(pathway_hull_data$pathway_name)
+      pathway_hull_data <- pathway_hull_data[pathway_hull_data$pathway_name %in% names(pathway_gene_counts[pathway_gene_counts >= 2]), ]
+
+      if (nrow(pathway_hull_data) > 0 && requireNamespace("ggforce", quietly = TRUE)) {
         p <- p +
           ggforce::geom_mark_hull(
             data = pathway_hull_data,
@@ -116,6 +95,8 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
             show.legend = TRUE,
             size = 1.5
           )
+      } else if (nrow(pathway_hull_data) == 0) {
+        cli::cli_alert_info("All pathways are single-gene; no hulls to draw (nodes colored by pathway)")
       } else {
         cli::cli_warn("Package {.pkg ggforce} is required for pathway hulls")
       }
@@ -134,8 +115,7 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
   # Add nodes (solid shapes - no separate border)
   p <- p +
     ggraph::geom_node_point(
-      # ggplot2::aes(color = prep$node_status$pathway_for_color, shape = prep$node_status$shape_code),
-      ggplot2::aes(shape = prep$node_status$shape_code), color = "gray70",
+      ggplot2::aes(color = prep$node_status$color_status, shape = prep$node_status$shape_code),
       size = 6
     )
 
@@ -173,63 +153,52 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
     ggplot2::theme(plot.margin = ggplot2::margin(20, 20, 20, 20)) +
     potato_theme()
 
-  # Color scales - different logic for multi-pathway vs single-pathway
+  # Build color palette for nodes (detection status only, never pathway)
+  node_colors <- c(
+    "Detected" = "#7FD399",
+    "Partial" = "#FFB84D",
+    "Not detected" = "#F77370",
+    "Unknown" = "#6AB8F5",
+    "NoGenome" = "#B3B3B3",   # Gray for enzymes when no genome
+    "Compound" = "#B3B3B3"     # Gray for compounds
+  )
+
+  # Apply node color scale
+  if (prep$has_genome) {
+    p <- p +
+      ggplot2::scale_color_manual(
+        values = node_colors,
+        breaks = c("Detected", "Partial", "Not detected", "Unknown", "Compound"),
+        name = "Detection Status",
+        na.value = "#6AB8F5"
+      )
+  } else {
+    # No genome: all nodes gray, no legend needed
+    p <- p +
+      ggplot2::scale_color_manual(
+        values = node_colors,
+        guide = "none"
+      )
+  }
+
+  # Add title/subtitle
+  p <- p +
+    ggplot2::labs(
+      title = prep$potato@name,
+      subtitle = if (prep$has_genome) paste("Genome:", genome_name) else NULL
+    )
+
+  # Add pathway hull fill scale for multi-pathway networks
   if (prep$is_multi_pathway) {
-    # Multi-pathway: nodes colored by pathway, compounds gray
     pathway_names <- sapply(prep$potato@edges, function(p) p$name %||% "")
     pathway_colors <- jakR2::palette_jak(n = length(pathway_names), p = "sunset")
     names(pathway_colors) <- pathway_names
 
-    # Add gray for compounds
-    all_colors <- c(pathway_colors, "Compound" = "#B3B3B3")
-
     p <- p +
-      ggplot2::scale_color_manual(
-        values = all_colors,
-        name = "Pathway"
-      ) +
       ggplot2::scale_fill_manual(
         values = pathway_colors,
         name = "Pathway"
-      ) +
-      ggplot2::labs(
-        title = prep$potato@name,
-        subtitle = if (prep$has_genome) paste("Genome:", genome_name) else NULL
       )
-  } else {
-    # Single-pathway: use detection status colors
-    if (prep$has_genome) {
-      p <- p +
-        ggplot2::scale_color_manual(
-          values = c(
-            "Detected" = "#7FD399",
-            "Partial" = "#FFB84D",
-            "Not detected" = "#F77370",
-            "Unknown" = "#6AB8F5",
-            "Compound" = "#B3B3B3"
-          ),
-          na.value = "#6AB8F5",
-          name = "Detection Status"
-        ) +
-        ggplot2::labs(
-          title = prep$potato@name,
-          subtitle = paste("Genome:", genome_name)
-        )
-    } else {
-      p <- p +
-        ggplot2::scale_color_manual(
-          values = c(
-            "Unknown" = "#6AB8F5",
-            "Compound" = "#B3B3B3"
-          ),
-          na.value = "#6AB8F5",
-          guide = "none"
-        ) +
-        ggplot2::labs(
-          title = prep$potato@name,
-          subtitle = NULL
-        )
-    }
   }
 
   p

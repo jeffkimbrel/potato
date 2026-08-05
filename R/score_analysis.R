@@ -97,7 +97,7 @@ find_near_miss_pathways <- function(sack, buffer = 0.1) {
     ) %>%
     dplyr::filter(near_miss) %>%
     dplyr::select(genome, potato_name, fraction, threshold,
-                  distance_from_threshold, steps_detected, steps_total) %>%
+                  distance_from_threshold, total_steps_detected, total_steps) %>%
     dplyr::arrange(distance_from_threshold)
 
   if (nrow(near_miss) == 0) {

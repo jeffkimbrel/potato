@@ -24,7 +24,7 @@
       "type": "enzyme",
       "x": 1077,
       "y": 700,
-      "x_compounds": 1213,
+      "x_compounds": 1218,
       "y_compounds": 569
     },
     {
@@ -61,7 +61,7 @@
       "type": "enzyme",
       "x": 752,
       "y": 700,
-      "x_compounds": 759,
+      "x_compounds": 755,
       "y_compounds": 569
     },
     {
@@ -97,7 +97,7 @@
       "type": "enzyme",
       "x": 661,
       "y": 317,
-      "x_compounds": 661,
+      "x_compounds": 657,
       "y_compounds": 330
     },
     {
@@ -115,7 +115,7 @@
       "type": "enzyme",
       "x": 600,
       "y": 181,
-      "x_compounds": 619,
+      "x_compounds": 657,
       "y_compounds": 190
     },
     {
@@ -187,7 +187,7 @@
       "type": "enzyme",
       "x": -100,
       "y": 126,
-      "x_compounds": -43,
+      "x_compounds": -64,
       "y_compounds": 55
     },
     {
@@ -223,7 +223,7 @@
       "type": "enzyme",
       "x": 92,
       "y": 126,
-      "x_compounds": 171,
+      "x_compounds": 204,
       "y_compounds": 55
     },
     {
@@ -297,8 +297,8 @@
       "type": "enzyme",
       "x": 566,
       "y": -140,
-      "x_compounds": 566,
-      "y_compounds": -149
+      "x_compounds": 546,
+      "y_compounds": -173
     },
     {
       "id": "gapA_alt",
@@ -315,8 +315,8 @@
       "type": "enzyme",
       "x": 752,
       "y": -70,
-      "x_compounds": 759,
-      "y_compounds": -74
+      "x_compounds": 755,
+      "y_compounds": -27
     },
     {
       "id": "pgk",
@@ -333,8 +333,8 @@
       "type": "enzyme",
       "x": 933,
       "y": -281,
-      "x_compounds": 833,
-      "y_compounds": -296
+      "x_compounds": 924,
+      "y_compounds": -173
     },
     {
       "id": "kdgK2",
@@ -369,8 +369,8 @@
       "type": "enzyme",
       "x": 343,
       "y": -25,
-      "x_compounds": 343,
-      "y_compounds": -25
+      "x_compounds": 371,
+      "y_compounds": -173
     },
     {
       "id": "gck",
@@ -405,8 +405,8 @@
       "type": "enzyme",
       "x": -135,
       "y": 734.5,
-      "x_compounds": -43,
-      "y_compounds": 839
+      "x_compounds": -196,
+      "y_compounds": 741
     },
     {
       "id": "gnl",
@@ -1042,8 +1042,8 @@
     },
     "COMPOUND_D_gluconate": {
       "id": "COMPOUND_D_gluconate",
-      "x": 134,
-      "y": 569
+      "x": 269,
+      "y": 741
     },
     "COMPOUND_2_dehydro_3_deoxy_D_gluconate__KDG_": {
       "id": "COMPOUND_2_dehydro_3_deoxy_D_gluconate__KDG_",
@@ -1067,8 +1067,8 @@
     },
     "COMPOUND_glyceraldehyde_3P": {
       "id": "COMPOUND_glyceraldehyde_3P",
-      "x": 504,
-      "y": 55
+      "x": 470,
+      "y": -368
     },
     "COMPOUND_1_3_bisphospho_D_glycerate": {
       "id": "COMPOUND_1_3_bisphospho_D_glycerate",
@@ -1092,7 +1092,7 @@
     },
     "COMPOUND_C00345": {
       "id": "COMPOUND_C00345",
-      "x": 759,
+      "x": 755,
       "y": 435
     },
     "COMPOUND_C04442": {
@@ -1112,28 +1112,28 @@
     },
     "COMPOUND_C00198": {
       "id": "COMPOUND_C00198",
-      "x": -101,
-      "y": 707
+      "x": -196,
+      "y": 569
     },
     "COMPOUND_C00257": {
       "id": "COMPOUND_C00257",
-      "x": 111,
+      "x": 114.5,
       "y": 569
     },
     "COMPOUND_C00679": {
       "id": "COMPOUND_C00679",
-      "x": 294,
-      "y": 370
+      "x": 269,
+      "y": 365
     },
     "COMPOUND_C00577": {
       "id": "COMPOUND_C00577",
-      "x": 111,
-      "y": 148
+      "x": 73,
+      "y": 190
     },
     "COMPOUND_C00258": {
       "id": "COMPOUND_C00258",
       "x": 73,
-      "y": -25
+      "y": -63
     },
     "OUTPUT_C00631": {
       "id": "OUTPUT_C00631",
@@ -1147,7 +1147,7 @@
     },
     "COMPOUND_C00236": {
       "id": "COMPOUND_C00236",
-      "x": 719,
+      "x": 755,
       "y": -173
     },
     "INPUT_C00257": {
@@ -1177,38 +1177,38 @@
     },
     "COMPOUND_D_glucose": {
       "id": "COMPOUND_D_glucose",
-      "x": 1213,
-      "y": 569
+      "x": 1218,
+      "y": 741
     },
     "COMPOUND_pyruvate___glyceraldehyde_3P": {
       "id": "COMPOUND_pyruvate___glyceraldehyde_3P",
-      "x": 619,
-      "y": 190
+      "x": 682,
+      "y": -368
     },
     "COMPOUND_D_glucose__optional__or_D_gluconate": {
       "id": "COMPOUND_D_glucose__optional__or_D_gluconate",
-      "x": 111,
-      "y": 707
+      "x": 114.5,
+      "y": 741
     },
     "COMPOUND_pyruvate___2_phosphoglycerate": {
       "id": "COMPOUND_pyruvate___2_phosphoglycerate",
-      "x": 317,
-      "y": -409
+      "x": 73,
+      "y": -368
     },
     "COMPOUND_3_phospho_D_glycerate": {
       "id": "COMPOUND_3_phospho_D_glycerate",
-      "x": 1084,
-      "y": -375
+      "x": 924,
+      "y": -368
     },
     "COMPOUND_D_galactonate": {
       "id": "COMPOUND_D_galactonate",
-      "x": 269,
-      "y": 569
+      "x": 504,
+      "y": 741
     },
     "COMPOUND_pyruvate___D_glyceraldehyde": {
       "id": "COMPOUND_pyruvate___D_glyceraldehyde",
       "x": 269,
-      "y": 246
+      "y": -368
     }
   }
 }

@@ -19,7 +19,9 @@
 #'
 #' @returns Modified PotatoSack with scores in @scores. For multi-pathway networks,
 #'   scores tibble includes 'pathway' and 'pathway_name' columns with one row per
-#'   pathway per genome.
+#'   pathway per genome. Scoring includes both all-steps metrics (total_steps_detected,
+#'   total_steps, fraction, present) and required-only metrics (essential_total_steps_detected,
+#'   essential_steps, essential_fraction, essential_pathway_present).
 #' @export
 
 score_pathways <- function(sack,
@@ -177,10 +179,10 @@ score_single_pathway <- function(potato, genome_name, genome_hits) {
     step_completion[[as.character(step_num)]] <- step_detected
   }
 
-  # Calculate completion
-  steps_detected <- sum(unlist(step_completion))
-  steps_total <- length(steps)
-  fraction <- steps_detected / steps_total
+  # Calculate completion (all steps)
+  total_steps_detected <- sum(unlist(step_completion))
+  total_steps <- length(steps)
+  fraction <- total_steps_detected / total_steps
 
   # Determine presence based on min_fraction threshold
   min_fraction <- potato@scoring$min_fraction
@@ -188,15 +190,43 @@ score_single_pathway <- function(potato, genome_name, genome_hits) {
 
   present <- fraction >= min_fraction
 
+  # Calculate completion for required steps only
+  required_steps <- Filter(function(step_num) {
+    step_nodes <- Filter(function(n) {
+      s <- if (is.list(n$step)) n$step[[1]] else n$step
+      s == step_num
+    }, nodes)
+    # Step is required if ANY node at that step is required
+    any(sapply(step_nodes, function(n) n$required %||% FALSE))
+  }, steps)
+
+  if (length(required_steps) > 0) {
+    essential_total_steps_detected <- sum(unlist(step_completion[as.character(required_steps)]))
+    essential_steps <- length(required_steps)
+    essential_fraction <- essential_total_steps_detected / essential_steps
+    essential_pathway_present <- essential_fraction >= min_fraction
+  } else {
+    # No required steps defined
+    essential_total_steps_detected <- NA_integer_
+    essential_steps <- NA_integer_
+    essential_fraction <- NA_real_
+    essential_pathway_present <- NA
+  }
+
   # Return score
   list(
     genome = genome_name,
     potato = potato@id,
     potato_name = potato@name,
-    steps_detected = steps_detected,
-    steps_total = steps_total,
+    total_steps_detected = total_steps_detected,
+    total_steps = total_steps,
     fraction = fraction,
-    present = present
+    min_fraction = min_fraction,
+    present = present,
+    essential_total_steps_detected = essential_total_steps_detected,
+    essential_steps = essential_steps,
+    essential_fraction = essential_fraction,
+    essential_pathway_present = essential_pathway_present
   )
 }
 
@@ -218,8 +248,8 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
       potato_name = potato_name,
       pathway = pathway_id,
       pathway_name = pathway$name,
-      steps_detected = 0,
-      steps_total = 0,
+      total_steps_detected = 0,
+      total_steps = 0,
       fraction = 0,
       present = FALSE
     ))
@@ -281,16 +311,39 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
     step_completion[[as.character(step_num)]] <- step_detected
   }
 
-  # Calculate completion
-  steps_detected <- sum(unlist(step_completion))
-  steps_total <- length(steps)
-  fraction <- steps_detected / steps_total
+  # Calculate completion (all steps)
+  total_steps_detected <- sum(unlist(step_completion))
+  total_steps <- length(steps)
+  fraction <- total_steps_detected / total_steps
 
   # Determine presence based on min_fraction threshold
   min_fraction <- pathway$scoring$min_fraction
   if (is.null(min_fraction)) min_fraction <- 0.75
 
   present <- fraction >= min_fraction
+
+  # Calculate completion for required steps only
+  required_steps <- Filter(function(step_num) {
+    step_nodes <- Filter(function(n) {
+      s <- if (is.list(n$step)) n$step[[1]] else n$step
+      s == step_num
+    }, merged_nodes)
+    # Step is required if ANY node at that step is required
+    any(sapply(step_nodes, function(n) n$required %||% FALSE))
+  }, steps)
+
+  if (length(required_steps) > 0) {
+    essential_total_steps_detected <- sum(unlist(step_completion[as.character(required_steps)]))
+    essential_steps <- length(required_steps)
+    essential_fraction <- essential_total_steps_detected / essential_steps
+    essential_pathway_present <- essential_fraction >= min_fraction
+  } else {
+    # No required steps defined
+    essential_total_steps_detected <- NA_integer_
+    essential_steps <- NA_integer_
+    essential_fraction <- NA_real_
+    essential_pathway_present <- NA
+  }
 
   # Return score
   list(
@@ -299,10 +352,15 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
     potato_name = potato_name,
     pathway = pathway_id,
     pathway_name = pathway$name %||% pathway_id,
-    steps_detected = steps_detected,
-    steps_total = steps_total,
+    total_steps_detected = total_steps_detected,
+    total_steps = total_steps,
     fraction = fraction,
-    present = present
+    min_fraction = min_fraction,
+    present = present,
+    essential_total_steps_detected = essential_total_steps_detected,
+    essential_steps = essential_steps,
+    essential_fraction = essential_fraction,
+    essential_pathway_present = essential_pathway_present
   )
 }
 

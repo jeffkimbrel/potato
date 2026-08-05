@@ -450,7 +450,7 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 
 - [x] `find_near_miss_pathways(sack, buffer)` - Find pathways just below threshold
   - Identifies pathways within `buffer` distance of their threshold
-  - Returns: tibble with `distance_from_threshold`, `steps_detected`, `steps_total`
+  - Returns: tibble with `distance_from_threshold`, `total_steps_detected`, `total_steps`
   - Use case: "Which pathways would flip to present with slight threshold adjustment?"
   
   ```r

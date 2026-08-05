@@ -26,7 +26,9 @@ score_pathways(
 \value{
 Modified PotatoSack with scores in @scores. For multi-pathway networks,
 scores tibble includes 'pathway' and 'pathway_name' columns with one row per
-pathway per genome.
+pathway per genome. Scoring includes both all-steps metrics (total_steps_detected,
+total_steps, fraction, present) and required-only metrics (essential_total_steps_detected,
+essential_steps, essential_fraction, essential_pathway_present).
 }
 \description{
 Applies quality thresholds to annotation hits and calculates pathway-level
