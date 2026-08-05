@@ -620,16 +620,101 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 - [ ] Build-potato agent can create networks (deferred)
 - [x] Documentation updated (CLAUDE.md, ROADMAP.md)
 
-### Phase 2: Database Management
+### Phase 2: Input/Output Validation & DAG Connectivity
 
-**Goal:** Work with collections of potatoes, validate consistency.
+**Goal:** Elevate input/output from plotting metadata to core validation requirements. Pathways must define biologically complete units with reachable inputs and connected outputs.
 
-#### 2.1 Multi-Potato Support
+**Key Insight:** A pathway isn't "complete" just because you have 75% of genes. It's complete when you can transform **available inputs → desired outputs** through detected genes. This fundamentally changes how we score pathways.
+
+#### 2.1 Input/Output as First-Class Citizens
+
+**Current status:** Input/output fields are optional, treated as metadata for visualization
+
+**New requirement:** Input/output are **mandatory** for pathway validation
+
+- [ ] **Schema enforcement**: Input/output required for all pathways
+  - Validation fails if missing (with clear error message)
+  - Build-potato agent MUST collect input/output (not optional)
+  - Update all existing potatoes to add missing input/output fields
+  
+- [ ] **Biological completeness validation**:
+  - Input must be realistic (can be imported/synthesized/is environmental)
+  - Output must connect to something (next pathway step, export, storage)
+  - Isolated pathways with unreachable inputs flagged as incomplete
+  
+- [ ] **Compound standardization**:
+  - Use KEGG compound IDs for matching (C#####)
+  - Support location qualifiers for membrane transport (_exterior, _periplasm, _cytoplasm)
+  - Handle compound name variants (glucose vs D-glucose vs α-D-glucose)
+
+**Why this matters:**
+
+```
+Example: npED pathway in isolation
+- Genes: 5/6 detected (83% complete)
+- Input: D-gluconate (but where does it come from?)
+- Traditional scoring: PRESENT (>75% threshold)
+- Reality: NON-FUNCTIONAL (no gluconate source)
+
+Example: ED network (gluconate_transport + npED)
+- gluconate_transport: imports D-gluconate_exterior → D-gluconate_cytoplasm
+- npED: transforms D-gluconate_cytoplasm → pyruvate + 2-PG
+- Network forms COMPLETE BIOLOGICAL UNIT
+- Can transform environmental gluconate → central metabolites
+```
+
+#### 2.2 Within-Network DAG Connectivity
+
+**Goal:** Multi-pathway networks must form complete biological units with connected inputs/outputs across pathways.
+
+- [ ] **Build meta-graph across pathways in network**:
+  - Link pathway outputs to pathway inputs via compound matching
+  - `gluconate_transport.output.compound` → `non_phosphorylative.input.compound`
+  - Track compound flow through network
+  
+- [ ] **Check input reachability**:
+  - For pathway with input requirement, verify:
+    - Can input be imported? (transport pathway detected)
+    - Can input be synthesized? (upstream pathway/genes detected)
+    - Is input environmental? (always available)
+  - Report: REACHABLE / UNREACHABLE / OPTIONAL
+  
+- [ ] **DAG traversal from input to output**:
+  - Given detected genes, simulate flow through pathway DAG
+  - Check: Can you reach output from input with detected genes?
+  - Report: COMPLETE PATH / BROKEN (at step X) / INPUT UNAVAILABLE
+  
+- [ ] **Network-level status**:
+  - Evaluate network as functional unit (not just individual pathways)
+  - "gluconate_transport + npED = complete unit"
+  - "npED alone (no gluconate source) = incomplete"
+
+**Scoring output includes:**
+```
+Pathway: non_phosphorylative (in ED network)
+Gene completion: 5/6 genes = 0.83
+Input status: REACHABLE (via gluconate_transport)
+DAG connectivity: COMPLETE PATH (input → output traversable)
+Network status: COMPLETE BIOLOGICAL UNIT
+Overall: FUNCTIONAL
+```
+
+vs
+
+```
+Pathway: non_phosphorylative (isolated)
+Gene completion: 5/6 genes = 0.83
+Input status: UNREACHABLE (no gluconate source detected)
+DAG connectivity: CANNOT START (input unavailable)
+Overall: NON-FUNCTIONAL (genes present but pathway inactive)
+```
+
+#### 2.3 Multi-Potato Support
 - [ ] Load all potatoes from `inst/potatoes/` directory
 - [ ] Filter by tags: `run_potatoes(tags = c("amino_acid_metabolism"))`
 - [ ] Batch scoring across multiple potatoes
 
-#### 2.2 Consistency Validation
+#### 2.4 Consistency Validation
 - [ ] Scan all potatoes for gene definitions
 - [ ] Build gene usage matrix (gene → list of potatoes)
 - [ ] Compute specificity scores for all genes
@@ -650,9 +735,9 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
   - `plot_potato(..., potato_list, genome_names, facet_by = "both")` - Grid of potatoes × genomes
   - Technical challenge: ggraph faceting requires careful layout coordination across subplots
 
-### Phase 3: Confidence Scoring
+### Phase 3: Confidence Scoring & Metabolic Network Analysis
 
-**Goal:** Interpret results in context of gene specificity and MAG completeness.
+**Goal:** Interpret results in context of gene specificity, MAG completeness, and genome-wide metabolic capability.
 
 #### 3.1 Specificity Weighting
 - [ ] Pre-compute specificity scores across potato database
@@ -675,7 +760,124 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 - [ ] Confidence levels in pathway output
 - [ ] Explanation text: "Found leuB, leuC, leuD (pathway-specific). Missing ilvE (also in valine biosynthesis). Likely present given 78% MAG completeness."
 
-#### 3.4 Threshold Sensitivity Analysis ⚠️ HIGH-PRIORITY, HIGH-LOAD
+#### 3.4 Cross-Potato Metabolic Network Analysis
+
+**Goal:** Evaluate pathway completeness in context of genome-wide metabolic capability. A pathway is complete if its input can be satisfied by another detected pathway's output.
+
+**Biological Reality:** Microbial metabolism is non-compartmentalized
+- Eukaryotes: Compartmentalized metabolism (glycolysis in cytoplasm, TCA in mitochondria, Calvin in chloroplast)
+- Bacteria: One cytoplasmic soup - all pathways co-localized
+- **Implication:** Intermediates from one pathway are immediately available for another
+- Pyruvate from ED pathway → available for TCA, fermentation, amino acid synthesis simultaneously
+- Only membrane barriers matter (exterior ↔ periplasm ↔ cytoplasm)
+
+**The Transporter Gatekeeper Problem:**
+
+Traditional metabolic models assume "everything extracellular is available intracellularly" (black box transport). This breaks down in real genomes:
+- Gluconate abundant in environment but genome lacks transporter → effectively absent
+- Transporters are gatekeepers - without them, substrates unavailable
+- Must explicitly model transport pathways (e.g., `gluconate_transport`)
+
+**Cross-Potato Linking Example:**
+
+```
+Potato 1 (ED network):
+  npED pathway: DETECTED
+  Output: pyruvate + D-glyceraldehyde (C00577)
+  Status: COMPLETE
+
+Potato 2 (serine biosynthesis):
+  Input: D-glyceraldehyde (C00577)
+  Genes: 75% detected
+  Traditional scoring: INCOMPLETE (where does glyceraldehyde come from?)
+  
+Cross-potato reasoning:
+  Check genome for C00577 sources → npED produces it!
+  Input: SATISFIED (from npED)
+  Serine biosynthesis: COMPLETE (uses npED intermediate)
+```
+
+**Implementation:**
+
+- [ ] **Build genome-wide metabolite pool map**:
+  - Available from environment: glucose, NH4+, O2, etc.
+  - Available after transport: compounds with detected transporters
+  - Produced by metabolism: track outputs from all detected pathways
+  - Consumed by metabolism: track inputs to all detected pathways
+  
+- [ ] **Compound matching via KEGG IDs**:
+  - Standardize on C##### identifiers for cross-potato matching
+  - Handle location qualifiers (_exterior, _cytoplasm)
+  - "D-glyceraldehyde" = C00577 regardless of pathway naming
+  
+- [ ] **Genome-level metabolic graph**:
+  - Nodes: compounds (available pools)
+  - Edges: pathways (transformations)
+  - Build per-genome, per-annotation-run
+  - Cache for reuse
+  
+- [ ] **Contextual pathway scoring**:
+  ```r
+  # Old: score pathways independently
+  score_pathways(sack)
+  
+  # New: score in metabolic context
+  score_metabolic_network(sack, genome_name)
+  # Builds genome-wide graph
+  # Evaluates pathway completeness considering all detected pathways
+  # Returns: which pathways are functionally complete given available inputs
+  ```
+
+**Output format:**
+
+```
+Genome: Marine_Bacterium_X
+
+Functional Metabolic Units:
+✓ Glucose → Pyruvate (classic ED complete)
+✓ Gluconate import → Pyruvate (gluconate_transport + npED)
+✓ D-glyceraldehyde → Serine (npED intermediate feeds serine biosynthesis)
+✓ Acetate import → TCA (acetate transporter + TCA forward)
+
+Incomplete Pathways:
+⚠ Leucine biosynthesis: 80% genes but missing α-ketoisovalerate source
+  - Check: Valine biosynthesis (produces α-ketoisovalerate) - NOT DETECTED
+  - Pathway cannot function without intermediate source
+  
+⚠ Aromatic amino acid biosynthesis: 70% genes but missing chorismate
+  - Shikimate pathway NOT DETECTED
+  - No alternative chorismate source
+  - Likely imports aromatic amino acids (auxotroph)
+```
+
+**Statistical Validation:**
+
+Once 50-100 potatoes exist, analyze compound sharing:
+- Build compound co-occurrence matrix (which compounds appear in which pathways)
+- Calculate average: Z = compounds per pathway
+- If Z > 1: compounds are inherently shared (validates cross-potato reasoning)
+- Cluster pathways by shared metabolites:
+  - Do clusters match functional domains? (glycolysis variants)
+  - Or extensive cross-domain linkage? (central metabolism ↔ amino acids ↔ toxins)
+
+**Research Questions:**
+- How often do compounds link completely different domains? (EMP ↔ toxin production)
+- Is microbial metabolism modular or highly interconnected?
+- Can we predict pathway co-occurrence based on shared intermediates?
+
+**Implementation Challenges:**
+
+1. **Compound name standardization** - Always use KEGG C##### for matching
+2. **Computational cost** - Build graph per-genome on demand, cache results
+3. **Circular dependencies** - Detect cycles, report separately
+4. **Multiple sources** - If 3 pathways produce X, which feeds pathway Y? (report all)
+5. **Intermediate vs terminal** - Track compound pool availability
+
+**Priority:** Medium-High - Implement after Phase 2 (input/output validation) proves the concept within networks
+
+**This makes POTATO unique:** Most tools score pathways independently. POTATO reasons about metabolic networks: "You have 60% of pathway X, but intermediate Y comes from pathway Z → pathway X is complete."
+
+#### 3.5 Threshold Sensitivity Analysis ⚠️ HIGH-PRIORITY, HIGH-LOAD
 
 **Goal:** Identify "gate-keeper genes" whose thresholds block pathway detection and quantify threshold sensitivity.
 
@@ -774,23 +976,307 @@ convert_gator_db(excel_path = "gator_db.xlsx",
 - [ ] One JSON per pathway
 - [ ] Validation report
 
-#### 4.3 Analysis Agent
+#### 4.3 Analysis Agent - LLM-Enhanced Pathway Interpretation
 
-Interprets results per-genome.
+**Goal:** Use LLM to interpret pathway scoring results with biological reasoning that goes beyond algorithmic scoring.
+
+**Key Innovation:** LLM provides context-aware interpretation of gene presence patterns, accounting for:
+1. **Gene specificity** - Distinguish diagnostic genes (mlrA) from promiscuous housekeeping genes (gapA)
+2. **Cross-pathway context** - Recognize when detected genes actually belong to a different pathway (PPP vs ED overlap)
+3. **Biological feasibility** - Assess whether partial pathways are likely functional
+
+**Architecture:**
+- **Algorithmic scoring first** (fast, deterministic): `sack <- score_pathways(sack)`
+- **LLM interpretation second** (optional, contextual): `interpret_pathway_llm(sack, potato_name, genome_name)`
+- **R interface via elmer** - Simple LLM access (Anthropic, OpenAI, local models)
+- **Config in potato_config.yaml**:
+  ```yaml
+  llm:
+    provider: "anthropic"  # or "openai", "ollama"
+    api_key_env: "ANTHROPIC_API_KEY"
+    model: "claude-sonnet-4-5"
+  ```
+
+**Implementation:**
+
+##### 4.3.1 Gene Specificity Interpretation
+- [ ] Pre-compute gene specificity scores across all potatoes (1 / num_potatoes containing gene)
+- [ ] LLM prompt includes:
+  - Detected genes with their specificity scores
+  - Pathway completion percentage
+  - Which genes are required vs optional
+  - Which genes are markers
+- [ ] LLM output: "60% complete with mlrABC (highly specific) = strong evidence" vs "60% complete with gapA/pgk (promiscuous) = weak evidence"
+
+**Example:**
+```r
+interpret_pathway_llm(sack, 
+  potato_name = "microcystin_degradation", 
+  genome_name = "Haloferax_sp"
+)
+
+# LLM response:
+# "Microcystin degradation pathway shows STRONG evidence (60% complete):
+#  - mlrA, mlrB, mlrC detected (all pathway-specific, avg specificity 0.98)
+#  - Missing mlrD (required but sometimes absent in partial operons)
+#  - High confidence despite incompleteness given marker gene presence"
+```
+
+##### 4.3.2 Cross-Pathway Context Awareness
+- [ ] LLM aware of major central metabolism pathways (PPP, EMP, TCA, ED)
+- [ ] Optional: Fetch KEGG context via API (`include_kegg_context = TRUE`)
+  - For each detected KO, query which KEGG modules it appears in
+  - Format: "K00036: appears in M00004 (PPP), M00008 (ED)"
+- [ ] Pre-loaded pathway context (curated definitions of common pathways)
+- [ ] LLM checks: "Are detected genes ALSO in PPP/EMP/TCA? Could this be false positive from overlap?"
+
+**Example:**
+```r
+interpret_pathway_llm(sack,
+  potato_name = "entner_doudoroff_classic",
+  genome_name = "E_coli_K12",
+  include_kegg_context = TRUE
+)
+
+# LLM response:
+# "ED pathway shows WEAK evidence (60% complete):
+#  - Detected: zwf, pgl, gnd (all shared with oxidative PPP)
+#  - Missing: edd, eda (ED-specific markers, CRITICAL for ED)
+#  - KEGG context confirms zwf/pgl in both M00004 (PPP) and M00008 (ED)
+#  - Interpretation: This is likely oxidative PPP, NOT ED pathway"
+```
+
+**Prompt Structure:**
+```r
+CENTRAL_METABOLISM_CONTEXT <- "
+Common metabolic pathways and their diagnostic genes:
+
+Pentose Phosphate Pathway (PPP):
+- Oxidative: zwf (K00036), pgl (K01057), gnd (K00033) - NOT ED-specific
+- Non-oxidative: rpe, rpi, tkt, tal
+
+Entner-Doudoroff (ED):
+- Classic: glk, zwf, pgl, edd (K01690)*, eda (K01625)* - edd/eda are diagnostic
+- Non-phosphorylative: gnaD, kdgA/kdpgA, gadh/cutABC/aor, gck
+
+Glycolysis (EMP):
+- Lower: gapA, pgk, pgm, eno, pyk - highly promiscuous
+- Upper: pgi, pfk, fba
+
+TCA cycle:
+- Forward: citrate synthase, aconitase, isocitrate DH, etc.
+- Reverse: ATP citrate lyase, etc.
+"
+
+interpret_pathway_llm <- function(sack, potato_name, genome_name, 
+                                   include_kegg_context = FALSE) {
+  # Get scoring results
+  scores <- sack@scores %>% filter(potato == potato_name, genome == genome_name)
+  gene_hits <- get_gene_results(sack) %>% 
+    filter(potato == potato_name, genome == genome_name, passed == TRUE)
+  
+  # Build prompt
+  prompt <- glue::glue("
+    Pathway: {potato_name}
+    Completion: {scores$fraction} ({scores$steps_detected}/{scores$steps_total})
+    Essential completion: {scores$fraction_essential}
+    
+    Detected genes: {paste(gene_hits$node_id, collapse=', ')}
+    Gene specificity scores: {paste(gene_hits$specificity, collapse=', ')}
+    Marker genes detected: {paste(gene_hits$node_id[gene_hits$marker], collapse=', ')}
+    
+    Context: {CENTRAL_METABOLISM_CONTEXT}
+  ")
+  
+  # Optionally add KEGG API context
+  if (include_kegg_context) {
+    kegg_info <- fetch_kegg_context_for_genes(gene_hits$ko)
+    prompt <- paste(prompt, "\n\nKEGG module lookup:\n", kegg_info)
+  }
+  
+  # Critical questions for LLM
+  prompt <- paste(prompt, "
+    CRITICAL: Before concluding {potato_name} is present, verify:
+    1. Are detected genes ALSO found in PPP/EMP/TCA? (check context above)
+    2. Are pathway-SPECIFIC genes present? (not just shared housekeeping)
+    3. Could this be a false positive from metabolic overlap?
+    4. Do the detected genes have high or low specificity scores?
+    
+    Provide biological interpretation: Is this STRONG or WEAK evidence for pathway presence?
+  ")
+  
+  # Query LLM via elmer
+  chat <- elmer::chat_anthropic(
+    model = sack@config$llm$model,
+    api_key = Sys.getenv(sack@config$llm$api_key_env)
+  )
+  chat$chat(prompt)
+}
+```
+
+##### 4.3.3 Functional Analog Suggestions
+- [ ] LLM uses reaction/EC metadata to suggest alternatives
+- [ ] "Missing ketol-acid reductoisomerase (EC 1.1.1.86). Found hypothetical protein with EC 1.1.1.* domain. Possible functional analog?"
+- [ ] Flag as unvalidated, requires expert review
+- [ ] Consider phylogenetic distance: "Archaeal genome missing bacterial homolog - check for archaeal-specific isoforms"
+
+##### 4.3.4 MAG Completeness Integration
+- [ ] Accept optional genome completeness estimate (CheckM, BUSCO)
+- [ ] Adjust confidence: "3 genes missing, but MAG is 60% complete - absence may be due to incompleteness"
+- [ ] Bayesian-style adjustment or simpler heuristic
+
+**Priority:** Medium-High - Provides major value-add over pure algorithmic scoring. Implement after Phase 3.1 (Specificity Weighting) is complete so specificity scores are available
+
+#### 4.4 Enhancement Agent - Potato Validation & Expansion
+
+**Goal:** LLM agent suggests additional detection methods, missing genes, and structural improvements for existing potatoes.
+
+**Use Case:** User creates a potato and wants to know: "What am I missing? Are there better detection methods? Should I add regulatory genes?"
+
+**What the agent is good at:**
+
+✅ **Cross-database mapping**
+- Suggest PFAM domains for genes currently only detected by KO
+- Map to PATRIC/RAST annotations
+- LLMs have broad training on database cross-references
+
+✅ **Suggesting alternative/missing genes**
+- "You have nifH but missing nifD/nifK (nitrogenase complex subunits)"
+- "Consider vnfH/vnfG for V-dependent variant"
+- Pattern recognition across pathway definitions
+
+✅ **Regulatory context**
+- "This pathway typically regulated by ntrC"
+- "FNR regulates ED pathway genes in E. coli"
+- Literature knowledge about operons/regulons
+
+✅ **Structural gap identification**
+- "Step 2 produces compound X but no step consumes it"
+- "Missing transporter for substrate uptake"
+- DAG completeness reasoning
+
+**What would be risky (requires mitigation):**
+
+❌ **Database ID hallucination**
+- LLM might invent PFAM/PATRIC IDs that don't exist
+- Training data is old but databases update constantly
+- **Mitigation:** API verification required before adding to potato
+
+❌ **EC number / substrate specificity errors**
+- Already seen build-potato make EC chemistry mistakes
+- **Mitigation:** User must verify EC substrate chemistry, not trust blindly
+
+❌ **Rare/novel pathway bias**
+- LLM training biased toward well-studied pathways
+- Custom/niche pathways may get bad suggestions
+- **Mitigation:** Lower confidence when source is "custom" not "KEGG"
+
+**Implementation Design:**
 
 ```r
-interpret_results(genome_results, genome_completeness = 0.78)
+suggest_potato_enhancements(potato, check_databases = TRUE)
 ```
-- [ ] Reads potato scoring results
-- [ ] Considers specificity, MAG completeness
-- [ ] Generates natural language interpretation
-- [ ] Suggests functional analogs for missing genes (Phase 5)
 
-#### 4.4 LLM Infrastructure
-- [ ] Claude API integration (via Anthropic SDK)
-- [ ] Prompt templates for each agent mode
+**Returns structured suggestions:**
+```
+Potato: entner_doudoroff_network (classic pathway)
+
+DETECTION METHOD SUGGESTIONS:
+✓ G6PD (K00036) - VERIFIED
+  - PFAM PF00479 (G6PD C-terminal) ✓ verified via API
+  - PATRIC PLF_1240_00001700 ✓ verified
+  - Confidence: HIGH
+  
+⚠ edd (K01690) - CHECK NEEDED  
+  - PFAM PF03446 (edd domain) - API lookup failed, verify manually
+  - Confidence: MEDIUM
+
+MISSING PATHWAY COMPONENTS:
+! No glucokinase regulator detected
+  - Consider: crp (catabolite repression, K02529)
+  - Reasoning: ED pathway subject to glucose catabolite repression
+  - Confidence: MEDIUM (regulatory, not structural)
+
+STRUCTURAL CHECKS:
+✓ All steps have downstream connections
+✓ No orphan compounds
+! Input compound (D-glucose) - no transporter defined
+  - Consider: glucose PTS system or porins for uptake
+  - Confidence: LOW (organism-dependent)
+```
+
+**Key Features:**
+1. **API verification built-in** - `check_databases = TRUE` queries KEGG/PFAM/PATRIC APIs to verify suggested IDs
+2. **Confidence scores** - HIGH (API verified) / MEDIUM (plausible) / LOW (speculative)
+3. **Reasoning included** - explains *why* each suggestion
+4. **Categorized output** - detection methods vs pathway components vs structure
+5. **User validates** - returns checklist, doesn't auto-edit JSON (user decides what to add)
+
+**Implementation Steps:**
+
+- [ ] LLM analyzes potato structure
+  - Input: `print_potato()` compact summary
+  - Prompt: "Suggest improvements: additional detection methods, missing genes, regulatory components, structural issues"
+  - Output: Structured JSON with suggestions + reasoning + confidence
+  
+- [ ] API verification layer (`check_databases = TRUE`)
+  - `verify_pfam_id()` - Query PFAM API
+  - `verify_ko_id()` - Query KEGG API
+  - `verify_patric_id()` - Query PATRIC/RAST if available
+  - Mark each suggestion: ✓ verified / ⚠ check needed / ✗ not found
+  
+- [ ] Structure suggestions into categories
+  - Detection methods (add to existing genes)
+  - Missing pathway components (new genes)
+  - Regulatory genes (optional additions)
+  - Structural issues (gaps, orphans, missing transporters)
+  
+- [ ] Interactive workflow
+  - User reviews suggestions
+  - Manually adds approved items to potato JSON
+  - Re-run `validate_potato()` after changes
+
+**Example Prompt Structure:**
+```r
+prompt <- glue::glue("
+  Analyze this metabolic pathway and suggest improvements:
+  
+  Pathway: {potato@name}
+  Source: {potato@source}
+  {print_potato(potato, compact = TRUE)}
+  
+  Suggest:
+  1. Additional detection methods (PFAM, PATRIC, HMM) for existing genes
+  2. Missing alternative genes (isoforms, paralogs, variants)
+  3. Regulatory genes commonly associated with this pathway
+  4. Structural issues (missing transporters, cofactor dependencies, orphan compounds)
+  
+  For each suggestion provide:
+  - Specific database ID (PFAM/PATRIC/KO)
+  - Confidence level (high/medium/low)
+  - Reasoning (why this is relevant)
+  
+  Be conservative - only suggest well-established associations.
+  Do NOT suggest genes unless you're confident they belong in this pathway.
+")
+```
+
+**Use as Research Assistant:**
+- Agent finds leads, user verifies before adding
+- Think: grad student literature search, not oracle
+- Especially useful for:
+  - Adding PFAM to KEGG-only pathways
+  - Checking for missing regulatory genes
+  - Identifying structural gaps
+
+**Priority:** Medium - Implement after Phase 4.3 (Analysis Agent) when LLM infrastructure exists
+
+#### 4.5 LLM Infrastructure
+- [ ] Claude API integration (via Anthropic SDK) or elmer wrapper
+- [ ] Prompt templates for each agent mode (builder, analyzer, enhancer)
 - [ ] Token management, caching
 - [ ] Error handling, retry logic
+- [ ] API verification helpers (KEGG, PFAM, PATRIC lookups)
 
 ### Phase 5: Advanced Features (Future)
 
@@ -1005,10 +1491,11 @@ When building a potato, agent asks:
 
 ---
 
-#### 5.2 Functional Analog Suggestions
-- [ ] LLM uses reaction metadata to suggest alternatives
-- [ ] "Missing ketol-acid reductoisomerase (EC 1.1.1.86). Found hypothetical protein with EC 1.1.1.* domain. Possible functional analog?"
-- [ ] Flag as unvalidated, requires expert review
+#### 5.2 Pathway Evolution Tracking
+- [ ] Track potato changes over time (git-based versioning)
+- [ ] Compare old vs new pathway definitions
+- [ ] Re-score genomes when potatoes are updated
+- [ ] Report: "pathway X now detected in 5 additional genomes due to updated thresholds"
 
 #### 5.3 Cross-Potato Queries
 - [ ] "Which potatoes produce acetyl-CoA?"
@@ -1020,10 +1507,12 @@ When building a potato, agent asks:
 - [ ] BacPT/Bacformer as pre-computed embedding database
 - [ ] ANN search for functional annotation
 
-#### 5.5 DAG Evolution Suggestions
-- [ ] LLM: "I know of a bifunctional enzyme that shortcuts A → B → C to A → C"
-- [ ] Suggest new edges/nodes to existing potatoes
+#### 5.5 LLM-Assisted Potato Refinement
+- [ ] LLM suggests pathway improvements based on detected patterns
+- [ ] "I found bifunctional enzyme X that shortcuts step 2-3, should we add it?"
+- [ ] Suggests new edges/nodes to existing potatoes
 - [ ] User reviews, accepts/rejects
+- [ ] Updates potato JSON with user approval
 
 #### 5.6 Alternative Visualization Libraries (Future Consideration)
 - [ ] **g6R** - Explore as alternative to visNetwork for pathway-based clustering

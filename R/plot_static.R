@@ -88,12 +88,12 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
           ggforce::geom_mark_hull(
             data = pathway_hull_data,
             ggplot2::aes(x = x, y = y, fill = pathway_name, color = pathway_name),
-            alpha = 0.1,
+            alpha = 0.3,
             expand = grid::unit(12, "mm"),
             radius = grid::unit(13, "mm"),
             concavity = 0.5,
             show.legend = TRUE,
-            size = 1.5
+            size = 0.5
           )
       } else if (nrow(pathway_hull_data) == 0) {
         cli::cli_alert_info("All pathways are single-gene; no hulls to draw (nodes colored by pathway)")

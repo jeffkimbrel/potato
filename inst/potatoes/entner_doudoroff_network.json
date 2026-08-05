@@ -1,7 +1,7 @@
 {
   "id": "entner_doudoroff_network",
   "name": "Entner-Doudoroff Pathway Network",
-  "source": "KEGG M00006, M00309, M00308, M00633",
+  "source": "KEGG M00008, M00309, M00308, M00633",
   "tags": [
     "metabolism",
     "carbohydrate",
@@ -28,7 +28,7 @@
       "y_compounds": 569
     },
     {
-      "id": "zwf",
+      "id": "G6PD",
       "name": "glucose-6-phosphate 1-dehydrogenase",
       "databases": {
         "kofam": [
@@ -39,7 +39,7 @@
         "1.1.1.49",
         "1.1.1.363"
       ],
-      "notes": "Oxidizes G6P to 6-phosphoglucono-δ-lactone; also in pentose phosphate pathway",
+      "notes": "Oxidizes G6P to 6-phosphoglucono-δ-lactone; also in pentose phosphate pathway. K00036 can encode either strict NADP+-dependent (EC 1.1.1.49) or dual-specificity NAD(P)+-accepting (EC 1.1.1.363) isoforms; cofactor specificity cannot be determined from KO annotation alone.",
       "type": "enzyme",
       "x": 902,
       "y": 700,
@@ -467,7 +467,7 @@
     "classic": {
       "name": "Classic ED (Phosphorylative)",
       "type": "variant",
-      "kegg_module": "M00006",
+      "kegg_module": "M00008",
       "notes": "Glucose entry via phosphorylation. Fully phosphorylated pathway: D-glucose → pyruvate + glyceraldehyde-3P. Found in Pseudomonas, E. coli, many bacteria.",
       "nodes": {
         "glk": {
@@ -475,7 +475,7 @@
           "required": true,
           "marker": false
         },
-        "zwf": {
+        "G6PD": {
           "step": 2,
           "required": true,
           "marker": false
@@ -504,18 +504,18 @@
       "edges": [
         {
           "from": "glk",
-          "to": "zwf",
+          "to": "G6PD",
           "compound": "D-glucose-6P",
           "kegg_compound": "C00668"
         },
         {
-          "from": "zwf",
+          "from": "G6PD",
           "to": "pgl",
           "compound": "6-phospho-D-glucono-1,5-lactone",
           "kegg_compound": "C01236"
         },
         {
-          "from": "zwf",
+          "from": "G6PD",
           "to": "ybhE",
           "compound": "6-phospho-D-glucono-1,5-lactone",
           "kegg_compound": "C01236"
@@ -557,7 +557,7 @@
         "min_fraction": 0.8,
         "marker_mode": "any"
       },
-      "verified": false
+      "verified": true
     },
     "non_phosphorylative": {
       "name": "Non-Phosphorylative ED",
@@ -710,7 +710,7 @@
         "min_fraction": 0.75,
         "marker_mode": "any"
       },
-      "verified": false
+      "verified": true
     },
     "semi_phosphorylative": {
       "name": "Semi-Phosphorylative ED",
@@ -965,7 +965,7 @@
         "min_fraction": 1,
         "marker_mode": "any"
       },
-      "verified": false
+      "verified": true
     },
     "galactose_catabolism": {
       "name": "Galactose Catabolism (ED Entry)",
