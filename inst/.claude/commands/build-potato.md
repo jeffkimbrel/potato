@@ -147,8 +147,14 @@ Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
 - Does NOT verify connectivity through DAG (a pathway with broken middle step but 80% genes still scores 0.8)
 - Sufficient for most presence/absence calls, especially with incomplete MAGs
 - Each pathway can have different `min_fraction` (e.g., 1.0 for strict, 0.5 for permissive)
+- **NEW in v0.9.3:** Dual scoring tracks:
+  - **All steps:** `steps_detected` / `steps_total` (includes optional genes)
+  - **Essential only:** `steps_detected_essential` / `steps_total_essential` (only `required: true` genes)
+  - Both use same `min_fraction` threshold
+  - Example: 10 genes (5 required, 5 optional) → all 5 required present = 50% total BUT 100% essential
+  - This allows scoring pathways even when optional/accessory genes are missing
 
-# Multi-Pathway Network Potatoes (NEW in v0.9.0)
+# Multi-Pathway Network Potatoes (v0.9.0-v0.9.3)
 
 ## When to Build Multi-Pathway Networks
 
@@ -1571,6 +1577,27 @@ Agent: ✓ Validated with load_potato() - no errors
 - **Suggest marker genes** based on pathway specificity, but let user confirm
 - **Check for bifunctional enzymes** - same gene at multiple steps needs special handling
 - **Use WebFetch** for KEGG API, not manual URLs
+
+# Analysis Context (v0.9.3)
+
+Once potatoes are built and genomes are scored, users can analyze pathway distributions:
+
+- `plot_pathway_prevalence(sack)` - Bar chart showing which pathways are common vs rare across genomes
+- `plot_pathway_uniqueness(sack)` - Histogram showing distribution of pathway prevalence
+- `get_pathway_scores(sack)` - Export pathway scores with essential-only metrics
+- `get_gene_results(sack)` - Export gene-level hits with threshold pass/fail
+
+**This helps users understand:**
+- Which pathways are widespread vs unique to specific organisms
+- Whether a pathway variant is common or rare in their dataset
+- Quality of pathway detection (all vs essential genes)
+
+**Relevance for potato building:**
+- Rare pathways (1-2 genomes) may need stricter validation
+- Common pathways with low scores may indicate missing genes or bad detection methods
+- High variance in pathway completeness may indicate need for multi-pathway network
+
+---
 
 # Save Location Logic
 
