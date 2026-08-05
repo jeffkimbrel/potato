@@ -216,11 +216,19 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
         }
       }
 
+      # Format pathway list with newlines
+      pathway_str <- ""
+      if (is_multi_pathway && node_pathways[i] != "") {
+        pathway_list <- strsplit(node_pathways[i], ", ")[[1]]
+        pathway_lines <- paste0(" - ", paste(pathway_list, collapse = "<br> - "))
+        pathway_str <- paste0("Pathways:<br>", pathway_lines, "<br>")
+      }
+
       hover_texts[i] <- paste0(
         "Gene: ", node_status$gene_id[i],
         if (node_status$ec[i] != "") paste0(" EC: ", ec_clean) else "", "<br>",
         "Type: ", type_str, "<br>",
-        if (is_multi_pathway && node_pathways[i] != "") paste0("Pathways: ", node_pathways[i], "<br>") else "",
+        pathway_str,
         "Status: ", node_status$status[i],
         databases_str
       )
