@@ -1,6 +1,6 @@
-# POTATO v0.6.0 - Workflow Diagrams
+# POTATO v0.9.3 - Workflow Diagrams
 
-Current status: Foundation complete. Kofam annotation fully implemented with parallel execution and file provenance.
+Current status: Multi-pathway networks with full scoring support. Essential-only metrics. Result export functions. Test coverage 27%.
 
 ## User Workflow
 
@@ -21,10 +21,16 @@ flowchart TD
     
     AddGenomes --> Registered[Genomes registered<br/>in sack@genomes]
     
-    Registered --> Annotate[run_kofam sack]
-    Annotate --> Results[Results in<br/>sack@results$kofam]
+    Registered --> Annotate[run_kofam/run_blast/run_hmm]
+    Annotate --> Results[Results in<br/>sack@results]
     
-    Results --> Save[saveRDS sack, path.rds]
+    Results --> Score[score_pathways sack]
+    Score --> Scored[Scores in<br/>sack@scores]
+    
+    Scored --> Export[get_gene_results<br/>get_pathway_scores]
+    Export --> Tibbles[Export tibbles]
+    
+    Scored --> Save[saveRDS sack, path.rds]
     Save --> RDS[(sack.rds<br/>saved)]
     
     RDS --> LoadRDS[readRDS path.rds]

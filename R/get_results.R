@@ -14,7 +14,7 @@ get_gene_results <- function(sack) {
     cli::cli_abort("Input must be a PotatoSack object")
   }
 
-  if (nrow(sack@results) == 0) {
+  if (is.null(sack@results) || nrow(sack@results) == 0) {
     cli::cli_warn("No annotation results found in sack")
     return(tibble::tibble())
   }
@@ -104,7 +104,7 @@ get_pathway_scores <- function(sack) {
     cli::cli_abort("Input must be a PotatoSack object")
   }
 
-  if (nrow(sack@scores) == 0) {
+  if (is.null(sack@scores) || nrow(sack@scores) == 0) {
     cli::cli_warn("No scoring results found in sack. Run score_pathways() first.")
     return(tibble::tibble())
   }
@@ -124,8 +124,15 @@ get_pathway_scores <- function(sack) {
   key_cols <- c("genome", "potato", "potato_hash", "pathway_name")
   other_cols <- setdiff(names(scores), key_cols)
   scores <- scores %>%
-    dplyr::select(dplyr::all_of(key_cols[key_cols %in% names(scores)]), dplyr::all_of(other_cols)) |>
-    dplyr::select(-pathway, -potato)
+    dplyr::select(dplyr::all_of(key_cols[key_cols %in% names(scores)]), dplyr::all_of(other_cols))
+
+  # Remove pathway and potato columns if they exist
+  if ("pathway" %in% names(scores)) {
+    scores <- scores %>% dplyr::select(-pathway)
+  }
+  if ("potato" %in% names(scores)) {
+    scores <- scores %>% dplyr::select(-potato)
+  }
 
   scores
 }

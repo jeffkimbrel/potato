@@ -1,12 +1,12 @@
 # POTATO v1 - Development Roadmap
 
-**Current Version:** v0.9.0 (in progress, 2026-08-04)
+**Current Version:** v0.9.3 (2026-08-05)
 
-**Status:** Multi-pathway networks implemented with interactive visNetwork visualization. Curated layout system with coordinate export/import. Ready for multi-pathway scoring implementation.
+**Status:** Multi-pathway networks with full scoring support. Essential-only scoring metrics. Result export functions with threshold filtering. Test coverage at 27%.
 
-**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (single-pathway only) → interactive/static visualization with curated layouts → analyze near-misses
+**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (all + essential genes) → interactive/static visualization with curated layouts → export results as tibbles → analyze near-misses
 
-**What's next:** Multi-pathway scoring, gene specificity weighting, threshold sensitivity analysis
+**What's next:** Gene specificity weighting, threshold sensitivity analysis, annotation workflow optimization
 
 ---
 
@@ -526,7 +526,32 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
   - [x] `compute_potato_hash()` generates MD5 of functional fields
   - [x] `potato_hash` column added to annotation results
 
-#### 0.9.3 Visualization Updates ✓ (COMPLETE)
+#### 0.9.2.1 Multi-Pathway Scoring ✓ (COMPLETE - v0.9.3)
+- [x] Update `score_pathways()` to score multi-pathway networks
+  - [x] Each pathway scored independently
+  - [x] Results include `pathway` and `pathway_name` columns
+  - [x] Single-pathway potatoes work as before
+  - [x] Handles shared genes across pathways
+- [x] Essential-only scoring metrics
+  - [x] Add `steps_detected_essential`, `steps_total_essential`, `fraction_essential`, `present_essential`
+  - [x] Tracks required genes separately from all genes
+  - [x] NA when no required genes defined
+- [x] Add `min_fraction` column to scores
+  - [x] Shows per-pathway threshold (from potato JSON or default 0.75)
+  - [x] Makes threshold explicit in results
+- [x] Result export functions
+  - [x] `get_gene_results()` - Gene-level hits with `passed` column
+  - [x] `get_pathway_scores()` - Pathway scores with potato_hash
+  - [x] Both return tibbles (no write_csv parameter)
+- [x] Interactive plot improvements
+  - [x] Multi-line pathway lists in hover text
+  - [x] Better formatting for genes in multiple pathways
+- [x] Test coverage improvements
+  - [x] 91 passing tests (up from ~35)
+  - [x] Test coverage: 27% (up from 11.35%)
+  - [x] New test files: test-export.R, test-scoring.R, test-multi-pathway.R
+
+#### 0.9.3 Visualization Updates ✓ (COMPLETE - v0.9.0/v0.9.1)
 - [x] Replace plotly with visNetwork for interactive mode
   - [x] Full viewport display (100vh)
   - [x] Drag-and-drop node positioning

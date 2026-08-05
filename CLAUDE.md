@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** v0.9.0 (in progress) - Multi-pathway networks, interactive visNetwork visualization with curated layouts, coordinate export/import system, pathway filtering, dual coordinate systems for compound/enzyme-only views.
+**Current Status:** v0.9.3 (2026-08-05) - Multi-pathway networks with full scoring support, essential-only scoring metrics, result export functions, 27% test coverage (91 passing tests).
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -598,7 +598,7 @@ sack <- readRDS("sack.rds")  # Standard R load
 
 ---
 
-## Complete Workflow Status (v0.9.0 in progress)
+## Complete Workflow Status (v0.9.3)
 
 ### Fully Implemented and Tested ✓
 
@@ -629,7 +629,7 @@ sack <- readRDS("sack.rds")  # Standard R load
   - `find_conda()` helper searches PATH, CONDA_EXE, common locations
   - Works out-of-box when conda is shell function (not in R's PATH)
 
-**Scoring (v0.7.0)**
+**Scoring (v0.7.0, v0.9.3)**
 - ✅ `score_pathways()` - Apply quality thresholds to annotation hits
 - ✅ Per-gene thresholding:
   - Kofam: uses KEGG per-gene threshold (column: `threshold`)
@@ -639,6 +639,15 @@ sack <- readRDS("sack.rds")  # Standard R load
 - ✅ Calculate pathway completion fractions
 - ✅ Determine presence/absence based on min_fraction threshold
 - ✅ Store results in `sack@scores` tibble
+- ✅ Multi-pathway network scoring (v0.9.3)
+  - Each pathway scored independently
+  - Results include `pathway` and `pathway_name` columns
+  - Handles shared genes across pathways
+- ✅ Essential-only scoring metrics (v0.9.3)
+  - `steps_detected_essential`, `steps_total_essential`, `fraction_essential`, `present_essential`
+  - Tracks required genes separately from all genes
+  - Returns NA when no required genes defined
+- ✅ Per-pathway thresholds included in results (`min_fraction` column)
 
 **Visualization (v0.7.0 - v0.9.0)**
 - ✅ `plot_potato()` - Dual-mode visualization system
@@ -672,10 +681,19 @@ sack <- readRDS("sack.rds")  # Standard R load
 - ✅ All plots use tidyverse/ggplot2 (no base graphics)
 - ✅ `potato_theme()` - Consistent theming with transparent backgrounds
 
-**Analysis Functions (v0.7.1)**
+**Analysis Functions (v0.7.1, v0.9.3)**
 - ✅ `summarize_missing_genes()` - Identify genes systematically missing across genomes
 - ✅ `find_near_miss_pathways()` - Find pathways just below detection threshold
 - ✅ `plot_near_miss_pathways()` - Visualize near-miss status with color coding
+- ✅ `get_gene_results()` - Export gene-level annotation results (v0.9.3)
+  - Returns tibble with all hits across tools (kofam, blast, hmm)
+  - Includes `passed` column for threshold filtering
+  - Kofam uses per-gene threshold, BLAST uses global e-value/bitscore, HMM uses TC or e-value
+- ✅ `get_pathway_scores()` - Export pathway-level scores (v0.9.3)
+  - Returns tibble with all scoring metrics
+  - Includes `potato_hash` for version tracking
+  - Shows both all-steps and essential-only metrics
+  - Includes `min_fraction` threshold per pathway
 
 **Multi-Pathway Networks (v0.9.0)**
 - ✅ Multi-pathway JSON schema implemented
@@ -729,7 +747,7 @@ All features above have been implemented and basic testing done on:
   - Custom HMM profiles (e.g., mlr) typically don't have TC
   - Falls back to global e-value threshold when TC absent
 
-## Current Working Functions (v0.7.1, v0.9.0 in progress)
+## Current Working Functions (v0.9.3)
 
 ### User Workflow Functions
 - `initialize_potato_sack(path)` - Create project folder structure
@@ -782,6 +800,9 @@ All features above have been implemented and basic testing done on:
 - `summarize_missing_genes(sack, potato_name, min_genomes)` - Find systematically missing genes
 - `find_near_miss_pathways(sack, buffer)` - Identify pathways just below threshold
 - `plot_near_miss_pathways(sack, genome_name, buffer)` - Visualize near-miss status
+- `get_gene_results(sack)` - Export gene-level annotation results with threshold pass/fail
+- `get_pathway_scores(sack)` - Export pathway scores with essential metrics and potato_hash
+- `get_node_status(potato, sack, genome_name)` - Get detection status for plotting (internal)
 
 ### Config Functions
 - `load_potato_config(config_path = NULL)` - Load and validate config YAML
@@ -793,8 +814,9 @@ All features above have been implemented and basic testing done on:
 - `find_conda()` - Locate conda executable (PATH, CONDA_EXE, common locations)
 
 ### Test Suite
-- 35 tests covering all core workflows
-- Tests in: test-potato-class.R, test-potato-sack.R, test-save-load.R, test-config.R
+- 91 passing tests (v0.9.3)
+- Test coverage: 27% (up from 11.35%)
+- Tests in: test-potato-class.R, test-potato-sack.R, test-save-load.R, test-config.R, test-export.R, test-scoring.R, test-multi-pathway.R
 
 ---
 
@@ -1531,7 +1553,11 @@ When you return to work on POTATO:
 
 ## Version History
 
-- **v0.7.0** - READY TO COMMIT. Scoring and visualization complete. All plots use ggplot2/ggraph.
+- **v0.9.3** - Essential-only scoring metrics, result export functions (get_gene_results, get_pathway_scores), multi-line pathway hover text, test coverage 27% (91 tests)
+- **v0.9.2** - Multi-pathway scoring implementation (score each pathway independently)
+- **v0.9.1** - Input/output compound visualization and static plot improvements  
+- **v0.9.0** - Dual-mode visualization (visNetwork + ggraph), curated coordinate system, multi-pathway networks
+- **v0.7.0** - Scoring and visualization complete. All plots use ggplot2/ggraph
 - **v0.6.2** - HMM annotation with profile extraction
 - **v0.6.1** - BLAST annotation with filtered databases
 - **v0.6.0** - Kofam annotation fully implemented with parallel execution, file provenance, GenomeFile serialization
@@ -1570,8 +1596,10 @@ plot_potato(sack@potatoes$glyoxylate_cycle, sack, "genome_name")
 plot_pathway_summary(sack)
 
 # 7. Export results
-write.csv(sack@scores, "pathway_scores.csv")
-write.csv(sack@results %>% unnest(kofam), "kofam_hits.csv")
+gene_results <- get_gene_results(sack)
+pathway_scores <- get_pathway_scores(sack)
+write.csv(gene_results, "gene_results.csv")
+write.csv(pathway_scores, "pathway_scores.csv")
 ```
 
 ## What to Work on Next
@@ -1586,14 +1614,16 @@ write.csv(sack@results %>% unnest(kofam), "kofam_hits.csv")
 - Required vs optional gene handling
 - Pathway-level confidence scores (not just fraction)
 
-**In Progress (v0.9.0):**
-- Multi-pathway schema implementation
+**Completed (v0.9.0 - v0.9.3):**
+- ✅ Multi-pathway schema implementation
   - ✅ Schema design finalized (pathways field, variant/independent types)
   - ✅ ED network potato created (entner_doudoroff_network.json)
   - ✅ Active flag for deprecating old potatoes
-  - ⚠️ Validation system needs update
-  - ⚠️ Scoring system needs update (score pathways independently)
-  - ⚠️ Visualization needs multi-pathway support
+  - ✅ Validation system updated
+  - ✅ Scoring system updated (score pathways independently)
+  - ✅ Visualization supports multi-pathway networks
+  - ✅ Essential-only scoring metrics
+  - ✅ Result export functions
 
 **Future (v0.10.0+):**
 - LLM agent for potato building
