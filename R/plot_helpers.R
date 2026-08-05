@@ -45,8 +45,10 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
   if (has_genome) {
     node_status <- get_node_status(potato, sack, genome_name)
   } else {
+    # Only include enzyme nodes initially - compound nodes will be added below
+    enzyme_nodes <- igraph::V(g)$name[igraph::V(g)$node_type == "enzyme"]
     node_status <- tibble::tibble(
-      name = igraph::V(g)$name,
+      name = enzyme_nodes,
       detected = NA,
       status = "Unknown"
     )
@@ -57,10 +59,29 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
   missing_nodes <- setdiff(all_nodes, node_status$name)
 
   if (length(missing_nodes) > 0) {
+    # Get compound status from graph attributes (set during bipartite graph construction)
+    compound_status_attr <- igraph::V(g)$compound_status
+
     missing_status <- tibble::tibble(
       name = missing_nodes,
       detected = NA,
-      status = "Compound",
+      status = sapply(seq_along(missing_nodes), function(i) {
+        n <- missing_nodes[i]
+        # Use compound_status attribute if available
+        idx <- which(igraph::V(g)$name == n)
+        if (length(idx) > 0 && !is.null(compound_status_attr) && !is.na(compound_status_attr[idx])) {
+          status <- compound_status_attr[idx]
+          if (status == "input") return("Input")
+          if (status == "output") return("Output")
+          if (status == "intermediate") return("Compound")
+        }
+        # Fallback: infer from name prefix
+        if (grepl("^COMPOUND_", n)) {
+          "Compound"
+        } else {
+          "Unknown"
+        }
+      }),
       is_complex = FALSE,
       fraction_detected = NA
     )
@@ -70,8 +91,7 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
   node_status <- node_status[match(all_nodes, node_status$name), ]
 
   # Add compound flag
-  node_status$is_compound_node <- grepl("^COMPOUND_", node_status$name) |
-                                  node_status$name %in% c("INPUT", "OUTPUT")
+  node_status$is_compound_node <- grepl("^COMPOUND_", node_status$name)
 
   # Gene IDs
   if (is_multi_pathway) {

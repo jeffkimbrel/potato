@@ -40,25 +40,31 @@ Help users build well-structured potato JSON files through:
   "id": "pathway_name",              // snake_case identifier
   "name": "Human Readable Name",
   "source": "KEGG M00123 / custom",
-  "verified": false,                 // ALWAYS false - NEVER set to true
   "tags": ["metabolism", "energy"],
   "notes": "Brief biological description",
   
-  "input": {                         // RECOMMENDED: starting substrate
-    "compound": "substrate name",
-    "kegg_compound": "C00001",
-    "targets": ["geneA_1"]
-  },
-  
-  "output": {                        // RECOMMENDED: final product
-    "compound": "product name",
-    "kegg_compound": "C00002",
-    "sources": ["geneZ_5"]
-  },
-  
   "nodes": [/* gene definitions */],
-  "edges": [/* pathway topology */],
-  "scoring": {/* scoring parameters */}
+  
+  "pathways": {
+    "pathway_id": {
+      "name": "Pathway Name",
+      "type": "variant",              // or "independent"
+      "verified": false,              // ALWAYS false - NEVER set to true (per-pathway field)
+      "input": {                      // RECOMMENDED: starting substrate
+        "compound": "substrate name",
+        "kegg_compound": "C00001",
+        "targets": ["geneA"]
+      },
+      "output": {                     // RECOMMENDED: final product
+        "compound": "product name",
+        "kegg_compound": "C00002",
+        "sources": ["geneZ"]
+      },
+      "nodes": {/* pathway-specific attributes */},
+      "edges": [/* pathway topology */],
+      "scoring": {/* scoring parameters */}
+    }
+  }
 }
 ```
 
@@ -93,7 +99,7 @@ Each gene in the pathway:
 ```
 
 **Key Rules:**
-- **CRITICAL:** `"verified": false` - ALWAYS set this field to false. NEVER set to true. Only humans verify potatoes.
+- **CRITICAL:** `"verified": false` - For multi-pathway networks, this field goes in EACH pathway (not at potato level). ALWAYS set to false. NEVER set to true. Only humans verify pathways after review.
 - `step` is INTEGER for single occurrence, ARRAY for bifunctional enzymes
 - `nodes` must match: if `step: 1` then `nodes: ["id_1"]`, if `step: [2,5]` then `nodes: ["id_2", "id_5"]`
 - For OR branches (alternative enzymes), multiple genes share same `step` number
@@ -842,6 +848,434 @@ convert_gator_db(excel_path = "gator_db.xlsx",
 
 For now, convert **one pathway at a time** and ask user to verify each before proceeding to next.
 
+## Option 5: Build from Obsidian Vault / Canvas
+
+**User says:** "Build potato from my Obsidian canvas" or "Use this canvas: [path]"
+
+**Context:** User has curated pathway information in Obsidian vault with:
+- **Canvas files** (.canvas JSON) showing network topology
+- **Markdown notes** for genes/enzymes with YAML frontmatter
+- Detection info may be in frontmatter, aliases, or absent
+- Vault is starting point - validate against KEGG/literature
+
+### Canvas Structure
+
+Canvas files contain nodes and edges:
+```json
+{
+  "nodes": [
+    {
+      "id": "abc123",
+      "type": "file",
+      "file": "Atoms/Genes and Proteins/nifH.md",
+      "x": 100,
+      "y": 200,
+      "width": 250,
+      "height": 60
+    },
+    {
+      "id": "def456",
+      "type": "group",
+      "label": "Nitrogen Fixation",
+      "color": "4",
+      "x": 50,
+      "y": 150,
+      "width": 500,
+      "height": 400
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge1",
+      "fromNode": "abc123",
+      "toNode": "xyz789"
+    }
+  ]
+}
+```
+
+**Key points:**
+- Groups (`type: "group"`) organize related genes into pathways
+- File nodes (`type: "file"`) reference markdown files
+- Canvas coordinates (x, y) can be extracted for potato visualization
+- Edges show compound flow (though compound names not always present)
+
+### Markdown Frontmatter Patterns
+
+Gene markdown files have YAML frontmatter with detection info:
+
+**Pattern 1: KO in frontmatter field**
+```yaml
+---
+ko: K02588
+aliases:
+  - nifH
+tags:
+  - EC/1/18/6/1
+---
+```
+
+**Pattern 2: KO in aliases array**
+```yaml
+---
+aliases:
+  - nifH
+  - K02588
+tags:
+  - EC/1/18/6/1
+---
+```
+
+**Pattern 3: No KO (needs lookup)**
+```yaml
+---
+aliases:
+  - nifH
+tags:
+  - EC/1/18/6/1
+---
+```
+
+**Pattern 4: Incomplete EC numbers**
+```yaml
+---
+aliases:
+  - bhcB
+  - K28180
+tags:
+  - EC/4/2/1  # Incomplete, need to complete
+---
+```
+
+**Important:**
+- EC numbers in tags use slash format: `EC/1/18/6/1` → `1.18.6.1`
+- KO may be in `ko:` field, `aliases` array, or absent entirely
+- Gene symbol typically in `aliases` array
+- File title may be full enzyme name, not symbol
+
+### Workflow Steps
+
+**1. Parse canvas to identify pathways**
+
+```bash
+# Read canvas JSON
+cat /path/to/canvas.json | jq .
+```
+
+Look for groups that represent pathways:
+- Group label = pathway name
+- Group color = visual grouping (multiple pathways may share canvas)
+- Nodes within group bounds = genes in that pathway
+
+Ask user: "I found groups: [list]. Which pathway should I build?"
+
+**2. Extract gene nodes from target pathway**
+
+For each file node in the pathway group:
+- Get file path (e.g., "Atoms/Genes and Proteins/nifH.md")
+- Read markdown file to extract frontmatter
+- Extract x, y coordinates for visualization
+
+**3. Parse markdown frontmatter for detection info**
+
+For each gene file:
+
+```python
+def extract_detection_info(md_file):
+    # Read frontmatter
+    frontmatter = parse_yaml_frontmatter(md_file)
+    
+    # Try multiple patterns for KO
+    ko = None
+    if 'ko' in frontmatter:
+        ko = frontmatter['ko']  # Pattern 1
+    elif 'aliases' in frontmatter:
+        for alias in frontmatter['aliases']:
+            if alias.startswith('K'):  # Pattern 2
+                ko = alias
+                break
+    
+    # Get gene symbol from aliases
+    gene_symbol = None
+    if 'aliases' in frontmatter:
+        for alias in frontmatter['aliases']:
+            if not alias.startswith('K'):  # Not a KO number
+                gene_symbol = alias
+                break
+    
+    # Get EC from tags
+    ec = None
+    if 'tags' in frontmatter:
+        for tag in frontmatter['tags']:
+            if tag.startswith('EC/'):
+                ec = tag.replace('EC/', '').replace('/', '.')
+                # May be incomplete: EC/4/2/1 → 4.2.1
+                break
+    
+    return {
+        'gene_symbol': gene_symbol,
+        'ko': ko,
+        'ec': ec,
+        'file_path': md_file
+    }
+```
+
+**4. Validate and supplement with KEGG**
+
+For each gene:
+
+**If KO present:**
+- Fetch from KEGG: `https://rest.kegg.jp/get/ko:{KO}`
+- Validate EC number matches (or complete if partial)
+- Get full enzyme name
+- Cross-check that vault info is accurate
+
+**If NO KO:**
+- Use gene symbol + EC to search KEGG
+- Fetch candidates: `https://rest.kegg.jp/find/ko/{gene_symbol}`
+- Ask user: "I found K##### for {gene}. Is this correct?"
+- **Set `verified: false`** since manual review needed
+
+**If EC incomplete (e.g., EC/4/2/1 instead of EC/4/2/1/184):**
+- Search KEGG/literature for complete EC
+- Ask user or check paper figures
+- Complete the EC number
+
+**5. Get BLAST reference sequences**
+
+Ask user: "Do you have BLAST reference sequences for these genes?"
+
+If yes:
+```bash
+# Search user's BLAST database
+grep "gene_symbol" /path/to/gator.faa
+```
+
+Extract sequence IDs from FASTA headers.
+
+**6. Suggest PFAM domains**
+
+For each gene with KO:
+- Search InterPro or suggest common PFAM families
+- Ask: "Gene X has PFAM domain PF#####. Add to HMM detection?"
+
+**7. Determine pathway structure**
+
+**From canvas edges:**
+- Parse edge connections (fromNode → toNode)
+- Map to gene IDs
+- Assign step numbers based on topology
+
+**From user:**
+- "I see these genes connected in the canvas: A → B → C. Is this the reaction order?"
+- "Are there alternative enzymes (OR branches) not shown separately in canvas?"
+- "Which genes are required vs optional?"
+- "Which are diagnostic markers?"
+
+**8. Extract visualization coordinates**
+
+Canvas provides x, y coordinates for each node:
+```json
+{
+  "nodes": [
+    {"id": "nifH_node", "file": "nifH.md", "x": 100, "y": 200}
+  ]
+}
+```
+
+Store these in potato JSON:
+```json
+{
+  "nodes": [
+    {
+      "id": "nifH",
+      "name": "dinitrogenase reductase",
+      "databases": {"kofam": ["K02588"], "blast": ["nifH_ref1"]},
+      "x": 100,
+      "y": 200
+    }
+  ]
+}
+```
+
+User can visualize potato with curated layout from canvas.
+
+**9. Handle multi-pathway networks**
+
+If canvas has multiple pathway groups:
+- Ask: "Should these be separate potatoes or a multi-pathway network?"
+- If network:
+  - Extract all unique genes (nodes shared across pathways)
+  - Build global nodes with detection methods
+  - Build pathway-specific topology for each group
+
+**10. Generate and validate potato**
+
+- Build JSON with multi-pathway schema
+- **CRITICAL:** Set `"verified": false`
+- Add notes documenting vault source
+- Include canvas coordinates
+- Validate with `load_potato()` and `validate_potato()`
+- Test print with `print_potato()`
+
+### Example: BHAC from Canvas
+
+**User says:** "Build BHAC pathway from canvas: /Users/kimbrel1/JAK_obsidian/Reviews/Canvases/Glycolate and Glyoxylate Metabolism.canvas"
+
+**Your steps:**
+
+1. **Read canvas, find BHAC group:**
+```json
+{
+  "nodes": [
+    {
+      "id": "group_bhac",
+      "type": "group",
+      "label": "BHAC",
+      "color": "4"
+    },
+    {"file": "Atoms/Genes and Proteins/Beta-Hydroxyaspartate Dehydratase.md"},
+    {"file": "Atoms/Genes and Proteins/3-hydroxy-D-aspartate aldolase.md"},
+    ...
+  ]
+}
+```
+
+2. **Parse markdown files:**
+```yaml
+# Beta-Hydroxyaspartate Dehydratase.md
+---
+aliases:
+  - bhcB
+  - K28180
+tags:
+  - EC/4/2/1  # Incomplete
+---
+```
+
+3. **Complete missing info:**
+- EC/4/2/1 → search KEGG for K28180 → find EC 4.2.1.184
+- Fetch enzyme name: "β-hydroxyaspartate dehydratase"
+
+4. **Get BLAST refs:**
+```bash
+grep "bhcB" /Users/kimbrel1/Github/gator/gator.faa
+# Found: bhcB_BLT64_RS06505
+```
+
+5. **Build detection methods:**
+```json
+{
+  "id": "bhcB",
+  "name": "β-hydroxyaspartate dehydratase",
+  "databases": {
+    "kofam": ["K28180"],
+    "blast": ["bhcB_BLT64_RS06505"]
+  },
+  "ec": ["4.2.1.184"]
+}
+```
+
+6. **Ask about markers:**
+"I found 5 genes in BHAC: bhcR (regulatory), bhcC, bhcB, bhcD, bhcA (catalytic). Which are diagnostic markers?"
+
+User: "The 4 catalytic genes are markers"
+
+7. **Generate multi-pathway potato:**
+```json
+{
+  "id": "bhac",
+  "name": "β-Hydroxyaspartate Cycle (BHAC)",
+  "source": "KEGG map00630, Schada von Borzyskowski et al. 2019",
+  "verified": false,
+  "notes": "Built from Obsidian canvas. Pathway structure validated against paper figure.",
+  "nodes": [
+    {"id": "bhcR", ...},
+    {"id": "bhcC", ...},
+    {"id": "bhcB", ...},
+    {"id": "bhcD", ...},
+    {"id": "bhcA", ...}
+  ],
+  "pathways": {
+    "bhac_cycle": {
+      "nodes": {
+        "bhcR": {"step": 0, "required": false, "marker": false},
+        "bhcC": {"step": 1, "required": true, "marker": true},
+        ...
+      },
+      "scoring": {"min_fraction": 1.0}
+    }
+  }
+}
+```
+
+8. **Validate:**
+```r
+pot <- load_potato('inst/potatoes/bhac.json')
+validate_potato(pot)
+print_potato(pot)
+```
+
+### Common Issues with Vault Parsing
+
+**Issue 1: KO in unexpected places**
+- Check `ko:` field, `aliases` array, AND main text
+- Vault is flexible - detection info may be anywhere
+- **Solution:** Try multiple patterns, ask user if unclear
+
+**Issue 2: Incomplete EC numbers**
+- Vault may have EC/4/2/1 instead of full EC 4.2.1.184
+- **Solution:** Complete using KEGG or literature
+
+**Issue 3: Gene typos or name variants**
+- Vault may have different spelling than KEGG
+- Example: "bhaA" (typo) vs "bhcA" (correct)
+- **Solution:** Cross-reference with KEGG, ask user to confirm
+
+**Issue 4: Canvas coordinates not useful**
+- Canvas may be draft/rough layout
+- **Solution:** Extract coordinates anyway, user can refine in visNetwork
+
+**Issue 5: Missing genes in canvas**
+- Not all genes visualized in canvas
+- **Solution:** Ask user if additional genes should be included
+
+**Issue 6: Multiple pathways in one canvas**
+- Canvas may show related pathways together
+- **Solution:** Extract pathway groups separately, ask about consolidation
+
+### Tips for Obsidian Vault Workflow
+
+**✓ DO:**
+- Parse canvas JSON with `jq` or Python
+- Check multiple patterns for KO (field, aliases, absent)
+- Complete incomplete EC numbers
+- Validate everything against KEGG
+- Always set `verified: false`
+- Ask user about gaps (missing genes, unclear structure)
+- Extract canvas coordinates for visualization
+- Document vault source in notes
+
+**✗ DON'T:**
+- Trust vault info without validation
+- Assume vault is complete or correct
+- Skip KEGG cross-referencing
+- Set `verified: true` for vault-derived potatoes
+- Guess gene IDs when unclear
+
+### Vault as Starting Point
+
+**Philosophy:** Vault is user's curated knowledge base, but it's a **starting point**, not ground truth.
+
+**Validation order:**
+1. **Vault** - Initial structure, gene list, visualization
+2. **KEGG** - Validate KOs, complete EC numbers, get enzyme names
+3. **Literature** - Confirm pathway logic, identify markers
+4. **User** - Final decisions on markers, structure, thresholds
+
+**Always tell user:**
+"I've extracted information from your vault and validated against KEGG. This potato is marked as unverified and needs your review before use."
+
 ## Multiple Detection Methods
 
 **IMPORTANT:** Always try to include multiple detection methods for robustness. Different tools work better for different organisms.
@@ -1028,9 +1462,9 @@ When uncertain, ask user: "Which genes are diagnostic markers?"
 
 Before saving, verify:
 
-- ✓ **CRITICAL:** `"verified": false` field present and set to false (NEVER true)
+- ✓ **CRITICAL:** `"verified": false` field present in EACH pathway and set to false (NEVER true)
 - ✓ `id` is snake_case, unique
-- ✓ `input` and `output` fields present (recommended, especially for KEGG modules)
+- ✓ `input` and `output` fields present in each pathway (recommended, especially for KEGG modules)
 - ✓ All `nodes` arrays match `step` field (single int → single node, array → multiple nodes)
 - ✓ All edge `from`/`to` reference valid node IDs (with _step suffix)
 - ✓ At least ONE gene has `marker: true`

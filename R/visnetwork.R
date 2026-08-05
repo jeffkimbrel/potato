@@ -61,20 +61,42 @@ build_visnetwork <- function(potato, g, node_coords, node_status, has_genome) {
 
   # Add colors based on detection status (fill)
   if (has_genome) {
-    nodes_df$color.background <- dplyr::case_when(
-      node_status$status == "Detected" ~ "#4CAF50",
-      node_status$status == "Partial" ~ "#FFA726",
-      node_status$status == "Not detected" ~ "#F44336",
-      node_status$status == "Compound" ~ "#E0E0E0",
-      TRUE ~ "#2196F3"
-    )
+    nodes_df$color.background <- sapply(seq_len(nrow(nodes_df)), function(i) {
+      if (node_status$is_compound_node[i]) {
+        # Color by compound type using status
+        if (node_status$status[i] == "Input") {
+          return("#7FD399")  # Green for inputs
+        } else if (node_status$status[i] == "Output") {
+          return("#F77370")  # Red for outputs
+        } else {
+          return("#B3B3B3")  # Gray for intermediates
+        }
+      } else if (node_status$status[i] == "Detected") {
+        return("#4CAF50")
+      } else if (node_status$status[i] == "Partial") {
+        return("#FFA726")
+      } else if (node_status$status[i] == "Not detected") {
+        return("#F44336")
+      } else {
+        return("#2196F3")  # Unknown
+      }
+    })
   } else {
-    # No genome - use light gray for all nodes
-    nodes_df$color.background <- ifelse(
-      node_status$status == "Compound",
-      "#E0E0E0",
-      "#BBDEFB"  # Light blue
-    )
+    # No genome - color compounds by type (input=green, output=red, intermediate=gray)
+    nodes_df$color.background <- sapply(seq_len(nrow(nodes_df)), function(i) {
+      if (node_status$is_compound_node[i]) {
+        # Color by compound type using status
+        if (node_status$status[i] == "Input") {
+          return("#7FD399")  # Green for inputs
+        } else if (node_status$status[i] == "Output") {
+          return("#F77370")  # Red for outputs
+        } else {
+          return("#B3B3B3")  # Gray for intermediates (Compound status)
+        }
+      } else {
+        return("#BBDEFB")  # Light blue for genes
+      }
+    })
   }
 
   # Border color and style
@@ -271,20 +293,24 @@ update_potato_coordinates <- function(potato_path, coords_path, output_path = NU
   # Read coordinates
   coords <- jsonlite::read_json(coords_path, simplifyVector = TRUE)
 
+  # Separate enzyme nodes and compound nodes (including INPUT/OUTPUT)
+  enzyme_nodes <- coords[!grepl("^(COMPOUND_|INPUT_|OUTPUT_)", coords$id), ]
+  compound_nodes <- coords[grepl("^(COMPOUND_|INPUT_|OUTPUT_)", coords$id), ]
+
   # Auto-detect if coordinates include compounds (if not explicitly specified)
   if (is.null(with_compounds)) {
-    has_compounds <- any(grepl("^COMPOUND_", coords$id))
+    has_compounds <- nrow(compound_nodes) > 0
     with_compounds <- has_compounds
     if (has_compounds) {
-      cli::cli_alert_info("Auto-detected: coordinates include compound nodes ({sum(grepl('^COMPOUND_', coords$id))} compound nodes found)")
+      cli::cli_alert_info("Auto-detected: coordinates include compound nodes ({nrow(compound_nodes)} compound nodes found)")
     } else {
-      cli::cli_alert_info("Auto-detected: coordinates are enzyme-only ({nrow(coords)} enzyme nodes)")
+      cli::cli_alert_info("Auto-detected: coordinates are enzyme-only ({nrow(enzyme_nodes)} enzyme nodes)")
     }
   }
 
   # Show which nodes will be updated
   enzyme_nodes_in_potato <- sapply(potato_json$nodes, function(n) n$id)
-  enzyme_nodes_in_coords <- coords$id[!grepl("^COMPOUND_", coords$id)]
+  enzyme_nodes_in_coords <- enzyme_nodes$id
   missing_in_coords <- setdiff(enzyme_nodes_in_potato, enzyme_nodes_in_coords)
   extra_in_coords <- setdiff(enzyme_nodes_in_coords, enzyme_nodes_in_potato)
 
@@ -295,10 +321,10 @@ update_potato_coordinates <- function(potato_path, coords_path, output_path = NU
     cli::cli_alert_warning("Nodes in coordinates but not in potato: {paste(extra_in_coords, collapse=', ')}")
   }
 
-  # Create lookup table
-  coords_lookup <- stats::setNames(
-    split(coords[, c("x", "y")], seq_len(nrow(coords))),
-    coords$id
+  # Create lookup table for enzyme nodes
+  enzyme_coords_lookup <- stats::setNames(
+    split(enzyme_nodes[, c("x", "y")], seq_len(nrow(enzyme_nodes))),
+    enzyme_nodes$id
   )
 
   # Determine field names based on with_compounds
@@ -309,31 +335,30 @@ update_potato_coordinates <- function(potato_path, coords_path, output_path = NU
   for (i in seq_along(potato_json$nodes)) {
     node_id <- potato_json$nodes[[i]]$id
 
-    if (node_id %in% names(coords_lookup)) {
-      potato_json$nodes[[i]][[x_field]] <- coords_lookup[[node_id]]$x
-      potato_json$nodes[[i]][[y_field]] <- coords_lookup[[node_id]]$y
+    if (node_id %in% names(enzyme_coords_lookup)) {
+      potato_json$nodes[[i]][[x_field]] <- enzyme_coords_lookup[[node_id]]$x
+      potato_json$nodes[[i]][[y_field]] <- enzyme_coords_lookup[[node_id]]$y
     }
   }
 
-  # Update compound node coordinates (stored separately)
-  compound_coords <- coords[grepl("^COMPOUND_", coords$id), ]
-  if (nrow(compound_coords) > 0) {
+  # Update compound node coordinates (stored separately in compound_coordinates)
+  if (nrow(compound_nodes) > 0) {
     # Create/update compound_coordinates field
     if (is.null(potato_json$compound_coordinates)) {
       potato_json$compound_coordinates <- list()
     }
 
-    # Store compound coordinates
-    for (i in seq_len(nrow(compound_coords))) {
-      compound_id <- compound_coords$id[i]
+    # Store compound coordinates (includes COMPOUND_, INPUT_, OUTPUT_)
+    for (i in seq_len(nrow(compound_nodes))) {
+      compound_id <- compound_nodes$id[i]
       potato_json$compound_coordinates[[compound_id]] <- list(
         id = compound_id,
-        x = compound_coords$x[i],
-        y = compound_coords$y[i]
+        x = compound_nodes$x[i],
+        y = compound_nodes$y[i]
       )
     }
 
-    cli::cli_alert_info("Saved {nrow(compound_coords)} compound node coordinates")
+    cli::cli_alert_info("Saved {nrow(compound_nodes)} compound node coordinates (includes INPUT/OUTPUT)")
   }
 
   # Write updated JSON
@@ -347,6 +372,13 @@ update_potato_coordinates <- function(potato_path, coords_path, output_path = NU
   coord_type <- if (with_compounds) "with compounds" else "without compounds"
   cli::cli_alert_success("Updated potato JSON with coordinates ({coord_type}): {.file {output_path}}")
   cli::cli_alert_info("Total nodes updated: {sum(sapply(potato_json$nodes, function(n) !is.null(n[[x_field]])))} using fields {.field {x_field}}/{.field {y_field}}")
+
+  # Provide usage guidance
+  if (with_compounds) {
+    cli::cli_alert_info("To use these coordinates, plot with: {.code show_compounds = TRUE}")
+  } else {
+    cli::cli_alert_info("To use these coordinates, plot with: {.code show_compounds = FALSE} or omit the parameter")
+  }
 
   invisible(output_path)
 }

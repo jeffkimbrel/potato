@@ -10,6 +10,7 @@ build_bipartite_graph <- function(potato) {
 
   # Collect all unique compounds from edges
   compound_info <- list()
+  compound_status <- list()  # Track if compound is input, output, or intermediate
 
   # Collect all edges (with proper DAG node IDs for networks)
   all_dag_edges <- list()
@@ -29,17 +30,27 @@ build_bipartite_graph <- function(potato) {
         to_id <- edge$to
 
         if (!is.null(edge$compound)) {
-          # Create compound node based on compound name only (deduplicate across pathways)
-          # Same compound appears once even if used by multiple pathways
+          # Parse compound string (may contain multiple compounds)
+          # Use KEGG ID for intermediate compounds
           compound_name <- edge$compound
-          compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+          kegg_id <- edge$kegg_compound
+
+          # Use KEGG ID for deduplication if available
+          if (!is.na(kegg_id) && !is.null(kegg_id) && nchar(kegg_id) > 0) {
+            compound_id <- paste0("COMPOUND_", kegg_id)
+          } else {
+            compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+          }
+
           if (!(compound_id %in% names(compound_info))) {
             compound_info[[compound_id]] <- list(
               id = compound_id,
               name = compound_name,
-              kegg_id = edge$kegg_compound
+              kegg_id = kegg_id
             )
+            compound_status[[compound_id]] <- "intermediate"
           }
+
           all_dag_edges[[length(all_dag_edges) + 1]] <- list(
             from = from_id,
             to = compound_id,
@@ -63,6 +74,75 @@ build_bipartite_graph <- function(potato) {
             pathway_name = pathway$name %||% pathway_id,
             pathway_type = pathway$type
           )
+        }
+      }
+
+      # Add input compound for this pathway (don't split, use full string)
+      if (!is.null(pathway$input)) {
+        compound_name <- pathway$input$compound
+
+        # For inputs, use name-based ID (no KEGG ID)
+        compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+
+        # Check if already exists as intermediate - keep as input (green priority)
+        if (!(compound_id %in% names(compound_info))) {
+          compound_info[[compound_id]] <- list(
+            id = compound_id,
+            name = compound_name,
+            kegg_id = NA_character_
+          )
+          compound_status[[compound_id]] <- "input"
+        } else if (compound_status[[compound_id]] == "intermediate") {
+          # Upgrade from intermediate to input
+          compound_status[[compound_id]] <- "input"
+        }
+
+        # Connect input compound to target genes
+        if (!is.null(pathway$input$targets)) {
+          for (target in pathway$input$targets) {
+            all_dag_edges[[length(all_dag_edges) + 1]] <- list(
+              from = compound_id,
+              to = target,
+              pathway = pathway_id,
+              pathway_name = pathway$name %||% pathway_id,
+              pathway_type = pathway$type
+            )
+          }
+        }
+      }
+
+      # Add output compound for this pathway (don't split, use full string)
+      if (!is.null(pathway$output)) {
+        compound_name <- pathway$output$compound
+
+        # For outputs, use name-based ID (no KEGG ID)
+        compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+
+        # Add compound info (don't override if already exists)
+        if (!(compound_id %in% names(compound_info))) {
+          compound_info[[compound_id]] <- list(
+            id = compound_id,
+            name = compound_name,
+            kegg_id = NA_character_
+          )
+          compound_status[[compound_id]] <- "output"
+        } else if (compound_status[[compound_id]] == "intermediate") {
+          # Only upgrade from intermediate to output
+          compound_status[[compound_id]] <- "output"
+        }
+        # If it's already input, keep it as input (green priority)
+
+        # Connect source genes to output compound
+        if (!is.null(pathway$output$sources)) {
+          for (source in pathway$output$sources) {
+            all_dag_edges[[length(all_dag_edges) + 1]] <- list(
+              from = source,
+              to = compound_id,
+              pathway = pathway_id,
+              pathway_name = pathway$name %||% pathway_id,
+              pathway_type = pathway$type
+            )
+          }
         }
       }
     }
@@ -143,7 +223,11 @@ build_bipartite_graph <- function(potato) {
 
   # Mark node types
   node_types <- sapply(igraph::V(g)$name, function(n) {
-    if (grepl("^COMPOUND_", n) || n %in% c("INPUT", "OUTPUT")) "compound" else "enzyme"
+    if (grepl("^COMPOUND_", n)) {
+      "compound"
+    } else {
+      "enzyme"
+    }
   })
   igraph::V(g)$node_type <- node_types
 
@@ -156,6 +240,16 @@ build_bipartite_graph <- function(potato) {
     }
   })
   igraph::V(g)$compound_name <- compound_names
+
+  # Add compound status (input, output, intermediate) as vertex attribute
+  compound_status_vals <- sapply(igraph::V(g)$name, function(n) {
+    if (n %in% names(compound_status)) {
+      compound_status[[n]]
+    } else {
+      NA_character_
+    }
+  })
+  igraph::V(g)$compound_status <- compound_status_vals
 
   g
 }
