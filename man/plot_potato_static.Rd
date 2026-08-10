@@ -9,8 +9,9 @@ plot_potato_static(
   sack = NULL,
   genome_name = NULL,
   show_compounds = FALSE,
-  layout = "fr",
-  pathway = NULL
+  layout = "xy",
+  pathway = NULL,
+  show_hulls = TRUE
 )
 }
 \arguments{
@@ -22,9 +23,11 @@ plot_potato_static(
 
 \item{show_compounds}{Logical. Show compound nodes in bipartite graph (default: FALSE)}
 
-\item{layout}{Layout algorithm: "fr", "kk", "sugiyama", "tree", "circle", "grid" (default: "fr")}
+\item{layout}{Layout algorithm: "xy" (use curated coords, default), "fr", "kk", "sugiyama", "tree", "circle", "grid"}
 
-\item{pathway}{For multi-pathway networks, show only this pathway (pathway ID). NULL = show all}
+\item{pathway}{For multi-pathway networks, show only this pathway (pathway ID or vector of IDs). NULL = show all}
+
+\item{show_hulls}{Logical. Show convex hulls around pathways in multi-pathway networks (default: TRUE)}
 }
 \value{
 A ggplot2 object

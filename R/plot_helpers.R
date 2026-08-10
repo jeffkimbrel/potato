@@ -13,22 +13,32 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
                       length(names(potato@edges)) > 0 &&
                       !is.null(potato@edges[[1]]$type)
 
-  # Filter to single pathway if requested
+  # Filter to pathway(s) if requested
   if (!is.null(pathway)) {
     if (!is_multi_pathway) {
       cli::cli_abort("The {.arg pathway} parameter only works with multi-pathway networks")
     }
-    if (!pathway %in% names(potato@edges)) {
+
+    # Check all requested pathways exist
+    missing <- setdiff(pathway, names(potato@edges))
+    if (length(missing) > 0) {
       available <- paste(names(potato@edges), collapse = ", ")
-      cli::cli_abort("Pathway {.val {pathway}} not found. Available: {available}")
+      cli::cli_abort("Pathway(s) {.val {missing}} not found. Available: {available}")
     }
 
     potato_filtered <- potato
     potato_filtered@edges <- list()
-    potato_filtered@edges[[pathway]] <- potato@edges[[pathway]]
 
-    pathway_node_ids <- names(potato@edges[[pathway]]$nodes)
-    potato_filtered@nodes <- Filter(function(n) n$id %in% pathway_node_ids, potato@nodes)
+    # Include all requested pathways
+    all_node_ids <- character()
+    for (pw in pathway) {
+      potato_filtered@edges[[pw]] <- potato@edges[[pw]]
+      all_node_ids <- c(all_node_ids, names(potato@edges[[pw]]$nodes))
+    }
+
+    # Get unique node IDs across all selected pathways
+    all_node_ids <- unique(all_node_ids)
+    potato_filtered@nodes <- Filter(function(n) n$id %in% all_node_ids, potato@nodes)
 
     potato <- potato_filtered
   }
@@ -262,11 +272,12 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
 
 #' Calculate node layout coordinates (internal)
 #' @noRd
-calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, layout = "fr") {
+calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, layout = "xy") {
 
   has_curated_coords <- FALSE
+  use_curated <- (layout == "xy")  # Only use curated coords if layout="xy"
 
-  if (is_multi_pathway) {
+  if (is_multi_pathway && use_curated) {
     # Check for curated coordinates
     x_field <- if (show_compounds) "x_compounds" else "x"
     y_field <- if (show_compounds) "y_compounds" else "y"
@@ -295,7 +306,9 @@ calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, l
       has_curated_coords <- TRUE
 
       # Start with layout algorithm for all nodes
+      # For "xy", use fr as base for nodes without curated coords
       layout_matrix <- switch(layout,
+        "xy" = if (show_compounds) igraph::layout_with_kk(g) else igraph::layout_with_fr(g),
         "sugiyama" = igraph::layout_with_sugiyama(g)$layout,
         "fr" = igraph::layout_with_fr(g),
         "kk" = igraph::layout_with_kk(g),
@@ -355,7 +368,10 @@ calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, l
   # If no curated coordinates, use layout algorithms
   if (!has_curated_coords) {
     if (is_multi_pathway) {
-      layout_matrix <- switch(layout,
+      # If layout="xy" but no curated coords, fall back to "fr"
+      actual_layout <- if (layout == "xy") "fr" else layout
+
+      layout_matrix <- switch(actual_layout,
         "sugiyama" = igraph::layout_with_sugiyama(g)$layout,
         "fr" = igraph::layout_with_fr(g),
         "kk" = igraph::layout_with_kk(g),

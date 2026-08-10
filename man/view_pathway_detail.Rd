@@ -4,12 +4,14 @@
 \alias{view_pathway_detail}
 \title{View pathway details as HTML table in browser}
 \usage{
-view_pathway_detail(potato, pathway = NULL)
+view_pathway_detail(potato, pathway = NULL, layout = "fr")
 }
 \arguments{
 \item{potato}{Potato S7 object or path to JSON}
 
-\item{pathway}{For multi-pathway networks, which pathway to show (pathway ID)}
+\item{pathway}{For multi-pathway networks, which pathway to show (single pathway ID only)}
+
+\item{layout}{Layout algorithm for visualization: "xy" (curated coords), "fr", "kk", "sugiyama", "tree", "circle", "grid" (default: "fr")}
 }
 \description{
 Opens a simple HTML table in the system browser showing pathway gene details.

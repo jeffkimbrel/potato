@@ -7,7 +7,7 @@
     "carbohydrate",
     "glycolysis_alternative"
   ],
-  "notes": "Alternative glucose/gluconate degradation pathways. Four ED variants with different substrate entry points and phosphorylation strategies: Classic (M00008) uses glucose via phosphorylation. Non-phosphorylative (M00309) uses gluconate without phosphorylation. Semi-phosphorylative gluconate (M00308) and galactonate (M00633) variants use mid-pathway phosphorylation. Additionally, gluconate_transport and galactose_catabolism pathways provide alternative entry points that can short-circuit the full ED pathways by delivering intermediates (D-gluconate, D-galactonate) directly into downstream steps.",
+  "notes": "Alternative glucose/gluconate degradation pathways. Four variants with different substrate entry points and phosphorylation strategies. Classic (M00006) uses glucose via phosphorylation. Non-phosphorylative (M00309) uses gluconate without phosphorylation. Semi-phosphorylative (M00308, M00633) use gluconate with mid-pathway phosphorylation.",
   "nodes": [
     {
       "id": "glk",
@@ -127,10 +127,9 @@
         ]
       },
       "ec": [
-        "4.1.2.55",
         "4.1.2.14"
       ],
-      "notes": "Bifunctional aldolase (K28887); EC 4.1.2.14 acts on KDPG (gluconate branch), EC 4.1.2.55 acts on KDGalP (galactonate branch). Can serve as alternative in both branches.",
+      "notes": "Alternative KDPG aldolase",
       "type": "enzyme",
       "x": 479,
       "y": 181,
@@ -292,10 +291,82 @@
         ]
       },
       "ec": [
+        "2.7.1.45"
+      ],
+      "notes": "Bifunctional kinase; phosphorylates KDG to KDPG (C00204→C04442) and phosphorylates D-glycerate to 2-phospho-D-glycerate (C01216→C01286)",
+      "type": "enzyme"
+    },
+    {
+      "id": "gapA",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NAD+)",
+      "databases": {
+        "kofam": [
+          "K00134"
+        ]
+      },
+      "ec": [
+        "1.2.1.12"
+      ],
+      "notes": "Oxidizes G3P to 1,3-bisphosphoglycerate",
+      "type": "enzyme",
+      "x": 566,
+      "y": -140,
+      "x_compounds": 546,
+      "y_compounds": -173
+    },
+    {
+      "id": "gapA_alt",
+      "name": "glyceraldehyde-3-phosphate dehydrogenase (NADP+)",
+      "databases": {
+        "kofam": [
+          "K00150"
+        ]
+      },
+      "ec": [
+        "1.2.1.59"
+      ],
+      "notes": "Alternative GAPDH using NADP+",
+      "type": "enzyme",
+      "x": 752,
+      "y": -70,
+      "x_compounds": 755,
+      "y_compounds": -27
+    },
+    {
+      "id": "pgk",
+      "name": "phosphoglycerate kinase",
+      "databases": {
+        "kofam": [
+          "K00927"
+        ]
+      },
+      "ec": [
+        "2.7.2.3"
+      ],
+      "notes": "Converts 1,3-bisphosphoglycerate to 3-phosphoglycerate",
+      "type": "enzyme",
+      "x": 933,
+      "y": -281,
+      "x_compounds": 924,
+      "y_compounds": -173
+    },
+    {
+      "id": "kdgK2",
+      "name": "2-dehydro-3-deoxygluconokinase",
+      "databases": {
+        "kofam": [
+          "K18126"
+        ]
+      },
+      "ec": [
         "2.7.1.178"
       ],
-      "notes": "Bifunctional kinase (EC 2.7.1.178); phosphorylates KDG to KDPG (C00679→C04442) in gluconate pathways and phosphorylates KDGal to KDGalP (C01216→C01286) in galactonate pathways. Crenarchaeota-specific (found in M00633) but bifunctionality means it can serve as an alternative kinase in both sp_gluconate (M00308) and sp_galactonate (M00633) variants.",
-      "type": "enzyme"
+      "notes": "Alternative kinase for archaeal variant; phosphorylates KDG to KDPG",
+      "type": "enzyme",
+      "x": 403,
+      "y": 476,
+      "x_compounds": 403,
+      "y_compounds": 476
     },
     {
       "id": "gapN",
@@ -429,35 +500,46 @@
       "name": "Classic ED (Phosphorylative)",
       "type": "variant",
       "kegg_module": "M00008",
-      "notes": "Fully phosphorylated ED pathway starting from D-glucose-6P. D-glucose-6P → pyruvate + glyceraldehyde-3P. Found in Pseudomonas, E. coli, many bacteria.",
+      "notes": "Glucose entry via phosphorylation. Fully phosphorylated pathway: D-glucose → pyruvate + glyceraldehyde-3P. Found in Pseudomonas, E. coli, many bacteria.",
       "nodes": {
-        "G6PD": {
+        "glk": {
           "step": 1,
           "required": true,
           "marker": false
         },
-        "pgl": {
+        "G6PD": {
           "step": 2,
+          "required": true,
+          "marker": false
+        },
+        "pgl": {
+          "step": 3,
           "required": false,
           "marker": false
         },
         "ybhE": {
-          "step": 2,
+          "step": 3,
           "required": false,
           "marker": false
         },
         "edd": {
-          "step": 3,
+          "step": 4,
           "required": true,
           "marker": true
         },
         "eda": {
-          "step": 4,
+          "step": 5,
           "required": true,
           "marker": true
         }
       },
       "edges": [
+        {
+          "from": "glk",
+          "to": "G6PD",
+          "compound": "D-glucose-6P",
+          "kegg_compound": "C00668"
+        },
         {
           "from": "G6PD",
           "to": "pgl",
@@ -490,10 +572,10 @@
         }
       ],
       "input": {
-        "compound": "D-glucose-6P",
-        "kegg_compound": "C00668",
+        "compound": "D-glucose",
+        "kegg_compound": "C00031",
         "targets": [
-          "G6PD"
+          "glk"
         ]
       },
       "output": {
@@ -642,10 +724,11 @@
         }
       ],
       "input": {
-        "compound": "D-glucose",
+        "compound": "D-glucose (optional) or D-gluconate",
         "kegg_compound": "C00031",
         "targets": [
-          "gdh"
+          "gdh",
+          "gnaD"
         ]
       },
       "output": {
@@ -665,7 +748,7 @@
       "name": "Semi-Phosphorylative ED - gluconate",
       "type": "variant",
       "kegg_module": "M00308",
-      "notes": "Hybrid pathway: starts with unphosphorylated glucose, phosphorylates KDG mid-pathway. D-glucose → pyruvate + glyceraldehyde-3P. Shares upstream genes with npED pathway. Note: M00308 extends to glycerate-3P via GAPDH/pgk, but we stop at G3P where enzymes overlap with glycolysis.",
+      "notes": "Hybrid pathway: starts with unphosphorylated glucose, phosphorylates KDG mid-pathway. D-glucose → glycerate-3P. Shares upstream genes with npED pathway.",
       "nodes": {
         "gdh": {
           "step": 1,
@@ -684,17 +767,17 @@
         },
         "kdgK": {
           "step": 4,
-          "required": false,
+          "required": true,
           "marker": true
         },
         "kdgK_alt": {
           "step": 4,
-          "required": false,
+          "required": true,
           "marker": true
         },
         "sskdgK": {
           "step": 4,
-          "required": false,
+          "required": true,
           "marker": true
         },
         "eda": {
@@ -704,6 +787,21 @@
         },
         "eda_alt": {
           "step": 5,
+          "required": true,
+          "marker": false
+        },
+        "gapA": {
+          "step": 6,
+          "required": true,
+          "marker": false
+        },
+        "gapA_alt": {
+          "step": 6,
+          "required": true,
+          "marker": false
+        },
+        "pgk": {
+          "step": 7,
           "required": true,
           "marker": false
         }
@@ -774,6 +872,42 @@
           "to": "eda_alt",
           "compound": "2-dehydro-3-deoxy-D-gluconate-6P",
           "kegg_compound": "C04442"
+        },
+        {
+          "from": "eda",
+          "to": "gapA",
+          "compound": "glyceraldehyde-3P",
+          "kegg_compound": "C00118"
+        },
+        {
+          "from": "eda",
+          "to": "gapA_alt",
+          "compound": "glyceraldehyde-3P",
+          "kegg_compound": "C00118"
+        },
+        {
+          "from": "eda_alt",
+          "to": "gapA",
+          "compound": "glyceraldehyde-3P",
+          "kegg_compound": "C00118"
+        },
+        {
+          "from": "eda_alt",
+          "to": "gapA_alt",
+          "compound": "glyceraldehyde-3P",
+          "kegg_compound": "C00118"
+        },
+        {
+          "from": "gapA",
+          "to": "pgk",
+          "compound": "1,3-bisphospho-D-glycerate",
+          "kegg_compound": "C00236"
+        },
+        {
+          "from": "gapA_alt",
+          "to": "pgk",
+          "compound": "1,3-bisphospho-D-glycerate",
+          "kegg_compound": "C00236"
         }
       ],
       "input": {
@@ -784,27 +918,31 @@
         ]
       },
       "output": {
-        "compound": "pyruvate + glyceraldehyde-3P",
-        "kegg_compound": "C00022",
+        "compound": "3-phospho-D-glycerate",
+        "kegg_compound": "C00197",
         "sources": [
-          "eda",
-          "eda_alt"
+          "pgk"
         ]
       },
       "scoring": {
         "min_fraction": 0.75,
         "marker_mode": "any"
       },
-      "verified": true
+      "verified": false
     },
     "sp_galactonate": {
       "name": "Semi-Phosphorylative ED - galactonate",
       "type": "variant",
       "kegg_module": "M00633",
-      "notes": "Crenarchaeota-specific semi-phosphorylative variant. D-galactonate → 3-phosphoglycerate via sskdgK (bifunctional kinase) and kdpgA or eda_alt (bifunctional aldolase), then non-phosphorylating GAPDH (gapN/gapN_alt). Found in Sulfolobus, Thermoplasma, Thermococcales.",
+      "notes": "Crenarchaeota-specific semi-phosphorylative variant. Uses alternative enzymes kdgK2 (or sskdgK) and kdpgA. D-gluconate → 3-phosphoglycerate via non-phosphorylating GAPDH (gapN/gapN_alt). Found in Sulfolobus, Thermoplasma, Thermococcales.",
       "nodes": {
         "gnaD": {
           "step": 1,
+          "required": true,
+          "marker": true
+        },
+        "kdgK2": {
+          "step": 2,
           "required": true,
           "marker": true
         },
@@ -815,13 +953,8 @@
         },
         "kdpgA": {
           "step": 3,
-          "required": false,
+          "required": true,
           "marker": true
-        },
-        "eda_alt": {
-          "step": 3,
-          "required": false,
-          "marker": false
         },
         "gapN": {
           "step": 4,
@@ -837,50 +970,44 @@
       "edges": [
         {
           "from": "gnaD",
+          "to": "kdgK2",
+          "compound": "2-dehydro-3-deoxy-D-gluconate",
+          "kegg_compound": "C00679"
+        },
+        {
+          "from": "gnaD",
           "to": "sskdgK",
-          "compound": "2-dehydro-3-deoxy-D-galactonate (KDGal)",
-          "kegg_compound": "C01216"
+          "compound": "2-dehydro-3-deoxy-D-gluconate",
+          "kegg_compound": "C00679"
+        },
+        {
+          "from": "kdgK2",
+          "to": "kdpgA",
+          "compound": "2-dehydro-3-deoxy-D-gluconate-6P",
+          "kegg_compound": "C04442"
         },
         {
           "from": "sskdgK",
           "to": "kdpgA",
-          "compound": "2-dehydro-3-deoxy-6-phospho-D-galactonate (KDGalP)",
-          "kegg_compound": "C01286"
-        },
-        {
-          "from": "sskdgK",
-          "to": "eda_alt",
-          "compound": "2-dehydro-3-deoxy-6-phospho-D-galactonate (KDGalP)",
-          "kegg_compound": "C01286"
+          "compound": "2-dehydro-3-deoxy-D-gluconate-6P",
+          "kegg_compound": "C04442"
         },
         {
           "from": "kdpgA",
           "to": "gapN",
-          "compound": "glyceraldehyde-3P + pyruvate",
+          "compound": "glyceraldehyde-3P",
           "kegg_compound": "C00118"
         },
         {
           "from": "kdpgA",
           "to": "gapN_alt",
-          "compound": "glyceraldehyde-3P + pyruvate",
-          "kegg_compound": "C00118"
-        },
-        {
-          "from": "eda_alt",
-          "to": "gapN",
-          "compound": "glyceraldehyde-3P + pyruvate",
-          "kegg_compound": "C00118"
-        },
-        {
-          "from": "eda_alt",
-          "to": "gapN_alt",
-          "compound": "glyceraldehyde-3P + pyruvate",
+          "compound": "glyceraldehyde-3P",
           "kegg_compound": "C00118"
         }
       ],
       "input": {
-        "compound": "D-galactonate",
-        "kegg_compound": "C00879",
+        "compound": "D-gluconate",
+        "kegg_compound": "C00257",
         "targets": [
           "gnaD"
         ]
@@ -897,7 +1024,7 @@
         "min_fraction": 0.75,
         "marker_mode": "any"
       },
-      "verified": true
+      "verified": false
     },
     "gluconate_transport": {
       "name": "Gluconate Transport",
@@ -923,7 +1050,7 @@
       },
       "edges": [],
       "input": {
-        "compound": "D-gluconate_external",
+        "compound": "D-gluconate_exterior",
         "kegg_compound": "C00257",
         "targets": [
           "gntP",
@@ -932,7 +1059,7 @@
         ]
       },
       "output": {
-        "compound": "D-gluconate",
+        "compound": "D-gluconate_interior",
         "kegg_compound": "C00257",
         "sources": [
           "gntP",
@@ -989,7 +1116,7 @@
         "min_fraction": 1,
         "marker_mode": "any"
       },
-      "verified": true
+      "verified": false
     }
   },
   "verified": false,

@@ -1,3 +1,19 @@
+#' Normalize compound names by sorting multiple compounds
+#' @noRd
+normalize_compound_name <- function(compound_name) {
+  if (is.null(compound_name) || is.na(compound_name) || nchar(compound_name) == 0) {
+    return(compound_name)
+  }
+
+  # Split by " + " (with spaces), sort, rejoin
+  parts <- strsplit(compound_name, " \\+ ")[[1]]
+  if (length(parts) > 1) {
+    parts <- sort(trimws(parts))
+    return(paste(parts, collapse = " + "))
+  }
+  return(compound_name)
+}
+
 #' Build bipartite graph with compound nodes (internal)
 #' @noRd
 build_bipartite_graph <- function(potato) {
@@ -20,19 +36,16 @@ build_bipartite_graph <- function(potato) {
     for (pathway_id in names(potato@edges)) {
       pathway <- potato@edges[[pathway_id]]
 
-      if (is.null(pathway$edges) || length(pathway$edges) == 0) {
-        next
-      }
-
       # Process edges for this pathway - use gene IDs directly
-      for (edge in pathway$edges) {
+      if (!is.null(pathway$edges) && length(pathway$edges) > 0) {
+        for (edge in pathway$edges) {
         from_id <- edge$from
         to_id <- edge$to
 
         if (!is.null(edge$compound)) {
           # Parse compound string (may contain multiple compounds)
-          # Use KEGG ID for intermediate compounds
-          compound_name <- edge$compound
+          # Normalize compound name by sorting parts
+          compound_name <- normalize_compound_name(edge$compound)
           kegg_id <- edge$kegg_compound
 
           # Use KEGG ID for deduplication if available
@@ -74,6 +87,7 @@ build_bipartite_graph <- function(potato) {
             pathway_name = pathway$name %||% pathway_id,
             pathway_type = pathway$type
           )
+        }
         }
       }
 

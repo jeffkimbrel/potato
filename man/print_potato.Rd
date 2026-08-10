@@ -8,7 +8,7 @@ print_potato(
   potato,
   compact = TRUE,
   show_compounds = TRUE,
-  show_ko = FALSE,
+  show_databases = FALSE,
   show_ec = FALSE
 )
 }
@@ -19,7 +19,7 @@ print_potato(
 
 \item{show_compounds}{Include compound names in flow (default: TRUE, ignored if compact)}
 
-\item{show_ko}{Show KO IDs (default: FALSE)}
+\item{show_databases}{Show database annotations (kofam, blast, hmm, etc.) (default: FALSE)}
 
 \item{show_ec}{Show EC numbers (default: FALSE)}
 }

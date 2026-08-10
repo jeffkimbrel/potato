@@ -4,10 +4,11 @@
 #' Useful when terminal output is too wide to read comfortably.
 #'
 #' @param potato Potato S7 object or path to JSON
-#' @param pathway For multi-pathway networks, which pathway to show (pathway ID)
+#' @param pathway For multi-pathway networks, which pathway to show (single pathway ID only)
+#' @param layout Layout algorithm for visualization: "xy" (curated coords), "fr", "kk", "sugiyama", "tree", "circle", "grid" (default: "fr")
 #'
 #' @export
-view_pathway_detail <- function(potato, pathway = NULL) {
+view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
   # Load if path provided
   if (is.character(potato)) {
@@ -28,9 +29,17 @@ view_pathway_detail <- function(potato, pathway = NULL) {
   }
 
   if (is_network && !is.null(pathway)) {
-    # Multi-pathway: extract specific pathway
+    # Multi-pathway: extract specific pathway (single only for table view)
+    if (length(pathway) > 1) {
+      cli::cli_abort(c(
+        "view_pathway_detail() only supports a single pathway",
+        "i" = "For plotting multiple pathways, use plot_potato_static() or plot_potato_interactive() with pathway = c(...)"
+      ))
+    }
+
     if (!pathway %in% names(potato@edges)) {
-      cli::cli_abort("Pathway '{pathway}' not found in network")
+      available <- paste(names(potato@edges), collapse = ", ")
+      cli::cli_abort("Pathway '{pathway}' not found. Available: {available}")
     }
 
     pathway_info <- potato@edges[[pathway]]
@@ -91,9 +100,9 @@ view_pathway_detail <- function(potato, pathway = NULL) {
   tryCatch({
     # Create plot
     if (is_network) {
-      p <- plot_potato_static(potato, pathway = pathway)
+      p <- plot_potato_static(potato, pathway = pathway, show_hulls = FALSE, show_compounds = TRUE, layout = layout)
     } else {
-      p <- plot_potato_static(potato)
+      p <- plot_potato_static(potato, show_hulls = FALSE, show_compounds = TRUE, layout = layout)
     }
 
     # Save to temp PNG
@@ -117,16 +126,35 @@ view_pathway_detail <- function(potato, pathway = NULL) {
     input_info <- pathway_info$input
     output_info <- pathway_info$output
     scoring_info <- pathway_info$scoring
+    verified <- !is.null(pathway_info$verified) && pathway_info$verified == TRUE
   } else {
     source_info <- potato@source
     notes_info <- potato@notes %||% ""
     input_info <- tryCatch(potato@input, error = function(e) NULL)
     output_info <- tryCatch(potato@output, error = function(e) NULL)
     scoring_info <- potato@scoring
+    # Check for verified field in top-level data
+    verified <- FALSE
+    if (!is.null(potato@json_path) && file.exists(potato@json_path)) {
+      data <- jsonlite::read_json(potato@json_path, simplifyVector = FALSE)
+      verified <- !is.null(data$verified) && data$verified == TRUE
+    }
+  }
+
+  # Build verification status banner
+  verification_html <- if (verified) {
+    "<div style='background: #d4edda; padding: 15px; margin-bottom: 15px; border-left: 4px solid #28a745; color: #155724;'>
+    <strong>✓ VERIFIED</strong> - This pathway has been manually validated.
+    </div>"
+  } else {
+    "<div style='background: #fff3cd; padding: 15px; margin-bottom: 15px; border-left: 4px solid #ffc107; color: #856404;'>
+    <strong>⚠ UNVERIFIED</strong> - This pathway has not been validated.
+    </div>"
   }
 
   # Build metadata section
   metadata_html <- paste0(
+    verification_html,
     "<div style='background: #f9f9f9; padding: 15px; margin-bottom: 20px; border-left: 4px solid #4CAF50;'>",
     "<p><strong>Source:</strong> ", source_info, "</p>",
     if (nchar(notes_info) > 0) paste0("<p><strong>Notes:</strong> ", notes_info, "</p>") else "",

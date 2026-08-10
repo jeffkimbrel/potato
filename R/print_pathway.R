@@ -5,11 +5,11 @@
 #' @param potato Potato S7 object or path to JSON
 #' @param compact Show compact one-line view (default: TRUE)
 #' @param show_compounds Include compound names in flow (default: TRUE, ignored if compact)
-#' @param show_ko Show KO IDs (default: FALSE)
+#' @param show_databases Show database annotations (kofam, blast, hmm, etc.) (default: FALSE)
 #' @param show_ec Show EC numbers (default: FALSE)
 #'
 #' @export
-print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_ko = FALSE, show_ec = FALSE) {
+print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_databases = FALSE, show_ec = FALSE) {
 
   # Load if path provided
   if (is.character(potato)) {
@@ -23,12 +23,12 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_ko 
                 !is.null(potato@edges[[1]]$type)
 
   if (is_network) {
-    print_multi_pathway_network(potato, show_ko = show_ko, show_ec = show_ec)
+    print_multi_pathway_network(potato, show_databases = show_databases, show_ec = show_ec, show_compounds = show_compounds)
     return(invisible(potato))
   }
 
   if (compact) {
-    print_pathway_compact(potato, show_ko = show_ko, show_ec = show_ec)
+    print_pathway_compact(potato, show_databases = show_databases, show_ec = show_ec)
     return(invisible(potato))
   }
 
@@ -81,10 +81,10 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_ko 
       if (!is.null(node$databases$kofam) && length(node$databases$kofam) > 1) {
         # Complex (multiple KOs in single node)
         cli::cli_text("{.strong COMPLEX} (all subunits required):")
-        format_gene(node, show_ko, show_ec)
+        format_gene(node, show_databases, show_ec)
       } else {
         # Simple single gene
-        format_gene(node, show_ko, show_ec)
+        format_gene(node, show_databases, show_ec)
       }
     } else {
       # Multiple nodes = OR alternatives
@@ -93,9 +93,9 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_ko 
         # Check if this individual node is a complex
         if (!is.null(node$databases$kofam) && length(node$databases$kofam) > 1) {
           cli::cli_text("  {.strong COMPLEX}:")
-          format_gene(node, show_ko, show_ec, indent = TRUE)
+          format_gene(node, show_databases, show_ec, indent = TRUE)
         } else {
-          format_gene(node, show_ko, show_ec, indent = TRUE)
+          format_gene(node, show_databases, show_ec, indent = TRUE)
         }
       }
     }
@@ -135,11 +135,15 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_ko 
 
 #' Print multi-pathway network (internal)
 #' @noRd
-print_multi_pathway_network <- function(potato, show_ko = FALSE, show_ec = FALSE) {
+print_multi_pathway_network <- function(potato, show_databases = FALSE, show_ec = FALSE, show_compounds = TRUE) {
 
   cli::cli_h1(potato@name)
   cli::cli_text("Source: {.field {potato@source}}")
   cli::cli_text("Tags: {.val {paste(potato@tags, collapse = ', ')}}")
+  if (!is.null(potato@notes) && nchar(potato@notes) > 0) {
+    cli::cli_text("")
+    cli::cli_text("{.emph {potato@notes}}")
+  }
   cli::cli_text("")
   cli::cli_alert_info("Multi-pathway network with {length(potato@edges)} pathway{?s}")
   cli::cli_rule()
@@ -192,7 +196,46 @@ print_multi_pathway_network <- function(potato, show_ko = FALSE, show_ec = FALSE
     parts <- character()
 
     if (!is.null(pathway$input)) {
-      parts <- c(parts, paste0("[", pathway$input$compound, "]"))
+      input_display <- pathway$input$compound
+      if (!is.null(pathway$input$kegg_compound) && !is.na(pathway$input$kegg_compound) && nchar(pathway$input$kegg_compound) > 0) {
+        input_display <- paste0(pathway$input$compound, " [", pathway$input$kegg_compound, "]")
+      }
+      parts <- c(parts, paste0("<", input_display, ">"))
+    }
+
+    # Build map of which compounds appear between steps
+    step_compounds <- list()
+    if (show_compounds && !is.null(pathway$edges) && length(pathway$edges) > 0) {
+      for (edge in pathway$edges) {
+        if (!is.null(edge$compound)) {
+          from_gene <- edge$from
+          # Find step of from_gene
+          from_step <- NULL
+          for (sn in names(steps)) {
+            for (node in steps[[sn]]) {
+              if (node$id == from_gene) {
+                from_step <- sn
+                break
+              }
+            }
+            if (!is.null(from_step)) break
+          }
+
+          if (!is.null(from_step)) {
+            if (is.null(step_compounds[[from_step]])) {
+              step_compounds[[from_step]] <- list()
+            }
+            # Store compound with its KEGG ID
+            compound_display <- edge$compound
+            if (!is.null(edge$kegg_compound) && !is.na(edge$kegg_compound) && nchar(edge$kegg_compound) > 0) {
+              compound_display <- paste0(edge$compound, " [", edge$kegg_compound, "]")
+            }
+            if (!(compound_display %in% step_compounds[[from_step]])) {
+              step_compounds[[from_step]] <- c(step_compounds[[from_step]], compound_display)
+            }
+          }
+        }
+      }
     }
 
     for (step_name in names(steps)) {
@@ -200,17 +243,28 @@ print_multi_pathway_network <- function(potato, show_ko = FALSE, show_ec = FALSE
 
       if (length(step_nodes) == 1) {
         node <- step_nodes[[1]]
-        gene_str <- format_gene_compact(node, show_ko, show_ec)
+        gene_str <- format_gene_compact(node, show_databases, show_ec)
         parts <- c(parts, gene_str)
       } else {
         # Multiple alternatives
-        alt_genes <- sapply(step_nodes, function(node) format_gene_compact(node, show_ko, show_ec))
+        alt_genes <- sapply(step_nodes, function(node) format_gene_compact(node, show_databases, show_ec))
         parts <- c(parts, paste0("(", paste(alt_genes, collapse = " | "), ")"))
+      }
+
+      # Add compounds after this step (if show_compounds)
+      if (show_compounds && !is.null(step_compounds[[step_name]])) {
+        for (cmp in step_compounds[[step_name]]) {
+          parts <- c(parts, paste0("<", cmp, ">"))
+        }
       }
     }
 
     if (!is.null(pathway$output)) {
-      parts <- c(parts, paste0("[", pathway$output$compound, "]"))
+      output_display <- pathway$output$compound
+      if (!is.null(pathway$output$kegg_compound) && !is.na(pathway$output$kegg_compound) && nchar(pathway$output$kegg_compound) > 0) {
+        output_display <- paste0(pathway$output$compound, " [", pathway$output$kegg_compound, "]")
+      }
+      parts <- c(parts, paste0("<", output_display, ">"))
     }
 
     # Print pathway flow
@@ -231,7 +285,7 @@ print_multi_pathway_network <- function(potato, show_ko = FALSE, show_ec = FALSE
 
 #' Print compact pathway view (internal)
 #' @noRd
-print_pathway_compact <- function(potato, show_ko = FALSE, show_ec = TRUE) {
+print_pathway_compact <- function(potato, show_databases = FALSE, show_ec = TRUE) {
 
   cli::cli_h2(potato@name)
   cli::cli_text("Source: {.field {potato@source}}")
@@ -267,12 +321,12 @@ print_pathway_compact <- function(potato, show_ko = FALSE, show_ec = TRUE) {
     if (length(step_nodes) == 1) {
       # Single gene or complex
       node <- step_nodes[[1]]
-      gene_str <- format_gene_compact(node, show_ko, show_ec)
+      gene_str <- format_gene_compact(node, show_databases, show_ec)
       parts <- c(parts, gene_str)
 
     } else {
       # Multiple alternatives
-      alt_genes <- sapply(step_nodes, function(node) format_gene_compact(node, show_ko, show_ec))
+      alt_genes <- sapply(step_nodes, function(node) format_gene_compact(node, show_databases, show_ec))
       parts <- c(parts, paste0("(", paste(alt_genes, collapse = " | "), ")"))
     }
   }
@@ -290,7 +344,7 @@ print_pathway_compact <- function(potato, show_ko = FALSE, show_ec = TRUE) {
   cli::cli_text("{.emph * = marker gene}")
   cli::cli_text("{.emph ^ = optional step}")
   cli::cli_text("{.emph {{n}} = complex with n subunits}")
-  if (show_ko) {
+  if (show_databases) {
     cli::cli_text("{.emph [K#####] = KO identifier}")
   }
   cli::cli_text("")
@@ -299,7 +353,7 @@ print_pathway_compact <- function(potato, show_ko = FALSE, show_ec = TRUE) {
 
 #' Format gene for compact view (internal)
 #' @noRd
-format_gene_compact <- function(node, show_ko = FALSE, show_ec = TRUE) {
+format_gene_compact <- function(node, show_databases = FALSE, show_ec = TRUE) {
   gene_str <- node$id
 
   # Add EC if requested
@@ -312,17 +366,38 @@ format_gene_compact <- function(node, show_ko = FALSE, show_ec = TRUE) {
     gene_str <- paste0(gene_str, "[", ec_str, "]")
   }
 
-  # Add KO if requested (after EC)
-  if (show_ko && !is.null(node$databases$kofam)) {
-    kos <- unlist(node$databases$kofam)
-    if (length(kos) == 1) {
-      gene_str <- paste0(gene_str, "[", kos, "]")
-    } else if (length(kos) > 1) {
-      # Complex - show all KOs with +
-      gene_str <- paste0(gene_str, "[", paste(kos, collapse = "+"), "]")
+  # Add database annotations if requested (after EC)
+  if (show_databases && !is.null(node$databases)) {
+    db_parts <- character()
+
+    # Add kofam
+    if (!is.null(node$databases$kofam)) {
+      kos <- unlist(node$databases$kofam)
+      if (length(kos) == 1) {
+        db_parts <- c(db_parts, kos)
+      } else if (length(kos) > 1) {
+        # Complex - show all KOs with +
+        db_parts <- c(db_parts, paste(kos, collapse = "+"))
+      }
     }
-  } else if (!show_ec) {
-    # Just show {n} for complex without EC/KO details
+
+    # Add blast count
+    if (!is.null(node$databases$blast)) {
+      n_blast <- length(unlist(node$databases$blast))
+      db_parts <- c(db_parts, paste0("B:", n_blast))
+    }
+
+    # Add hmm count
+    if (!is.null(node$databases$hmm)) {
+      n_hmm <- length(unlist(node$databases$hmm))
+      db_parts <- c(db_parts, paste0("H:", n_hmm))
+    }
+
+    if (length(db_parts) > 0) {
+      gene_str <- paste0(gene_str, "[", paste(db_parts, collapse = ","), "]")
+    }
+  } else if (!show_ec && !show_databases) {
+    # Just show {n} for complex without EC/database details
     if (!is.null(node$databases$kofam) && length(node$databases$kofam) > 1) {
       gene_str <- paste0(gene_str, "{", length(node$databases$kofam), "}")
     }
@@ -344,7 +419,7 @@ format_gene_compact <- function(node, show_ko = FALSE, show_ec = TRUE) {
 
 #' Format a gene for printing (internal)
 #' @noRd
-format_gene <- function(node, show_ko, show_ec, indent = FALSE) {
+format_gene <- function(node, show_databases, show_ec, indent = FALSE) {
   prefix <- if (indent) "  • " else ""
 
   # Build label
@@ -360,22 +435,20 @@ format_gene <- function(node, show_ko, show_ec, indent = FALSE) {
 
   cli::cli_text(label)
 
-  # Show databases
-  if (!is.null(node$databases)) {
+  # Show databases if requested
+  if (show_databases && !is.null(node$databases)) {
     db_info <- character()
     if (!is.null(node$databases$kofam)) {
       kos <- unlist(node$databases$kofam)
-      if (show_ko || length(kos) > 1) {  # Always show if complex
-        db_info <- c(db_info, paste0("KOfam: ", paste(kos, collapse = "+")))
-      }
+      db_info <- c(db_info, paste0("KOfam: ", paste(kos, collapse = "+")))
     }
     if (!is.null(node$databases$blast)) {
-      n_blast <- length(unlist(node$databases$blast))
-      db_info <- c(db_info, paste0("BLAST: ", n_blast, " refs"))
+      blast_terms <- unlist(node$databases$blast)
+      db_info <- c(db_info, paste0("BLAST: ", paste(blast_terms, collapse = ", ")))
     }
     if (!is.null(node$databases$hmm)) {
-      n_hmm <- length(unlist(node$databases$hmm))
-      db_info <- c(db_info, paste0("HMM: ", n_hmm, " profiles"))
+      hmm_terms <- unlist(node$databases$hmm)
+      db_info <- c(db_info, paste0("HMM: ", paste(hmm_terms, collapse = ", ")))
     }
 
     if (length(db_info) > 0) {

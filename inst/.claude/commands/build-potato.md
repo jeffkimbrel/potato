@@ -17,6 +17,16 @@ Help users build well-structured potato JSON files through:
 5. **Education and guidance** - Push back on oversimplifications, suggest better approaches
 6. **Resource recommendations** - Proactively suggest PFAM domains, reference sequences, literature
 
+## CRITICAL: Never Edit Verified Pathways Without Permission
+
+**STOP AND ALERT:** If a user asks to modify a potato or pathway that has `"verified": true`, DO NOT proceed with edits. Instead:
+1. Alert the user: "This pathway is marked as verified. Editing verified pathways requires explicit approval."
+2. Show them what field(s) would be changed
+3. Ask: "This pathway has been validated. Do you want to proceed with these changes and reset verified status to false?"
+4. Only proceed if user explicitly approves
+
+**Why:** Verified pathways have been manually reviewed and validated. Changes could invalidate that work.
+
 ## Be an Expert Guide, Not Just a Transcriber
 
 **CRITICAL:** You are building a scientific annotation tool. Your job is to:
@@ -70,65 +80,73 @@ Help users build well-structured potato JSON files through:
 
 ## Gene Definition (nodes)
 
-Each gene in the pathway:
+**For multi-pathway networks (recommended):**
+- Global `nodes` array defines **detection methods only** (databases, EC, name, type)
+- Pathway-specific `nodes` object defines **context** (step, required, marker)
+- Same gene can have different roles in different pathways
 
+**Global node example:**
 ```json
 {
-  "id": "geneSymbol",               // Gene symbol (e.g., "nifH", "aceA")
-  "step": 1,                        // or [2, 5] for bifunctional enzymes
-  "nodes": ["geneSymbol_1"],        // DAG node IDs: must be id_step format
-  "type": "enzyme",                 // Usually "enzyme"
-  "name": "enzyme name",
-  "ko": ["K00001"],                 // KO identifiers (array) - LEGACY, prefer databases
-  "ec": ["1.1.1.1"],               // EC numbers (optional, array)
-  "databases": {                    // PREFERRED: Multi-database detection
-    "kofam": ["K00001"],           // KEGG Orthology IDs
-    "hmm": ["PF00001"],            // HMM profile NAMEs (includes PFAM)
-    "blast": ["ref_seq_1"]         // BLAST reference sequence IDs
+  "id": "gnaD",
+  "name": "gluconate dehydratase",
+  "databases": {
+    "kofam": ["K05308"]
   },
-  "thresholds": {                   // OPTIONAL: Per-gene threshold overrides
-    "kofam_score": 100,            // Override default kofam threshold
-    "blast_evalue": 1e-20,         // Override default BLAST e-value
-    "blast_bitscore": 100,         // Override default BLAST bitscore
-    "hmm_evalue": 1e-15            // Override default HMM e-value (if no TC)
-  },
-  "required": true,                 // Required for pathway completion?
-  "marker": false,                  // Diagnostic gene for this pathway?
-  "notes": "Biological context"
+  "ec": ["4.2.1.140"],
+  "type": "enzyme",
+  "notes": "Bifunctional: acts on gluconate and galactonate",
+  "x": 100,        // Optional: visualization coordinates
+  "y": 200
+}
+```
+
+**Pathway-specific node example (in `pathways.pathway_id.nodes`):**
+```json
+"gnaD": {
+  "step": 1,
+  "required": true,
+  "marker": true
 }
 ```
 
 **Key Rules:**
-- **CRITICAL:** `"verified": false` - For multi-pathway networks, this field goes in EACH pathway (not at potato level). ALWAYS set to false. NEVER set to true. Only humans verify pathways after review.
-- `step` is INTEGER for single occurrence, ARRAY for bifunctional enzymes
-- `nodes` must match: if `step: 1` then `nodes: ["id_1"]`, if `step: [2,5]` then `nodes: ["id_2", "id_5"]`
+- **CRITICAL:** `"verified": false` - For multi-pathway networks, this field goes in EACH pathway definition (not at potato level or node level). ALWAYS set to false. NEVER set to true. Only humans verify pathways after review.
+- In multi-pathway networks, `step`, `required`, and `marker` are **pathway-specific**, not global
+- Same gene can be step 1 in one pathway, step 3 in another
 - For OR branches (alternative enzymes), multiple genes share same `step` number
-- At least ONE gene should have `marker: true` (diagnostic for pathway)
+- At least ONE gene should have `marker: true` per pathway (diagnostic for that pathway)
 - **Detection methods:** Use `databases` field. Include multiple sources when possible:
   - **kofam** - KEGG Orthology IDs (K##### format)
   - **hmm** - HMM profile NAMEs (includes PFAM like PF##### and custom HMMs)
   - **blast** - Custom reference sequence IDs
-- **Thresholds:** Optional per-gene overrides in `thresholds` field (use sparingly, usually not needed)
 - **IMPORTANT:** PFAM profiles go in `hmm` field (PFAM is a type of HMM database), NOT a separate `pfam` field
 
 ## Edges (pathway topology)
 
+**For multi-pathway networks (recommended):**
+Edges use **gene IDs** (not step-based node IDs):
+
 ```json
 {
-  "from": "geneA_1",                // Source node (with _step suffix)
-  "to": "geneB_2",                  // Target node (with _step suffix)
-  "compound": "glucose",            // Metabolite transferred (optional)
-  "kegg_compound": "C00031",        // KEGG compound ID (optional)
-  "notes": "Additional context"     // Optional
+  "from": "geneA",                  // Source gene ID (no _step suffix)
+  "to": "geneB",                    // Target gene ID (no _step suffix)
+  "compound": "glucose",            // Metabolite transferred (optional but recommended)
+  "kegg_compound": "C00031"         // KEGG compound ID (optional but recommended)
 }
 ```
 
-**OR Branches:** When step N has alternatives, create edges from ALL step N-1 nodes to ALL step N alternatives.
+**Important notes:**
+- Edges are defined per pathway in `pathways.pathway_id.edges`
+- Use bare gene IDs, not step-based node IDs
+- **Compound name normalization:** Multi-part compounds (e.g., "pyruvate + G3P") will have parts sorted alphabetically during graph construction, so "A + B" and "B + A" are treated as equivalent
+- **Empty edges:** Transporter pathways may have `edges: []` since their topology is defined by input → genes → output connections
+- **OR Branches:** When step N has alternatives, create edges from ALL previous genes to ALL alternatives
 
 Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
 ```json
-{"from": "A_1", "to": "C_2"},
-{"from": "B_1", "to": "C_2"}
+{"from": "A", "to": "C", "compound": "intermediate"},
+{"from": "B", "to": "C", "compound": "intermediate"}
 ```
 
 ## Scoring

@@ -1,10 +1,17 @@
 # POTATO v1 - Development Roadmap
 
-**Current Version:** v0.9.3 (2026-08-05)
+**Current Version:** v0.9.3 (2026-08-10)
 
-**Status:** Multi-pathway networks with full scoring support. Essential-only scoring metrics. Result export functions with threshold filtering. Test coverage at 27%.
+**Status:** Multi-pathway networks fully implemented and production-ready. ED network verified and tested. Enhanced visualization and print functions. Test coverage at 27%.
 
-**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (all + essential genes) → interactive/static visualization with curated layouts → export results as tibbles → analyze near-misses
+**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (all + essential genes) → interactive/static visualization with curated layouts → export results as tibbles → analyze near-misses → print pathways with compound details
+
+**Recent additions (2026-08-10):**
+- Compound name normalization (merge "A + B" and "B + A")
+- Enhanced `print_potato()` with `show_databases` parameter and angle-bracket compound display
+- Transporter pathway support (empty edges arrays)
+- Verification system for multi-pathway networks (per-pathway `verified` field)
+- Entner-Doudoroff network completed with 6 pathways (4 verified, 2 independent)
 
 **What's next:** Gene specificity weighting, threshold sensitivity analysis, annotation workflow optimization
 

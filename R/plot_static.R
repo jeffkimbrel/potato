@@ -7,14 +7,16 @@
 #' @param sack PotatoSack object (optional, for genome detection status)
 #' @param genome_name Genome name to show detection status (requires sack)
 #' @param show_compounds Logical. Show compound nodes in bipartite graph (default: FALSE)
-#' @param layout Layout algorithm: "fr", "kk", "sugiyama", "tree", "circle", "grid" (default: "fr")
-#' @param pathway For multi-pathway networks, show only this pathway (pathway ID). NULL = show all
+#' @param layout Layout algorithm: "xy" (use curated coords, default), "fr", "kk", "sugiyama", "tree", "circle", "grid"
+#' @param pathway For multi-pathway networks, show only this pathway (pathway ID or vector of IDs). NULL = show all
+#' @param show_hulls Logical. Show convex hulls around pathways in multi-pathway networks (default: TRUE)
 #'
 #' @return A ggplot2 object
 #' @export
 
 plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
-                                show_compounds = FALSE, layout = "fr", pathway = NULL) {
+                                show_compounds = FALSE, layout = "xy", pathway = NULL,
+                                show_hulls = TRUE) {
 
   if (!requireNamespace("ggraph", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg ggraph} is required for static plots")
@@ -23,6 +25,9 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
   if (!requireNamespace("igraph", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg igraph} is required for plotting")
   }
+
+  # Store original potato for color mapping (before filtering)
+  original_potato <- if (is.character(potato)) load_potato(potato) else potato
 
   # Prepare data
   prep <- prepare_potato_for_plotting(potato, sack, genome_name, show_compounds, pathway)
@@ -48,13 +53,13 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
   p <- ggraph::ggraph(prep$g, layout = "manual", x = node_coords$x, y = -node_coords$y)
 
   # Add pathway convex hulls for multi-pathway networks
-  if (prep$is_multi_pathway) {
+  if (prep$is_multi_pathway && show_hulls) {
     pathway_nodes <- list()
 
-    # Use the already-generated pathway colors
-    pathway_names <- sapply(prep$potato@edges, function(p) p$name %||% "")
-    pathway_colors <- jakR2::palette_jak(n = length(pathway_names), p = "sunset")
-    names(pathway_colors) <- pathway_names
+    # Generate pathway colors based on ORIGINAL (unfiltered) potato to maintain consistent colors
+    pathway_names_all <- sapply(original_potato@edges, function(p) p$name %||% "")
+    pathway_colors <- jakR2::palette_jak(n = length(pathway_names_all), p = "sunset")
+    names(pathway_colors) <- pathway_names_all
 
     for (pathway_id in names(prep$potato@edges)) {
       pathway <- prep$potato@edges[[pathway_id]]
@@ -188,8 +193,8 @@ plot_potato_static <- function(potato, sack = NULL, genome_name = NULL,
       subtitle = if (prep$has_genome) paste("Genome:", genome_name) else NULL
     )
 
-  # Add pathway hull fill scale for multi-pathway networks
-  if (prep$is_multi_pathway) {
+  # Add pathway hull fill scale for multi-pathway networks (only if hulls are shown)
+  if (prep$is_multi_pathway && show_hulls) {
     pathway_names <- sapply(prep$potato@edges, function(p) p$name %||% "")
     pathway_colors <- jakR2::palette_jak(n = length(pathway_names), p = "sunset")
     names(pathway_colors) <- pathway_names

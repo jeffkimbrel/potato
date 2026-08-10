@@ -176,6 +176,7 @@ Each potato is a self-contained pathway definition with genes and topology:
 
 **Key fields:**
 - `verified`: **CRITICAL** - Always set to `false` for new/unverified potatoes. **NEVER set to true**. Only the user manually sets this after validation.
+  - **NEVER EDIT VERIFIED POTATOES**: If a potato or pathway has `"verified": true`, DO NOT make any edits without explicit user approval. Alert the user that they are requesting changes to a verified pathway and ask for confirmation before proceeding.
 - `input`/`output`: Starting substrate and final product (optional but recommended)
   - For metabolic pathways: actual metabolites (e.g., "D-glucose", "pyruvate")
   - For transporters: location-qualified (e.g., "NH4_external", "NH4_internal")
@@ -761,16 +762,20 @@ All features above have been implemented and basic testing done on:
 - `load_potato(path)` - Load single potato JSON (multi-pathway networks supported)
 - `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory (filters active=false)
 - `load_test_potato()` - Load example test potato
-- `print_potato(potato, compact, show_compounds, show_ko, show_ec)` - Text-based pathway view
+- `print_potato(potato, compact, show_compounds, show_databases, show_ec)` - Text-based pathway view
   - Handles both single-pathway and multi-pathway networks
   - Compact notation: `*` = marker, `^` = optional, `{n}` = complex, `(A|B)` = alternatives
-  - Example: `[D-glucose-6-P] -> zwf -> (pgl^ | ybhE^) -> edd* -> eda*`
-  - Multi-pathway: prints each pathway separately with its topology
+  - Compounds shown with angle brackets: `<compound [C00031]>` vs genes with square brackets: `gene[EC]`
+  - `show_databases` displays all detection methods (kofam, blast, hmm) instead of just KO IDs
+  - Example: `<D-glucose [C00031]> -> glk -> <D-glucose-6P [C00668]> -> zwf -> (pgl^ | ybhE^) -> edd* -> eda*`
+  - Multi-pathway: prints top-level notes, then each pathway separately with pathway-specific notes
 - `get_enzyme_nodes(potato)` - Extract enzyme nodes
 - `get_detection_terms(potato, database_name)` - Extract KO/blast/hmm terms
 - `get_marker_genes(potato)` - Extract marker gene nodes
 - `build_potato_graph(potato)` - Build igraph DAG (gene-based for multi-pathway)
 - `build_bipartite_graph(potato)` - Build bipartite graph with compound nodes
+  - Normalizes compound names by sorting parts ("pyruvate + G3P" == "G3P + pyruvate")
+  - Supports pathways with empty edges arrays (e.g., transporters)
 - `print_validation(validation_result)` - Pretty print validation
 - `compute_potato_hash(potato)` - Generate MD5 hash of functional fields
 - `update_potato_coordinates(potato_path, coords_path, with_compounds)` - Import coordinates
@@ -1646,7 +1651,10 @@ write.csv(pathway_scores, "pathway_scores.csv")
 - `test_glycolysis.json` - Test pathway (3 steps)
 
 **Multi-pathway networks:**
-- `entner_doudoroff_network.json` - ED pathway network (4 variants: classic, non_phosphorylative, semi_phosphorylative, semi_phosphorylative_alt)
+- `entner_doudoroff_network.json` - ED pathway network with 6 pathways:
+  - **ED variants (4):** classic (verified), non_phosphorylative (verified), sp_gluconate (verified), sp_galactonate (verified)
+  - **Support pathways (2):** gluconate_transport (verified), galactose_catabolism (verified)
+  - **Features:** Bifunctional genes (sskdgK in both gluconate/galactonate branches), compound name normalization, transporter pathways with empty edges, alternative entry points
 
 ### Inactive Potatoes (active: false, kept for reference)
 
@@ -1665,4 +1673,4 @@ Candidates for multi-pathway networks:
 
 ---
 
-Last updated: 2026-07-30
+Last updated: 2026-08-10
