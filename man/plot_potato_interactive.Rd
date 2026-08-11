@@ -9,7 +9,8 @@ plot_potato_interactive(
   sack = NULL,
   genome_name = NULL,
   show_compounds = FALSE,
-  pathway = NULL
+  pathway = NULL,
+  layout = "curated"
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ plot_potato_interactive(
 \item{show_compounds}{Logical. Show compound nodes in bipartite graph (default: FALSE)}
 
 \item{pathway}{For multi-pathway networks, show only this pathway (pathway ID). NULL = show all}
+
+\item{layout}{Layout algorithm. "curated" uses x,y coordinates from potato JSON (default), or specify igraph layout: "fr", "kk", "dh", "circle", "nicely"}
 }
 \value{
 A visNetwork htmlwidget

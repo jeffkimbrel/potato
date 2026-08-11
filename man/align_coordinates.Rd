@@ -8,7 +8,7 @@ align_coordinates(
   coords_path,
   output_path = NULL,
   grid_size = NULL,
-  align_threshold = 10,
+  align_threshold = 2.5,
   axis = "both"
 )
 }
@@ -19,7 +19,10 @@ align_coordinates(
 
 \item{grid_size}{Snap to grid of this size (NULL = no grid snapping)}
 
-\item{align_threshold}{Nodes within this distance are aligned to same axis (NULL = no alignment)}
+\item{align_threshold}{Percentage of coordinate range for alignment (NULL = no alignment).
+Nodes within this percentage distance are aligned to same axis.
+Examples: 2.5 = gentle (default), 5.0 = moderate, 10.0 = aggressive.
+Scale-independent - works regardless of coordinate system.}
 
 \item{axis}{Axis to align: "y" (horizontal lines), "x" (vertical lines), or "both"}
 }

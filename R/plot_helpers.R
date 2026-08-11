@@ -272,10 +272,22 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
 
 #' Calculate node layout coordinates (internal)
 #' @noRd
-calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, layout = "xy") {
+calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, layout = "xy", scale_for_visnetwork = FALSE) {
 
   has_curated_coords <- FALSE
-  use_curated <- (layout == "xy")  # Only use curated coords if layout="xy"
+  use_curated <- (layout == "curated" || layout == "xy")  # Use curated coords for "curated" or legacy "xy"
+
+  # Dynamic scaling based on network size
+  # visNetwork needs larger coordinates for bigger networks
+  # Base scale increases with number of nodes (sqrt to avoid extreme scaling)
+  if (scale_for_visnetwork) {
+    n_nodes <- igraph::vcount(g)
+    # Scale from ~20 (small networks) to ~60 (large networks)
+    coord_scale <- 20 + (sqrt(n_nodes) * 2)
+    coord_scale <- max(20, min(coord_scale, 60))  # Clamp between 20-60
+  } else {
+    coord_scale <- 1
+  }
 
   if (is_multi_pathway && use_curated) {
     # Check for curated coordinates
@@ -328,8 +340,8 @@ calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, l
       for (i in seq_along(node_coords$name)) {
         node_name <- node_coords$name[i]
         if (node_name %in% names(node_coords_list)) {
-          node_coords$x[i] <- node_coords_list[[node_name]][1]
-          node_coords$y[i] <- node_coords_list[[node_name]][2]
+          node_coords$x[i] <- node_coords_list[[node_name]][1] * coord_scale
+          node_coords$y[i] <- node_coords_list[[node_name]][2] * coord_scale
         }
       }
 
@@ -345,8 +357,8 @@ calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, l
           # Use stored coordinates if available
           if (compound_id %in% names(compound_coords_stored)) {
             stored <- compound_coords_stored[[compound_id]]
-            node_coords$x[i] <- stored$x
-            node_coords$y[i] <- stored$y
+            node_coords$x[i] <- stored$x * coord_scale
+            node_coords$y[i] <- stored$y * coord_scale
           } else {
             # Calculate from neighbors
             neighbors <- igraph::neighbors(g, i, mode = "all")

@@ -76,27 +76,14 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_dat
 
     # Show alternatives
     if (length(step_nodes) == 1) {
-      # Single gene - check if complex
+      # Single gene
       node <- step_nodes[[1]]
-      if (!is.null(node$databases$kofam) && length(node$databases$kofam) > 1) {
-        # Complex (multiple KOs in single node)
-        cli::cli_text("{.strong COMPLEX} (all subunits required):")
-        format_gene(node, show_databases, show_ec)
-      } else {
-        # Simple single gene
-        format_gene(node, show_databases, show_ec)
-      }
+      format_gene(node, show_databases, show_ec)
     } else {
       # Multiple nodes = OR alternatives
       cli::cli_text("{.strong ALTERNATIVES} (any one):")
       for (node in step_nodes) {
-        # Check if this individual node is a complex
-        if (!is.null(node$databases$kofam) && length(node$databases$kofam) > 1) {
-          cli::cli_text("  {.strong COMPLEX}:")
-          format_gene(node, show_databases, show_ec, indent = TRUE)
-        } else {
-          format_gene(node, show_databases, show_ec, indent = TRUE)
-        }
+        format_gene(node, show_databases, show_ec, indent = TRUE)
       }
     }
 
@@ -207,6 +194,11 @@ print_multi_pathway_network <- function(potato, show_databases = FALSE, show_ec 
     step_compounds <- list()
     if (show_compounds && !is.null(pathway$edges) && length(pathway$edges) > 0) {
       for (edge in pathway$edges) {
+        # Skip edges with null endpoints (external compounds) - these won't have step associations
+        if (is.null(edge$from) || is.null(edge$to)) {
+          next
+        }
+
         if (!is.null(edge$compound)) {
           from_gene <- edge$from
           # Find step of from_gene
@@ -376,8 +368,9 @@ format_gene_compact <- function(node, show_databases = FALSE, show_ec = TRUE) {
       if (length(kos) == 1) {
         db_parts <- c(db_parts, kos)
       } else if (length(kos) > 1) {
-        # Complex - show all KOs with +
-        db_parts <- c(db_parts, paste(kos, collapse = "+"))
+        # Multiple KO IDs = alternative detection methods (OR), not complex (AND)
+        # Use / to indicate alternatives
+        db_parts <- c(db_parts, paste(kos, collapse = "/"))
       }
     }
 
@@ -396,12 +389,8 @@ format_gene_compact <- function(node, show_databases = FALSE, show_ec = TRUE) {
     if (length(db_parts) > 0) {
       gene_str <- paste0(gene_str, "[", paste(db_parts, collapse = ","), "]")
     }
-  } else if (!show_ec && !show_databases) {
-    # Just show {n} for complex without EC/database details
-    if (!is.null(node$databases$kofam) && length(node$databases$kofam) > 1) {
-      gene_str <- paste0(gene_str, "{", length(node$databases$kofam), "}")
-    }
   }
+  # Note: Removed {n} notation - multiple KO IDs don't indicate protein complex
 
   # Add marker indicator
   if (node$marker %||% FALSE) {

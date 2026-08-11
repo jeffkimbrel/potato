@@ -6,12 +6,15 @@
 #' @param coords_path Path to coordinates JSON file
 #' @param output_path Path to save aligned coordinates (default: overwrites input)
 #' @param grid_size Snap to grid of this size (NULL = no grid snapping)
-#' @param align_threshold Nodes within this distance are aligned to same axis (NULL = no alignment)
+#' @param align_threshold Percentage of coordinate range for alignment (NULL = no alignment).
+#'   Nodes within this percentage distance are aligned to same axis.
+#'   Examples: 2.5 = gentle (default), 5.0 = moderate, 10.0 = aggressive.
+#'   Scale-independent - works regardless of coordinate system.
 #' @param axis Axis to align: "y" (horizontal lines), "x" (vertical lines), or "both"
 #'
 #' @export
 align_coordinates <- function(coords_path, output_path = NULL,
-                              grid_size = NULL, align_threshold = 10, axis = "both") {
+                              grid_size = NULL, align_threshold = 2.5, axis = "both") {
 
   if (is.null(output_path)) {
     output_path <- coords_path
@@ -22,6 +25,14 @@ align_coordinates <- function(coords_path, output_path = NULL,
 
   original_coords <- coords
 
+  # Convert percentage threshold to actual distance based on coordinate range
+  actual_threshold <- NULL
+  if (!is.null(align_threshold)) {
+    coord_range <- max(max(coords$x) - min(coords$x), max(coords$y) - min(coords$y))
+    actual_threshold <- coord_range * (align_threshold / 100)
+    cli::cli_alert_info("Using {align_threshold}% threshold = {round(actual_threshold, 2)} units (range: {round(coord_range, 1)})")
+  }
+
   # Grid snapping
   if (!is.null(grid_size)) {
     coords$x <- round(coords$x / grid_size) * grid_size
@@ -30,7 +41,7 @@ align_coordinates <- function(coords_path, output_path = NULL,
   }
 
   # Axis alignment
-  if (!is.null(align_threshold)) {
+  if (!is.null(actual_threshold)) {
 
     # Align Y (horizontal lines)
     if (axis %in% c("y", "both")) {
@@ -40,7 +51,7 @@ align_coordinates <- function(coords_path, output_path = NULL,
       groups[[current_group]] <- 1
 
       for (i in 2:nrow(coords_sorted)) {
-        if (abs(coords_sorted$y[i] - coords_sorted$y[i-1]) <= align_threshold) {
+        if (abs(coords_sorted$y[i] - coords_sorted$y[i-1]) <= actual_threshold) {
           groups[[current_group]] <- c(groups[[current_group]], i)
         } else {
           current_group <- current_group + 1
@@ -58,7 +69,7 @@ align_coordinates <- function(coords_path, output_path = NULL,
           y_changes <- y_changes + 1
 
           node_ids <- coords_sorted$id[group]
-          cli::cli_alert_success("Aligned {length(group)} nodes horizontally at Y={median_y}: {paste(node_ids, collapse=', ')}")
+          cli::cli_alert_success("Aligned {length(group)} nodes horizontally at Y={round(median_y, 2)}: {paste(node_ids, collapse=', ')}")
         }
       }
 
@@ -74,7 +85,7 @@ align_coordinates <- function(coords_path, output_path = NULL,
       groups[[current_group]] <- 1
 
       for (i in 2:nrow(coords_sorted)) {
-        if (abs(coords_sorted$x[i] - coords_sorted$x[i-1]) <= align_threshold) {
+        if (abs(coords_sorted$x[i] - coords_sorted$x[i-1]) <= actual_threshold) {
           groups[[current_group]] <- c(groups[[current_group]], i)
         } else {
           current_group <- current_group + 1
@@ -92,7 +103,7 @@ align_coordinates <- function(coords_path, output_path = NULL,
           x_changes <- x_changes + 1
 
           node_ids <- coords_sorted$id[group]
-          cli::cli_alert_success("Aligned {length(group)} nodes vertically at X={median_x}: {paste(node_ids, collapse=', ')}")
+          cli::cli_alert_success("Aligned {length(group)} nodes vertically at X={round(median_x, 2)}: {paste(node_ids, collapse=', ')}")
         }
       }
 

@@ -293,6 +293,23 @@ update_potato_coordinates <- function(potato_path, coords_path, output_path = NU
   # Read coordinates
   coords <- jsonlite::read_json(coords_path, simplifyVector = TRUE)
 
+  # Normalize coordinates to reasonable range for plotting
+  # visNetwork uses pixel coordinates (e.g., -500 to 500)
+  # Static plots work better with normalized coords (e.g., -20 to 20)
+  x_range <- range(coords$x)
+  y_range <- range(coords$y)
+  x_span <- diff(x_range)
+  y_span <- diff(y_range)
+
+  # Scale to roughly -20 to 20 range, maintaining aspect ratio
+  max_span <- max(x_span, y_span)
+  scale_factor <- 40 / max_span  # Target range of 40 units (-20 to 20)
+
+  coords$x <- (coords$x - mean(x_range)) * scale_factor
+  coords$y <- (coords$y - mean(y_range)) * scale_factor
+
+  cli::cli_alert_info("Normalized coordinates: X [{round(min(coords$x), 2)}, {round(max(coords$x), 2)}], Y [{round(min(coords$y), 2)}, {round(max(coords$y), 2)}]")
+
   # Separate enzyme nodes and compound nodes (including INPUT/OUTPUT)
   enzyme_nodes <- coords[!grepl("^(COMPOUND_|INPUT_|OUTPUT_)", coords$id), ]
   compound_nodes <- coords[grepl("^(COMPOUND_|INPUT_|OUTPUT_)", coords$id), ]

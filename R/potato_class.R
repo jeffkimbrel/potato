@@ -531,13 +531,20 @@ validate_single_pathway <- function(data, strict) {
   if (!is.null(data$edges)) {
     for (i in seq_along(data$edges)) {
       edge <- data$edges[[i]]
+      # Allow null endpoints for non-structural edges (external compounds)
+      is_non_structural <- !is.null(edge$structural) && edge$structural == FALSE
+
       if (is.null(edge$from)) {
-        errors <- c(errors, sprintf("Edge %d: missing 'from'", i))
+        if (!is_non_structural) {
+          errors <- c(errors, sprintf("Edge %d: missing 'from' (only allowed for non-structural edges)", i))
+        }
       } else if (!edge$from %in% all_valid_ids) {
         errors <- c(errors, sprintf("Edge %d: 'from' references non-existent node '%s'", i, edge$from))
       }
       if (is.null(edge$to)) {
-        errors <- c(errors, sprintf("Edge %d: missing 'to'", i))
+        if (!is_non_structural) {
+          errors <- c(errors, sprintf("Edge %d: missing 'to' (only allowed for non-structural edges)", i))
+        }
       } else if (!edge$to %in% all_valid_ids) {
         errors <- c(errors, sprintf("Edge %d: 'to' references non-existent node '%s'", i, edge$to))
       }
@@ -709,15 +716,54 @@ validate_multi_pathway <- function(data, strict) {
         pathway_node_ids <- names(pathway$nodes)
         for (i in seq_along(pathway$edges)) {
           edge <- pathway$edges[[i]]
-          if (is.null(edge$from)) {
-            errors <- c(errors, sprintf("%s edge %d: missing 'from'", path_prefix, i))
-          } else if (!edge$from %in% pathway_node_ids) {
-            errors <- c(errors, sprintf("%s edge %d: 'from' node '%s' not in pathway nodes", path_prefix, i, edge$from))
+          # Allow null endpoints for non-structural edges (external compounds)
+          is_non_structural <- !is.null(edge$structural) && edge$structural == FALSE
+
+          # Validate 'from' field
+          # Note: jsonlite may read null as empty list, so check both
+          from_is_null <- is.null(edge$from) || (is.list(edge$from) && length(edge$from) == 0)
+          if (from_is_null) {
+            if (!is_non_structural) {
+              errors <- c(errors, sprintf("%s edge %d: missing 'from' (only allowed for non-structural edges)", path_prefix, i))
+            }
+          } else {
+            # Check that from is valid non-empty string
+            if (!is.character(edge$from) || length(edge$from) != 1) {
+              errors <- c(errors, sprintf("%s edge %d: 'from' must be a single string, got type %s", path_prefix, i, class(edge$from)[1]))
+            } else if (nchar(edge$from) == 0) {
+              errors <- c(errors, sprintf("%s edge %d: 'from' is empty string", path_prefix, i))
+            } else if (!edge$from %in% pathway_node_ids) {
+              errors <- c(errors, sprintf("%s edge %d: 'from' node '%s' not in pathway nodes", path_prefix, i, edge$from))
+            }
           }
-          if (is.null(edge$to)) {
-            errors <- c(errors, sprintf("%s edge %d: missing 'to'", path_prefix, i))
-          } else if (!edge$to %in% pathway_node_ids) {
-            errors <- c(errors, sprintf("%s edge %d: 'to' node '%s' not in pathway nodes", path_prefix, i, edge$to))
+
+          # Validate 'to' field
+          # Note: jsonlite may read null as empty list, so check both
+          to_is_null <- is.null(edge$to) || (is.list(edge$to) && length(edge$to) == 0)
+          if (to_is_null) {
+            if (!is_non_structural) {
+              errors <- c(errors, sprintf("%s edge %d: missing 'to' (only allowed for non-structural edges)", path_prefix, i))
+            }
+          } else {
+            # Check that to is valid non-empty string
+            if (!is.character(edge$to) || length(edge$to) != 1) {
+              errors <- c(errors, sprintf("%s edge %d: 'to' must be a single string, got type %s", path_prefix, i, class(edge$to)[1]))
+            } else if (nchar(edge$to) == 0) {
+              errors <- c(errors, sprintf("%s edge %d: 'to' is empty string", path_prefix, i))
+            } else if (!edge$to %in% pathway_node_ids) {
+              errors <- c(errors, sprintf("%s edge %d: 'to' node '%s' not in pathway nodes", path_prefix, i, edge$to))
+            }
+          }
+
+          # Validate kegg_compound if present
+          if (!is.null(edge$kegg_compound)) {
+            if (!is.character(edge$kegg_compound) || length(edge$kegg_compound) != 1) {
+              errors <- c(errors, sprintf("%s edge %d: 'kegg_compound' must be a single string (e.g., 'C00024'), got type %s",
+                                         path_prefix, i, class(edge$kegg_compound)[1]))
+            } else if (!grepl("^C[0-9]{5}$", edge$kegg_compound)) {
+              warnings <- c(warnings, sprintf("%s edge %d: 'kegg_compound' format should be C##### (e.g., 'C00024'), got '%s'",
+                                             path_prefix, i, edge$kegg_compound))
+            }
           }
         }
 
@@ -740,6 +786,29 @@ validate_multi_pathway <- function(data, strict) {
           }, error = function(e) {
             errors <- c(errors, sprintf("%s: graph validation failed: %s", path_prefix, e$message))
           })
+        }
+      }
+
+      # Validate input/output kegg_compound
+      if (!is.null(pathway$input) && !is.null(pathway$input$kegg_compound)) {
+        kegg_id <- pathway$input$kegg_compound
+        if (!is.character(kegg_id) || length(kegg_id) != 1) {
+          errors <- c(errors, sprintf("%s input: 'kegg_compound' must be a single string (e.g., 'C00024'), got type %s",
+                                     path_prefix, class(kegg_id)[1]))
+        } else if (!grepl("^C[0-9]{5}$", kegg_id)) {
+          warnings <- c(warnings, sprintf("%s input: 'kegg_compound' format should be C##### (e.g., 'C00024'), got '%s'",
+                                         path_prefix, kegg_id))
+        }
+      }
+
+      if (!is.null(pathway$output) && !is.null(pathway$output$kegg_compound)) {
+        kegg_id <- pathway$output$kegg_compound
+        if (!is.character(kegg_id) || length(kegg_id) != 1) {
+          errors <- c(errors, sprintf("%s output: 'kegg_compound' must be a single string (e.g., 'C00024'), got type %s",
+                                     path_prefix, class(kegg_id)[1]))
+        } else if (!grepl("^C[0-9]{5}$", kegg_id)) {
+          warnings <- c(warnings, sprintf("%s output: 'kegg_compound' format should be C##### (e.g., 'C00024'), got '%s'",
+                                         path_prefix, kegg_id))
         }
       }
 

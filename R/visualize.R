@@ -1,7 +1,10 @@
 #' Normalize compound names by sorting multiple compounds
 #' @noRd
 normalize_compound_name <- function(compound_name) {
-  if (is.null(compound_name) || is.na(compound_name) || nchar(compound_name) == 0) {
+  if (is.null(compound_name)) {
+    return(compound_name)
+  }
+  if (is.na(compound_name) || nchar(compound_name) == 0) {
     return(compound_name)
   }
 
@@ -49,7 +52,7 @@ build_bipartite_graph <- function(potato) {
           kegg_id <- edge$kegg_compound
 
           # Use KEGG ID for deduplication if available
-          if (!is.na(kegg_id) && !is.null(kegg_id) && nchar(kegg_id) > 0) {
+          if (!is.null(kegg_id) && !is.na(kegg_id) && nchar(kegg_id) > 0) {
             compound_id <- paste0("COMPOUND_", kegg_id)
           } else {
             compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
@@ -64,29 +67,36 @@ build_bipartite_graph <- function(potato) {
             compound_status[[compound_id]] <- "intermediate"
           }
 
-          all_dag_edges[[length(all_dag_edges) + 1]] <- list(
-            from = from_id,
-            to = compound_id,
-            pathway = pathway_id,
-            pathway_name = pathway$name %||% pathway_id,
-            pathway_type = pathway$type
-          )
-          all_dag_edges[[length(all_dag_edges) + 1]] <- list(
-            from = compound_id,
-            to = to_id,
-            pathway = pathway_id,
-            pathway_name = pathway$name %||% pathway_id,
-            pathway_type = pathway$type
-          )
+          # Only add edges if both endpoints exist (skip external compounds with null endpoints)
+          if (!is.null(from_id)) {
+            all_dag_edges[[length(all_dag_edges) + 1]] <- list(
+              from = from_id,
+              to = compound_id,
+              pathway = pathway_id,
+              pathway_name = pathway$name %||% pathway_id,
+              pathway_type = pathway$type
+            )
+          }
+          if (!is.null(to_id)) {
+            all_dag_edges[[length(all_dag_edges) + 1]] <- list(
+              from = compound_id,
+              to = to_id,
+              pathway = pathway_id,
+              pathway_name = pathway$name %||% pathway_id,
+              pathway_type = pathway$type
+            )
+          }
         } else {
-          # Direct edge - gene to gene
-          all_dag_edges[[length(all_dag_edges) + 1]] <- list(
-            from = from_id,
-            to = to_id,
-            pathway = pathway_id,
-            pathway_name = pathway$name %||% pathway_id,
-            pathway_type = pathway$type
-          )
+          # Direct edge - gene to gene (skip if either endpoint is null)
+          if (!is.null(from_id) && !is.null(to_id)) {
+            all_dag_edges[[length(all_dag_edges) + 1]] <- list(
+              from = from_id,
+              to = to_id,
+              pathway = pathway_id,
+              pathway_name = pathway$name %||% pathway_id,
+              pathway_type = pathway$type
+            )
+          }
         }
         }
       }
@@ -94,16 +104,21 @@ build_bipartite_graph <- function(potato) {
       # Add input compound for this pathway (don't split, use full string)
       if (!is.null(pathway$input)) {
         compound_name <- pathway$input$compound
+        kegg_id <- pathway$input$kegg_compound
 
-        # For inputs, use name-based ID (no KEGG ID)
-        compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+        # Use KEGG ID for deduplication if available
+        if (!is.null(kegg_id) && !is.na(kegg_id) && nchar(kegg_id) > 0) {
+          compound_id <- paste0("COMPOUND_", kegg_id)
+        } else {
+          compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+        }
 
         # Check if already exists as intermediate - keep as input (green priority)
         if (!(compound_id %in% names(compound_info))) {
           compound_info[[compound_id]] <- list(
             id = compound_id,
             name = compound_name,
-            kegg_id = NA_character_
+            kegg_id = kegg_id
           )
           compound_status[[compound_id]] <- "input"
         } else if (compound_status[[compound_id]] == "intermediate") {
@@ -128,16 +143,21 @@ build_bipartite_graph <- function(potato) {
       # Add output compound for this pathway (don't split, use full string)
       if (!is.null(pathway$output)) {
         compound_name <- pathway$output$compound
+        kegg_id <- pathway$output$kegg_compound
 
-        # For outputs, use name-based ID (no KEGG ID)
-        compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+        # Use KEGG ID for deduplication if available
+        if (!is.null(kegg_id) && !is.na(kegg_id) && nchar(kegg_id) > 0) {
+          compound_id <- paste0("COMPOUND_", kegg_id)
+        } else {
+          compound_id <- paste0("COMPOUND_", gsub("[^A-Za-z0-9]", "_", compound_name))
+        }
 
         # Add compound info (don't override if already exists)
         if (!(compound_id %in% names(compound_info))) {
           compound_info[[compound_id]] <- list(
             id = compound_id,
             name = compound_name,
-            kegg_id = NA_character_
+            kegg_id = kegg_id
           )
           compound_status[[compound_id]] <- "output"
         } else if (compound_status[[compound_id]] == "intermediate") {
@@ -185,6 +205,11 @@ build_bipartite_graph <- function(potato) {
     }
 
     for (edge in potato@edges) {
+      # Skip edges with null endpoints (external compounds)
+      if (is.null(edge$from) || is.null(edge$to)) {
+        next
+      }
+
       if (!is.null(edge$compound)) {
         # Extract steps from node IDs
         from_step <- as.integer(sub(".*_(\\d+)$", "\\1", edge$from))
@@ -228,8 +253,20 @@ build_bipartite_graph <- function(potato) {
     stop("No edges found in potato", call. = FALSE)
   }
 
-  edge_list <- do.call(rbind, lapply(all_dag_edges, function(e) {
-    c(e$from, e$to)
+  # Filter out edges with NULL, NA, or empty endpoints (external compounds)
+  valid_edges <- Filter(function(e) {
+    !is.null(e$from) && !is.null(e$to) &&
+    length(e$from) > 0 && length(e$to) > 0 &&
+    !is.na(e$from) && !is.na(e$to) &&
+    nchar(as.character(e$from)) > 0 && nchar(as.character(e$to)) > 0
+  }, all_dag_edges)
+
+  if (length(valid_edges) == 0) {
+    stop("No valid edges found in potato (all edges have NULL endpoints)", call. = FALSE)
+  }
+
+  edge_list <- do.call(rbind, lapply(valid_edges, function(e) {
+    c(as.character(e$from), as.character(e$to))
   }))
 
   # Create graph
