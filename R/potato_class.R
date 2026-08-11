@@ -545,12 +545,20 @@ validate_single_pathway <- function(data, strict) {
   }
 
   # Check for cycles
+  # Note: Only check structural edges (structural != FALSE) to allow metabolic cycles
   if (length(errors) == 0 && !is.null(data$edges) && length(data$edges) > 0) {
     tryCatch({
-      edge_list <- do.call(rbind, lapply(data$edges, function(e) c(e$from, e$to)))
-      g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
-      if (!igraph::is_dag(g)) {
-        errors <- c(errors, "Potato contains cycles (must be DAG)")
+      # Filter to structural edges only (exclude edges with structural: false)
+      structural_edges <- Filter(function(e) {
+        is.null(e$structural) || e$structural != FALSE
+      }, data$edges)
+
+      if (length(structural_edges) > 0) {
+        edge_list <- do.call(rbind, lapply(structural_edges, function(e) c(e$from, e$to)))
+        g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
+        if (!igraph::is_dag(g)) {
+          errors <- c(errors, "Potato contains cycles (must be DAG)")
+        }
       }
     }, error = function(e) {
       errors <- c(errors, sprintf("Graph validation failed: %s", e$message))
@@ -714,12 +722,20 @@ validate_multi_pathway <- function(data, strict) {
         }
 
         # Check for cycles in this pathway
+        # Note: Only check structural edges (structural != FALSE) to allow metabolic cycles
         if (length(errors) == 0) {
           tryCatch({
-            edge_list <- do.call(rbind, lapply(pathway$edges, function(e) c(e$from, e$to)))
-            g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
-            if (!igraph::is_dag(g)) {
-              errors <- c(errors, sprintf("%s: contains cycles (must be DAG)", path_prefix))
+            # Filter to structural edges only (exclude edges with structural: false)
+            structural_edges <- Filter(function(e) {
+              is.null(e$structural) || e$structural != FALSE
+            }, pathway$edges)
+
+            if (length(structural_edges) > 0) {
+              edge_list <- do.call(rbind, lapply(structural_edges, function(e) c(e$from, e$to)))
+              g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)
+              if (!igraph::is_dag(g)) {
+                errors <- c(errors, sprintf("%s: contains cycles (must be DAG)", path_prefix))
+              }
             }
           }, error = function(e) {
             errors <- c(errors, sprintf("%s: graph validation failed: %s", path_prefix, e$message))
