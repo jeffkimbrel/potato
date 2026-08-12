@@ -1,0 +1,75 @@
+{
+  "id": "glycerate_pathway_v2",
+  "name": "Glycerate Pathway (v2 schema)",
+  "source": "KEGG map00630",
+  "schema_version": "v2",
+  "tags": ["metabolism", "glyoxylate", "carbon"],
+  "notes": "Alternative glyoxylate assimilation via tartronate semialdehyde and D-glycerate. Net: 2 Glyoxylate → 2-Phosphoglycerate (feeds glycolysis).",
+
+  "genes": [
+    {
+      "id": "gcl",
+      "name": "tartronate-semialdehyde synthase",
+      "databases": {
+        "kofam": ["K01608"]
+      },
+      "ec": ["4.1.1.47"],
+      "reactions": ["R00013"],
+      "type": "enzyme",
+      "notes": "Condenses 2 glyoxylate to tartronate semialdehyde"
+    },
+    {
+      "id": "glxR",
+      "name": "tartronate-semialdehyde reductase",
+      "databases": {
+        "kofam": ["K00052"]
+      },
+      "ec": ["1.1.1.60"],
+      "reactions": ["R00994", "R04426", "R10052"],
+      "type": "enzyme",
+      "notes": "Reduces tartronate semialdehyde to D-glycerate"
+    },
+    {
+      "id": "glxK",
+      "name": "glycerate 2-kinase",
+      "databases": {
+        "kofam": ["K00865"]
+      },
+      "ec": ["2.7.1.165"],
+      "reactions": ["R08572"],
+      "type": "enzyme",
+      "notes": "Phosphorylates D-glycerate to 2-phosphoglycerate"
+    }
+  ],
+
+  "compounds": [
+    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"},
+    {"id": "C01146", "name": "Tartronate semialdehyde", "kegg_compound": "C01146"},
+    {"id": "C00258", "name": "D-Glycerate", "kegg_compound": "C00258"},
+    {"id": "C00631", "name": "2-Phospho-D-glycerate", "kegg_compound": "C00631"}
+  ],
+
+  "pathways": {
+    "main": {
+      "name": "Glycerate Pathway",
+      "type": "independent",
+      "verified": false,
+      "notes": "Three-step pathway: glyoxylate → tartronate semialdehyde → D-glycerate → 2-phosphoglycerate",
+
+      "edges": [
+        {"from": "C00048", "to": "gcl", "required": true, "marker": true, "reaction": "R00013"},
+        {"from": "gcl", "to": "C01146", "required": true, "marker": true, "reaction": "R00013"},
+        {"from": "C01146", "to": "glxR", "required": true, "marker": true, "reaction": "R10052"},
+        {"from": "glxR", "to": "C00258", "required": true, "marker": true, "reaction": "R10052"},
+        {"from": "C00258", "to": "glxK", "required": true, "marker": false, "reaction": "R08572"},
+        {"from": "glxK", "to": "C00631", "required": true, "marker": false, "reaction": "R08572"}
+      ],
+
+      "scoring": {
+        "min_fraction": 1.0,
+        "marker_mode": "all",
+        "notes": "All 3 enzymes required for functional pathway"
+      }
+    }
+  }
+}

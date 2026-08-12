@@ -1,0 +1,173 @@
+{
+  "id": "ethylmalonyl_coa_v2",
+  "name": "Ethylmalonyl-CoA Pathway (v2 schema)",
+  "source": "KEGG M00373",
+  "schema_version": "v2",
+  "tags": ["metabolism", "carbon", "glyoxylate"],
+  "notes": "V2 schema test: compounds as first-class citizens, step-based edges",
+
+  "genes": [
+    {
+      "id": "atoB",
+      "name": "acetyl-CoA C-acetyltransferase",
+      "databases": {"kofam": ["K00626"]},
+      "ec": ["2.3.1.9"],
+      "reactions": ["R00238"],
+      "type": "enzyme"
+    },
+    {
+      "id": "phbB",
+      "name": "acetoacetyl-CoA reductase",
+      "databases": {"kofam": ["K00023"]},
+      "ec": ["1.1.1.36"],
+      "reactions": ["R01977"],
+      "type": "enzyme"
+    },
+    {
+      "id": "croR",
+      "name": "3-hydroxybutyryl-CoA dehydratase",
+      "databases": {"kofam": ["K17865"]},
+      "ec": ["4.2.1.55"],
+      "reactions": ["R03027"],
+      "type": "enzyme"
+    },
+    {
+      "id": "ccr",
+      "name": "crotonyl-CoA carboxylase/reductase",
+      "databases": {"kofam": ["K14446"]},
+      "ec": ["1.3.1.85"],
+      "reactions": ["R09291"],
+      "type": "enzyme"
+    },
+    {
+      "id": "mcee",
+      "name": "methylmalonyl-CoA/ethylmalonyl-CoA epimerase",
+      "databases": {"kofam": ["K05606"]},
+      "ec": ["5.1.99.1"],
+      "reactions": ["R02765", "R09979"],
+      "type": "enzyme"
+    },
+    {
+      "id": "ecm",
+      "name": "ethylmalonyl-CoA mutase",
+      "databases": {"kofam": ["K14447"]},
+      "ec": ["5.4.99.63"],
+      "reactions": ["R09292"],
+      "type": "enzyme"
+    },
+    {
+      "id": "mcd",
+      "name": "(2S)-methylsuccinyl-CoA dehydrogenase",
+      "databases": {"kofam": ["K14448"]},
+      "ec": ["1.3.8.12"],
+      "reactions": ["R09293"],
+      "type": "enzyme"
+    },
+    {
+      "id": "mch",
+      "name": "2-methylfumaryl-CoA hydratase",
+      "databases": {"kofam": ["K14449"]},
+      "ec": ["4.2.1.148"],
+      "reactions": ["R05076"],
+      "type": "enzyme"
+    },
+    {
+      "id": "mcl",
+      "name": "malyl-CoA lyase",
+      "databases": {"kofam": ["K08691"]},
+      "ec": ["4.1.3.24"],
+      "reactions": ["R00934", "R00473"],
+      "type": "enzyme"
+    },
+    {
+      "id": "mcl2",
+      "name": "(3S)-malyl-CoA thioesterase",
+      "databases": {"kofam": ["K14451"]},
+      "ec": ["3.1.2.30"],
+      "reactions": ["R10612"],
+      "type": "enzyme"
+    },
+    {
+      "id": "pccAB",
+      "name": "propionyl-CoA carboxylase",
+      "databases": {"kofam": ["K01965", "K01966"]},
+      "ec": ["6.4.1.3"],
+      "reactions": ["R01859"],
+      "type": "enzyme"
+    },
+    {
+      "id": "mutAB",
+      "name": "methylmalonyl-CoA mutase",
+      "databases": {"kofam": ["K01847"]},
+      "ec": ["5.4.99.2"],
+      "reactions": ["R00833"],
+      "type": "enzyme"
+    }
+  ],
+
+  "compounds": [
+    {"id": "C00024", "name": "Acetyl-CoA", "kegg_compound": "C00024"},
+    {"id": "C00332", "name": "Acetoacetyl-CoA", "kegg_compound": "C00332"},
+    {"id": "C03561", "name": "(R)-3-Hydroxybutanoyl-CoA", "kegg_compound": "C03561"},
+    {"id": "C00877", "name": "Crotonyl-CoA", "kegg_compound": "C00877"},
+    {"id": "C18026", "name": "(2S)-Ethylmalonyl-CoA", "kegg_compound": "C18026"},
+    {"id": "C20238", "name": "(2R)-Ethylmalonyl-CoA", "kegg_compound": "C20238"},
+    {"id": "C18324", "name": "(2S)-Methylsuccinyl-CoA", "kegg_compound": "C18324"},
+    {"id": "C06028", "name": "2-Methylfumaryl-CoA", "kegg_compound": "C06028"},
+    {"id": "C06027", "name": "L-erythro-3-Methylmalyl-CoA", "kegg_compound": "C06027"},
+    {"id": "C00100", "name": "Propanoyl-CoA", "kegg_compound": "C00100"},
+    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"},
+    {"id": "C04348", "name": "L-Malyl-CoA", "kegg_compound": "C04348"},
+    {"id": "C00149", "name": "(S)-Malate", "kegg_compound": "C00149"},
+    {"id": "C00683", "name": "(S)-Methylmalonyl-CoA", "kegg_compound": "C00683"},
+    {"id": "C01213", "name": "(R)-Methylmalonyl-CoA", "kegg_compound": "C01213"},
+    {"id": "C00091", "name": "Succinyl-CoA", "kegg_compound": "C00091"}
+  ],
+
+  "pathways": {
+    "main": {
+      "name": "Ethylmalonyl-CoA Pathway",
+      "type": "independent",
+      "verified": false,
+      "notes": "Main trunk + three terminal branches",
+
+      "edges": [
+        {"from": "C00024", "to": "atoB", "required": true, "marker": false, "reaction": "R00238"},
+        {"from": "atoB", "to": "C00332", "required": true, "marker": false, "reaction": "R00238"},
+        {"from": "C00332", "to": "phbB", "required": true, "marker": false, "reaction": "R01977"},
+        {"from": "phbB", "to": "C03561", "required": true, "marker": false, "reaction": "R01977"},
+        {"from": "C03561", "to": "croR", "required": true, "marker": false, "reaction": "R03027"},
+        {"from": "croR", "to": "C00877", "required": true, "marker": false, "reaction": "R03027"},
+        {"from": "C00877", "to": "ccr", "required": true, "marker": true, "reaction": "R09291"},
+        {"from": "ccr", "to": "C18026", "required": true, "marker": true, "reaction": "R09291"},
+        {"from": "C18026", "to": "mcee", "required": true, "marker": false, "reaction": "R02765"},
+        {"from": "mcee", "to": "C20238", "required": true, "marker": false, "reaction": "R02765"},
+        {"from": "C20238", "to": "ecm", "required": true, "marker": true, "reaction": "R09292"},
+        {"from": "ecm", "to": "C18324", "required": true, "marker": true, "reaction": "R09292"},
+        {"from": "C18324", "to": "mcd", "required": true, "marker": false, "reaction": "R09293"},
+        {"from": "mcd", "to": "C06028", "required": true, "marker": false, "reaction": "R09293"},
+        {"from": "C06028", "to": "mch", "required": true, "marker": false, "reaction": "R05076"},
+        {"from": "mch", "to": "C06027", "required": true, "marker": false, "reaction": "R05076"},
+        {"from": "C06027", "to": "mcl", "required": false, "marker": true, "reaction": "R00934", "notes": "Cleavage: C06027 -> C00100 + C00048"},
+        {"from": "mcl", "to": "C00100", "required": false, "marker": true, "reaction": "R00934"},
+        {"from": "mcl", "to": "C00048", "required": false, "marker": true, "reaction": "R00934"},
+        {"from": "C00024", "to": "mcl", "required": false, "marker": false, "reaction": "R00473", "notes": "Ligation: C00024 + C00048 -> C04348"},
+        {"from": "C00048", "to": "mcl", "required": false, "marker": false, "reaction": "R00473"},
+        {"from": "mcl", "to": "C04348", "required": false, "marker": false, "reaction": "R00473"},
+        {"from": "C04348", "to": "mcl2", "required": false, "marker": true, "reaction": "R10612"},
+        {"from": "mcl2", "to": "C00149", "required": false, "marker": true, "reaction": "R10612"},
+        {"from": "C00100", "to": "pccAB", "required": false, "marker": false, "reaction": "R01859"},
+        {"from": "pccAB", "to": "C00683", "required": false, "marker": false, "reaction": "R01859"},
+        {"from": "C00683", "to": "mcee", "required": false, "marker": false, "reaction": "R09979"},
+        {"from": "mcee", "to": "C01213", "required": false, "marker": false, "reaction": "R09979"},
+        {"from": "C01213", "to": "mutAB", "required": false, "marker": false, "reaction": "R00833"},
+        {"from": "mutAB", "to": "C00091", "required": false, "marker": false, "reaction": "R00833"}
+      ],
+
+      "scoring": {
+        "min_fraction": 0.7,
+        "marker_mode": "any"
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "id": "glcDEF_transport_v2",
+  "name": "Glycolate Oxidase Pathway (v2 schema)",
+  "source": "KEGG",
+  "schema_version": "v2",
+  "tags": ["metabolism", "glyoxylate", "transport"],
+  "notes": "Glycolate oxidation to glyoxylate via glcDEF complex. Provides glyoxylate substrate for other pathways.",
+
+  "genes": [
+    {
+      "id": "glcD",
+      "name": "glycolate oxidase FAD-binding subunit",
+      "databases": {
+        "kofam": ["K00104"]
+      },
+      "ec": ["1.1.3.15"],
+      "reactions": ["R00475", "R00476"],
+      "type": "enzyme",
+      "notes": "Part of glycolate oxidase complex"
+    },
+    {
+      "id": "glcE",
+      "name": "glycolate oxidase Fe-S subunit",
+      "databases": {
+        "kofam": ["K00103"]
+      },
+      "ec": ["1.1.3.15"],
+      "reactions": ["R03184", "R10053"],
+      "type": "enzyme",
+      "notes": "Iron-sulfur cluster subunit"
+    },
+    {
+      "id": "glcF",
+      "name": "glycolate oxidase FAD-binding subunit",
+      "databases": {
+        "kofam": ["K00102"]
+      },
+      "ec": ["1.1.3.15"],
+      "reactions": ["R00197"],
+      "type": "enzyme",
+      "notes": "FAD-binding subunit"
+    }
+  ],
+
+  "compounds": [
+    {"id": "C00160", "name": "Glycolate", "kegg_compound": "C00160"},
+    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"}
+  ],
+
+  "pathways": {
+    "main": {
+      "name": "Glycolate Oxidase",
+      "type": "independent",
+      "verified": false,
+      "notes": "Multi-subunit enzyme complex oxidizes glycolate to glyoxylate. Main reaction is R00475.",
+
+      "edges": [
+        {"from": "C00160", "to": "glcD", "required": true, "marker": true, "reaction": "R00475"},
+        {"from": "glcD", "to": "C00048", "required": true, "marker": true, "reaction": "R00475"},
+        {"from": "C00160", "to": "glcE", "required": true, "marker": false, "reaction": "R03184"},
+        {"from": "glcE", "to": "C00048", "required": true, "marker": false, "reaction": "R03184"},
+        {"from": "C00160", "to": "glcF", "required": true, "marker": false, "reaction": "R00475"},
+        {"from": "glcF", "to": "C00048", "required": true, "marker": false, "reaction": "R00475"}
+      ],
+
+      "scoring": {
+        "min_fraction": 0.67,
+        "marker_mode": "any",
+        "notes": "At least 2 of 3 subunits for functional complex"
+      }
+    }
+  }
+}

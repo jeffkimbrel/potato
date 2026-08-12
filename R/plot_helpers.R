@@ -4,6 +4,17 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
 
   # Load potato if character path
   if (is.character(potato)) {
+    # Check schema version
+    potato_data <- jsonlite::read_json(potato, simplifyVector = FALSE)
+    if (!is.null(potato_data$schema_version) && potato_data$schema_version == "v2") {
+      cli::cli_abort(c(
+        "V2 schema potatoes are not yet supported by plot_potato_interactive2()",
+        "i" = "Use plot_v2() instead:",
+        " " = "pot <- load_potato_v2('{potato}')",
+        " " = "g <- build_graph_v2(pot)",
+        " " = "plot_v2(g, interactive = TRUE)"
+      ))
+    }
     potato <- load_potato(potato)
   }
 
@@ -51,8 +62,24 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
   }
 
   # Get node detection status
+  # Check if genome_name provided without sack
+  if (!is.null(genome_name) && is.null(sack)) {
+    cli::cli_abort(c(
+      "Cannot display genome {.val {genome_name}} without a sack",
+      "i" = "Provide a {.arg sack} parameter with annotation results"
+    ))
+  }
+
   has_genome <- !is.null(sack) && !is.null(genome_name)
   if (has_genome) {
+    # Validate genome exists in sack
+    available_genomes <- sapply(sack@genomes, function(g) g$short_name)
+    if (!genome_name %in% available_genomes) {
+      cli::cli_abort(c(
+        "Genome {.val {genome_name}} not found in sack",
+        "i" = "Available genomes: {paste(available_genomes, collapse=', ')}"
+      ))
+    }
     node_status <- get_node_status(potato, sack, genome_name)
   } else {
     # Only include enzyme nodes initially - compound nodes will be added below
@@ -205,7 +232,11 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
   for (i in seq_len(nrow(node_status))) {
     if (node_status$is_compound_node[i]) {
       cmp_name <- igraph::V(g)$compound_name[match(node_status$name[i], igraph::V(g)$name)]
+      kegg_id <- igraph::V(g)$kegg_id[match(node_status$name[i], igraph::V(g)$name)]
       hover_texts[i] <- paste0("Compound: ", cmp_name)
+      if (!is.null(kegg_id) && !is.na(kegg_id) && nchar(kegg_id) > 0) {
+        hover_texts[i] <- paste0(hover_texts[i], "<br>KEGG: ", kegg_id)
+      }
     } else {
       ec_clean <- gsub("^\n\\[|\\]$", "", node_status$ec[i])
       type_str <- ifelse(node_status$marker[i], "Marker", ifelse(node_status$required[i], "Required", "Optional"))
