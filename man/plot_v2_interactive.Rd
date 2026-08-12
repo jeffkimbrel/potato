@@ -4,10 +4,12 @@
 \alias{plot_v2_interactive}
 \title{Interactive visNetwork plot of v2 graph}
 \usage{
-plot_v2_interactive(g)
+plot_v2_interactive(g, layout = "fr")
 }
 \arguments{
 \item{g}{Graph from build_graph_v2()}
+
+\item{layout}{Layout algorithm (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"}
 }
 \description{
 Interactive visNetwork plot of v2 graph

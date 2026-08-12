@@ -4,12 +4,14 @@
 \alias{plot_v2}
 \title{Simple plot of v2 graph}
 \usage{
-plot_v2(potato_or_graph, interactive = TRUE)
+plot_v2(potato_or_graph, interactive = TRUE, layout = "fr")
 }
 \arguments{
 \item{potato_or_graph}{Either a potato_v2 object, path to v2 JSON, or igraph from build_graph_v2()}
 
 \item{interactive}{Use interactive visNetwork plot (TRUE) or static ggraph (FALSE)}
+
+\item{layout}{Layout algorithm for static plot (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"}
 }
 \description{
 Simple plot of v2 graph

@@ -1,3 +1,10 @@
+# Shared color palette for v2 plots
+V2_COLORS <- list(
+  gene = "#2196F3",        # Blue for genes
+  compound = "#999999",    # Gray for compounds
+  border = "#1976D2"       # Darker blue for borders
+)
+
 #' Load potato v2 schema
 #' @param path Path to v2 potato JSON
 #' @export
@@ -195,10 +202,12 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
 #' Simple plot of v2 graph
 #' @param potato_or_graph Either a potato_v2 object, path to v2 JSON, or igraph from build_graph_v2()
 #' @param interactive Use interactive visNetwork plot (TRUE) or static ggraph (FALSE)
+#' @param layout Layout algorithm for static plot (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"
 #' @export
-plot_v2 <- function(potato_or_graph, interactive = TRUE) {
+plot_v2 <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
 
   # Build graph if needed
+  potato <- NULL
   if (is.character(potato_or_graph)) {
     # Path to JSON
     potato <- load_potato_v2(potato_or_graph)
@@ -206,6 +215,7 @@ plot_v2 <- function(potato_or_graph, interactive = TRUE) {
   } else if (inherits(potato_or_graph, "potato_v2") ||
              (is.list(potato_or_graph) && !is.null(potato_or_graph$schema_version))) {
     # Potato object
+    potato <- potato_or_graph
     g <- build_graph_v2(potato_or_graph)
   } else {
     # Assume it's already a graph
@@ -213,35 +223,118 @@ plot_v2 <- function(potato_or_graph, interactive = TRUE) {
   }
 
   if (interactive) {
-    plot_v2_interactive(g)
+    plot_v2_interactive(g, layout = layout)
   } else {
     if (!requireNamespace("ggraph", quietly = TRUE)) {
       cli::cli_abort("Package {.pkg ggraph} required")
     }
 
-    # Simple force-directed layout
-    ggraph::ggraph(g, layout = "fr") +
-      ggraph::geom_edge_link(arrow = grid::arrow(length = grid::unit(3, "mm")),
-                            end_cap = ggraph::circle(5, "mm"),
-                            color = "gray50") +
-      ggraph::geom_node_point(ggplot2::aes(color = type), size = 8) +
+    # Get pathway name for title
+    pathway_name <- if (!is.null(potato)) {
+      # Get first pathway name
+      first_pathway_id <- names(potato$pathways)[1]
+      potato$pathways[[first_pathway_id]]$name
+    } else {
+      NULL
+    }
+
+    # Detect additional edges to add
+    gene_nodes <- igraph::V(g)$name[igraph::V(g)$type == "gene"]
+    gene_base_ids <- sub("_R\\d+$", "", gene_nodes)
+
+    # Red dashed edges: split gene nodes (same gene, different reactions)
+    red_edges <- data.frame(from = character(), to = character(), stringsAsFactors = FALSE)
+    for (base_id in unique(gene_base_ids)) {
+      instances <- gene_nodes[gene_base_ids == base_id]
+      if (length(instances) > 1) {
+        for (i in 1:(length(instances) - 1)) {
+          for (j in (i + 1):length(instances)) {
+            red_edges <- rbind(red_edges, data.frame(from = instances[i], to = instances[j], stringsAsFactors = FALSE))
+          }
+        }
+      }
+    }
+
+    # Green dashed edges: alternative routes (OR branches)
+    green_edges <- data.frame(from = character(), to = character(), stringsAsFactors = FALSE)
+    for (gene1 in gene_nodes) {
+      pred1 <- igraph::neighbors(g, gene1, mode = "in")
+      pred1 <- pred1[igraph::V(g)[pred1]$type == "compound"]
+      succ1 <- igraph::neighbors(g, gene1, mode = "out")
+      succ1 <- succ1[igraph::V(g)[succ1]$type == "compound"]
+
+      if (length(pred1) == 0 || length(succ1) == 0) next
+
+      for (gene2 in gene_nodes) {
+        if (gene1 >= gene2) next
+
+        pred2 <- igraph::neighbors(g, gene2, mode = "in")
+        pred2 <- pred2[igraph::V(g)[pred2]$type == "compound"]
+        succ2 <- igraph::neighbors(g, gene2, mode = "out")
+        succ2 <- succ2[igraph::V(g)[succ2]$type == "compound"]
+
+        if (length(pred2) > 0 && length(succ2) > 0 &&
+            setequal(igraph::V(g)[pred1]$name, igraph::V(g)[pred2]$name) &&
+            setequal(igraph::V(g)[succ1]$name, igraph::V(g)[succ2]$name)) {
+          green_edges <- rbind(green_edges, data.frame(from = gene1, to = gene2, stringsAsFactors = FALSE))
+        }
+      }
+    }
+
+    # Add additional edges to graph for plotting
+    g_plot <- g
+    # Always set edge_type attribute for all edges
+    igraph::E(g_plot)$edge_type <- "pathway"
+
+    if (nrow(red_edges) > 0) {
+      g_plot <- g_plot + igraph::edges(as.vector(t(as.matrix(red_edges))), edge_type = "split_gene")
+    }
+    if (nrow(green_edges) > 0) {
+      g_plot <- g_plot + igraph::edges(as.vector(t(as.matrix(green_edges))), edge_type = "alternative")
+    }
+
+    # Apply layout - pathway edges with arrows, dashed edges without
+    p <- ggraph::ggraph(g_plot, layout = layout) +
+      # Pathway edges (solid, with arrows)
+      ggraph::geom_edge_link(ggplot2::aes(filter = edge_type == "pathway"),
+                            color = "gray50",
+                            arrow = grid::arrow(length = grid::unit(3, "mm")),
+                            end_cap = ggraph::circle(5, "mm")) +
+      # Red dashed edges (split genes, no arrows)
+      ggraph::geom_edge_link(ggplot2::aes(filter = edge_type == "split_gene"),
+                            color = "#FF0000",
+                            linetype = "dashed",
+                            arrow = NULL) +
+      # Green dashed edges (alternatives, no arrows)
+      ggraph::geom_edge_link(ggplot2::aes(filter = edge_type == "alternative"),
+                            color = "#00AA00",
+                            linetype = "dashed",
+                            arrow = NULL) +
+      ggraph::geom_node_point(ggplot2::aes(color = type, shape = type), size = 8) +
       ggraph::geom_node_text(ggplot2::aes(label = label), size = 3, repel = TRUE) +
-      ggplot2::scale_color_manual(values = c("gene" = "#2196F3", "compound" = "#666666")) +
-      ggplot2::theme_minimal() +
+      ggplot2::scale_color_manual(values = c("gene" = V2_COLORS$gene, "compound" = V2_COLORS$compound)) +
+      ggplot2::scale_shape_manual(values = c("gene" = 19, "compound" = 17)) +  # 19 = circle, 17 = triangle
+      ggplot2::theme_void() +
       ggplot2::theme(
-        panel.background = ggplot2::element_rect(fill = "white", color = NA),
         plot.background = ggplot2::element_rect(fill = "white", color = NA),
-        panel.grid = ggplot2::element_blank()
-      ) +
-      ggplot2::labs(title = "V2 Potato Graph")
+        legend.position = "none"
+      )
+
+    # Add title if we have pathway name
+    if (!is.null(pathway_name)) {
+      p <- p + ggplot2::labs(title = pathway_name)
+    }
+
+    p
   }
 }
 
 
 #' Interactive visNetwork plot of v2 graph
 #' @param g Graph from build_graph_v2()
+#' @param layout Layout algorithm (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"
 #' @export
-plot_v2_interactive <- function(g) {
+plot_v2_interactive <- function(g, layout = "fr") {
   if (!requireNamespace("visNetwork", quietly = TRUE)) {
     cli::cli_abort(c(
       "Package {.pkg visNetwork} is required for interactive plots",
@@ -325,12 +418,26 @@ plot_v2_interactive <- function(g) {
     }
   }
 
+  # Calculate layout positions
+  layout_func <- switch(layout,
+    "fr" = igraph::layout_with_fr,
+    "kk" = igraph::layout_with_kk,
+    "circle" = igraph::layout_in_circle,
+    "tree" = igraph::layout_as_tree,
+    "grid" = igraph::layout_on_grid,
+    "sugiyama" = function(g) igraph::layout_with_sugiyama(g)$layout,
+    igraph::layout_with_fr  # default to fr
+  )
+  coords <- layout_func(g)
+
   # Prepare nodes dataframe with hover text
   nodes_df <- data.frame(
     id = igraph::V(g)$name,
     label = igraph::V(g)$label,
     title = character(igraph::vcount(g)),
     shape = character(igraph::vcount(g)),
+    x = coords[, 1] * 100,  # Scale for visNetwork
+    y = coords[, 2] * 100,
     stringsAsFactors = FALSE
   )
 
@@ -408,15 +515,15 @@ plot_v2_interactive <- function(g) {
     }
   }
 
-  # Color nodes by type
+  # Color nodes by type (using shared palette)
   nodes_df$color.background <- ifelse(
     igraph::V(g)$type == "compound",
-    "#B3B3B3",  # Gray for compounds
-    "#BBDEFB"   # Light blue for genes
+    V2_COLORS$compound,  # Gray for compounds
+    V2_COLORS$gene       # Blue for genes
   )
-  nodes_df$color.border <- "#2B7CE9"
+  nodes_df$color.border <- V2_COLORS$border
   nodes_df$color.highlight.background <- nodes_df$color.background
-  nodes_df$color.highlight.border <- "#2B7CE9"
+  nodes_df$color.highlight.border <- V2_COLORS$border
 
   # Build visNetwork
   vis <- visNetwork::visNetwork(nodes_df, edges_df, height = "100vh", width = "100%") %>%
