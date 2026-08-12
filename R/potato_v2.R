@@ -333,8 +333,9 @@ plot_v2 <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
 #' Interactive visNetwork plot of v2 graph
 #' @param g Graph from build_graph_v2()
 #' @param layout Layout algorithm (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"
+#' @param height Height of the plot (default: "100vh")
 #' @export
-plot_v2_interactive <- function(g, layout = "fr") {
+plot_v2_interactive <- function(g, layout = "fr", height = "100vh") {
   if (!requireNamespace("visNetwork", quietly = TRUE)) {
     cli::cli_abort(c(
       "Package {.pkg visNetwork} is required for interactive plots",
@@ -526,7 +527,7 @@ plot_v2_interactive <- function(g, layout = "fr") {
   nodes_df$color.highlight.border <- V2_COLORS$border
 
   # Build visNetwork
-  vis <- visNetwork::visNetwork(nodes_df, edges_df, height = "100vh", width = "100%") %>%
+  vis <- visNetwork::visNetwork(nodes_df, edges_df, height = height, width = "100%") %>%
     visNetwork::visNodes(
       font = list(size = 16),
       borderWidth = 2,
