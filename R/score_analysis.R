@@ -35,13 +35,13 @@ summarize_missing_genes <- function(sack, potato_name = NULL, min_genomes = 3) {
 
     # Check each potato
     for (potato in potatoes) {
-      for (node in potato@nodes) {
-        detected <- is_node_detected(node, potato@id, genome_hits)
+      for (gene in potato@genes) {
+        detected <- is_node_detected(gene, potato@id, genome_hits)
 
         missing_data[[length(missing_data) + 1]] <- list(
           potato = potato@name,
-          gene_id = node$id,
-          gene_name = node$name,
+          gene_id = gene$id,
+          gene_name = gene$name,
           genome = genome_name,
           detected = detected
         )

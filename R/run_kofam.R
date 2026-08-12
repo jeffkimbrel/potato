@@ -67,7 +67,7 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     list(
       id = p@id,
       name = p@name,
-      nodes = p@nodes
+      genes = p@genes
     )
   })
 
@@ -204,21 +204,21 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
 #' Convert jakomics kofam hits to tibble (internal)
 #' @noRd
 kofam_hits_to_tibble <- function(parsed_hits, potato_data, potato_hashes) {
-  # Build map of KO -> potato nodes
-  ko_to_nodes <- list()
+  # Build map of KO -> potato genes
+  ko_to_genes <- list()
   for (potato_id in names(potato_data)) {
     potato <- potato_data[[potato_id]]
-    for (node in potato$nodes) {
-      if (!is.null(node$databases$kofam)) {
-        for (ko in node$databases$kofam) {
-          if (is.null(ko_to_nodes[[ko]])) {
-            ko_to_nodes[[ko]] <- list()
+    for (gene in potato$genes) {
+      if (!is.null(gene$databases$kofam)) {
+        for (ko in gene$databases$kofam) {
+          if (is.null(ko_to_genes[[ko]])) {
+            ko_to_genes[[ko]] <- list()
           }
-          ko_to_nodes[[ko]][[length(ko_to_nodes[[ko]]) + 1]] <- list(
+          ko_to_genes[[ko]][[length(ko_to_genes[[ko]]) + 1]] <- list(
             potato = potato_id,
             potato_hash = potato_hashes[[potato_id]],
-            node_id = node$id,
-            step = node$step
+            node_id = gene$id,
+            step = gene$step
           )
         }
       }
@@ -228,11 +228,11 @@ kofam_hits_to_tibble <- function(parsed_hits, potato_data, potato_hashes) {
   rows <- list()
   for (ko in names(parsed_hits)) {
     hits_list <- parsed_hits[[ko]]
-    nodes <- ko_to_nodes[[ko]]
-    if (is.null(nodes)) next
+    genes <- ko_to_genes[[ko]]
+    if (is.null(genes)) next
 
     for (hit in hits_list) {
-      for (node_info in nodes) {
+      for (node_info in genes) {
         rows[[length(rows) + 1]] <- list(
           potato = node_info$potato,
           potato_hash = node_info$potato_hash,

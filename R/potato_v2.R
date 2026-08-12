@@ -5,6 +5,32 @@ V2_COLORS <- list(
   border = "#1976D2"       # Darker blue for borders
 )
 
+#' PotatoV2 S7 class
+#'
+#' Represents a v2 schema potato with genes, compounds, and pathways
+#'
+#' @export
+PotatoV2 <- S7::new_class(
+  "PotatoV2",
+  properties = list(
+    schema_version = S7::class_character,
+    id = S7::class_character,
+    name = S7::class_character,
+    source = S7::class_character,
+    tags = S7::class_character,
+    notes = S7::class_character,
+    genes = S7::class_list,
+    compounds = S7::class_list,
+    pathways = S7::class_list,
+    json_path = S7::class_character
+  ),
+  validator = function(self) {
+    if (self@schema_version != "v2") {
+      "schema_version must be 'v2'"
+    }
+  }
+)
+
 #' Load potato v2 schema
 #' @param path Path to v2 potato JSON
 #' @export
@@ -17,9 +43,21 @@ load_potato_v2 <- function(path) {
   }
 
   cli::cli_alert_success("Loaded v2 potato: {potato_data$name}")
-  cli::cli_alert_info("Genes: {length(potato_data$genes)}, Compounds: {length(potato_data$compounds)}")
+  cli::cli_alert_info("Genes: {length(potato_data$genes %||% list())}, Compounds: {length(potato_data$compounds %||% list())}")
 
-  structure(potato_data, class = "potato_v2")
+  # Create S7 PotatoV2 object
+  PotatoV2(
+    schema_version = potato_data$schema_version,
+    id = potato_data$id,
+    name = potato_data$name,
+    source = potato_data$source %||% "",
+    tags = unlist(potato_data$tags) %||% character(0),
+    notes = potato_data$notes %||% "",
+    genes = potato_data$genes %||% list(),
+    compounds = potato_data$compounds %||% list(),
+    pathways = potato_data$pathways %||% list(),
+    json_path = normalizePath(path, mustWork = FALSE)
+  )
 }
 
 
@@ -30,10 +68,10 @@ load_potato_v2 <- function(path) {
 build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
 
   if (is.null(pathway_id)) {
-    pathway_id <- names(potato_v2$pathways)[1]
+    pathway_id <- names(potato_v2@pathways)[1]
   }
 
-  pathway <- potato_v2$pathways[[pathway_id]]
+  pathway <- potato_v2@pathways[[pathway_id]]
   cli::cli_alert_info("Building graph for pathway: {pathway$name}")
 
   # Get all edges
@@ -165,7 +203,7 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
     if (grepl("^C\\d+", v)) {
       igraph::V(g)[v]$type <- "compound"
       # Find compound info
-      compound <- purrr::keep(potato_v2$compounds, ~ .x$id == v)
+      compound <- purrr::keep(potato_v2@compounds, ~ .x$id == v)
       if (length(compound) > 0) {
         igraph::V(g)[v]$label <- compound[[1]]$name
       }
@@ -174,7 +212,7 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
       # Strip _ctx or _R##### suffix to get original gene ID
       gene_id <- sub("_ctx\\d+$", "", v)
       gene_id <- sub("_R\\d+$", "", gene_id)
-      gene <- purrr::keep(potato_v2$genes, ~ .x$id == gene_id)
+      gene <- purrr::keep(potato_v2@genes, ~ .x$id == gene_id)
       if (length(gene) > 0) {
         igraph::V(g)[v]$label <- gene[[1]]$name
         igraph::V(g)[v]$gene_id <- gene_id

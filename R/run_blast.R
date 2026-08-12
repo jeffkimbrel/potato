@@ -88,7 +88,7 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     list(
       id = p@id,
       name = p@name,
-      nodes = p@nodes
+      genes = p@genes
     )
   })
 
@@ -226,7 +226,7 @@ blast_hits_to_tibble <- function(parsed_hits, potato_data, potato_hashes) {
   subject_to_nodes <- list()
   for (potato_id in names(potato_data)) {
     potato <- potato_data[[potato_id]]
-    for (node in potato$nodes) {
+    for (node in potato$genes) {
       if (!is.null(node$databases$blast)) {
         for (subject_id in node$databases$blast) {
           if (is.null(subject_to_nodes[[subject_id]])) {

@@ -23,17 +23,17 @@ annotate_sack_simple <- function(sack) {
   term_map <- list()
 
   for (potato in sack@potatoes) {
-    for (node in potato@nodes) {
-      if (is.null(node$type) || node$type != "enzyme") next
+    for (gene in potato@genes) {
+      if (is.null(gene$type) || gene$type != "enzyme") next
 
       # Get BLAST terms for this gene
-      if (!is.null(node$databases) && "blast" %in% names(node$databases)) {
-        terms <- node$databases$blast
+      if (!is.null(gene$databases) && "blast" %in% names(gene$databases)) {
+        terms <- gene$databases$blast
         for (term in terms) {
           term_map[[term]] <- list(
             potato_id = potato@id,
-            gene_id = node$id,
-            gene_name = node$name %||% node$id
+            gene_id = gene$id,
+            gene_name = gene$name %||% gene$id
           )
         }
       }

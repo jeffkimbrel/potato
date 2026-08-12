@@ -21,9 +21,16 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
   # Extract all unique HMM profile NAMEs across potatoes
   all_profiles <- character()
   for (potato in potatoes) {
-    for (node in potato@nodes) {
-      if (!is.null(node$databases$hmm)) {
-        all_profiles <- c(all_profiles, node$databases$hmm)
+    # Handle both v1 (nodes) and v2 (genes)
+    genes <- if (S7::S7_inherits(potato, PotatoV2)) {
+      potato@genes
+    } else {
+      potato@genes
+    }
+
+    for (gene in genes) {
+      if (!is.null(gene$databases$hmm)) {
+        all_profiles <- c(all_profiles, gene$databases$hmm)
       }
     }
   }

@@ -13,7 +13,7 @@ print_potato(
 )
 }
 \arguments{
-\item{potato}{Potato S7 object or path to JSON}
+\item{potato}{Potato S7 object, v2 potato object, or path to JSON}
 
 \item{compact}{Show compact one-line view (default: TRUE)}
 

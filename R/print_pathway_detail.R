@@ -104,16 +104,16 @@ print_pathway_detail <- function(potato, pathway = NULL) {
   for (gene_id in names(pathway_nodes)) {
     pathway_node <- pathway_nodes[[gene_id]]
 
-    # Find global node
-    global_node <- NULL
-    for (node in potato@nodes) {
-      if (node$id == gene_id) {
-        global_node <- node
+    # Find global gene
+    global_gene <- NULL
+    for (gene in potato@genes) {
+      if (gene$id == gene_id) {
+        global_gene <- gene
         break
       }
     }
 
-    if (is.null(global_node)) {
+    if (is.null(global_gene)) {
       next
     }
 
@@ -121,19 +121,19 @@ print_pathway_detail <- function(potato, pathway = NULL) {
     step <- pathway_node$step
     if (is.list(step)) step <- paste(unlist(step), collapse = ", ")
 
-    name <- global_node$name %||% ""
+    name <- global_gene$name %||% ""
 
-    ec <- if (!is.null(global_node$ec) && length(global_node$ec) > 0) {
-      paste(global_node$ec, collapse = ", ")
+    ec <- if (!is.null(global_gene$ec) && length(global_gene$ec) > 0) {
+      paste(global_gene$ec, collapse = ", ")
     } else {
       ""
     }
 
     # Detection methods
     detection <- character()
-    if (!is.null(global_node$databases)) {
-      for (db_type in names(global_node$databases)) {
-        terms <- global_node$databases[[db_type]]
+    if (!is.null(global_gene$databases)) {
+      for (db_type in names(global_gene$databases)) {
+        terms <- global_gene$databases[[db_type]]
         if (length(terms) > 0) {
           detection <- c(detection, paste0(db_type, ": ", paste(terms, collapse = ", ")))
         }
@@ -144,7 +144,7 @@ print_pathway_detail <- function(potato, pathway = NULL) {
     required <- if (isTRUE(pathway_node$required)) "Yes" else "No"
     marker <- if (isTRUE(pathway_node$marker)) "Yes" else "No"
 
-    notes <- global_node$notes %||% ""
+    notes <- global_gene$notes %||% ""
 
     gene_rows[[length(gene_rows) + 1]] <- data.frame(
       Step = step,

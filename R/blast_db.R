@@ -20,9 +20,16 @@ create_blast_db <- function(sack, potato_names = NULL) {
   # Extract all unique BLAST subject IDs across potatoes
   all_subjects <- character()
   for (potato in potatoes) {
-    for (node in potato@nodes) {
-      if (!is.null(node$databases$blast)) {
-        all_subjects <- c(all_subjects, node$databases$blast)
+    # Handle both v1 (nodes) and v2 (genes)
+    genes <- if (S7::S7_inherits(potato, PotatoV2)) {
+      potato@genes
+    } else {
+      potato@genes
+    }
+
+    for (gene in genes) {
+      if (!is.null(gene$databases$blast)) {
+        all_subjects <- c(all_subjects, gene$databases$blast)
       }
     }
   }

@@ -91,38 +91,21 @@ score_pathways <- function(sack,
 
     # Score each potato for this genome
     for (potato in sack@potatoes) {
-      # Check if this is a multi-pathway network
-      is_network <- !is.null(potato@edges) &&
-                    is.list(potato@edges) &&
-                    length(names(potato@edges)) > 0 &&
-                    !is.null(potato@edges[[1]]$type)  # Pathway has type field
+      # Score each pathway independently
+      for (pathway_id in names(potato@pathways)) {
+        pathway <- potato@pathways[[pathway_id]]
 
-      if (is_network) {
-        # Score each pathway independently
-        for (pathway_id in names(potato@edges)) {
-          pathway <- potato@edges[[pathway_id]]
-
-          pathway_score <- score_single_pathway_network(
-            potato_id = potato@id,
-            potato_name = potato@name,
-            pathway_id = pathway_id,
-            pathway = pathway,
-            global_nodes = potato@nodes,
-            genome_name = genome_name,
-            genome_hits = genome_hits
-          )
-
-          all_scores[[length(all_scores) + 1]] <- pathway_score
-        }
-      } else {
-        # Single-pathway potato (legacy schema)
-        potato_score <- score_single_pathway(
-          potato = potato,
+        pathway_score <- score_single_pathway_network(
+          potato_id = potato@id,
+          potato_name = potato@name,
+          pathway_id = pathway_id,
+          pathway = pathway,
+          global_nodes = potato@genes,
           genome_name = genome_name,
           genome_hits = genome_hits
         )
 
-        all_scores[[length(all_scores) + 1]] <- potato_score
+        all_scores[[length(all_scores) + 1]] <- pathway_score
       }
     }
   }
@@ -140,12 +123,12 @@ score_pathways <- function(sack,
 #' @noRd
 score_single_pathway <- function(potato, genome_name, genome_hits) {
 
-  # Get all nodes in pathway
-  nodes <- potato@nodes
+  # Get all genes in pathway
+  genes <- potato@genes
 
-  # Group nodes by step (for handling OR branches)
-  steps <- unique(sapply(nodes, function(n) {
-    step_val <- n$step
+  # Group genes by step (for handling OR branches)
+  steps <- unique(sapply(genes, function(g) {
+    step_val <- g$step
     if (is.list(step_val)) {
       # If step is a list, get first element
       step_val <- step_val[[1]]
@@ -159,18 +142,18 @@ score_single_pathway <- function(potato, genome_name, genome_hits) {
   step_completion <- list()
 
   for (step_num in steps) {
-    # Get all nodes at this step (OR alternatives)
-    step_nodes <- Filter(function(n) {
-      s <- if (is.list(n$step)) n$step[[1]] else n$step
+    # Get all genes at this step (OR alternatives)
+    step_genes <- Filter(function(g) {
+      s <- if (is.list(g$step)) g$step[[1]] else g$step
       s == step_num
-    }, nodes)
+    }, genes)
 
-    # Check if ANY node at this step is detected
+    # Check if ANY gene at this step is detected
     step_detected <- FALSE
 
-    for (node in step_nodes) {
-      node_detected <- is_node_detected(node, potato@id, genome_hits)
-      if (node_detected) {
+    for (gene in step_genes) {
+      gene_detected <- is_node_detected(gene, potato@id, genome_hits)
+      if (gene_detected) {
         step_detected <- TRUE
         break  # OR branch satisfied
       }
@@ -192,12 +175,12 @@ score_single_pathway <- function(potato, genome_name, genome_hits) {
 
   # Calculate completion for required steps only
   required_steps <- Filter(function(step_num) {
-    step_nodes <- Filter(function(n) {
-      s <- if (is.list(n$step)) n$step[[1]] else n$step
+    step_genes <- Filter(function(g) {
+      s <- if (is.list(g$step)) g$step[[1]] else g$step
       s == step_num
-    }, nodes)
-    # Step is required if ANY node at that step is required
-    any(sapply(step_nodes, function(n) n$required %||% FALSE))
+    }, genes)
+    # Step is required if ANY gene at that step is required
+    any(sapply(step_genes, function(g) g$required %||% FALSE))
   }, steps)
 
   if (length(required_steps) > 0) {
@@ -237,10 +220,10 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
                                          pathway, global_nodes, genome_name,
                                          genome_hits) {
 
-  # Get pathway-specific nodes
-  pathway_nodes <- pathway$nodes
+  # V2 schema: extract genes from edges
+  pathway_edges <- pathway$edges
 
-  if (is.null(pathway_nodes) || length(pathway_nodes) == 0) {
+  if (is.null(pathway_edges) || length(pathway_edges) == 0) {
     # Empty pathway
     return(list(
       genome = genome_name,
@@ -251,70 +234,102 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
       total_steps_detected = 0,
       total_steps = 0,
       fraction = 0,
-      present = FALSE
+      min_fraction = 0.75,
+      present = FALSE,
+      essential_total_steps_detected = NA_integer_,
+      essential_steps = NA_integer_,
+      essential_fraction = NA_real_,
+      essential_pathway_present = NA
     ))
   }
 
-  # Build merged nodes: global detection methods + pathway-specific attributes
-  merged_nodes <- list()
-  for (node_id in names(pathway_nodes)) {
-    # Find global node
-    global_node <- Find(function(n) n$id == node_id, global_nodes)
+  # Extract unique gene IDs from edges and their attributes
+  gene_info <- list()
+  for (edge in pathway_edges) {
+    from_id <- edge$from
+    to_id <- edge$to
 
-    if (is.null(global_node)) {
-      cli::cli_warn("Pathway '{pathway_id}' references node '{node_id}' not found in global nodes")
-      next
-    }
-
-    # Merge: global databases + pathway-specific step/required/marker
-    merged_node <- global_node
-    merged_node$step <- pathway_nodes[[node_id]]$step
-    merged_node$required <- pathway_nodes[[node_id]]$required
-    merged_node$marker <- pathway_nodes[[node_id]]$marker
-
-    merged_nodes[[length(merged_nodes) + 1]] <- merged_node
-  }
-
-  # Group nodes by step (for handling OR branches)
-  steps <- unique(sapply(merged_nodes, function(n) {
-    step_val <- n$step
-    if (is.list(step_val)) {
-      # If step is a list, get first element
-      step_val <- step_val[[1]]
-    }
-    # Ensure it's numeric
-    as.numeric(step_val)
-  }))
-  steps <- sort(steps)
-
-  # Track which steps are complete
-  step_completion <- list()
-
-  for (step_num in steps) {
-    # Get all nodes at this step (OR alternatives)
-    step_nodes <- Filter(function(n) {
-      s <- if (is.list(n$step)) n$step[[1]] else n$step
-      s == step_num
-    }, merged_nodes)
-
-    # Check if ANY node at this step is detected
-    step_detected <- FALSE
-
-    for (node in step_nodes) {
-      node_detected <- is_node_detected_network(node, potato_id, genome_hits)
-      if (node_detected) {
-        step_detected <- TRUE
-        break  # OR branch satisfied
+    # Check if from/to are genes (not compounds starting with C)
+    if (!is.null(from_id) && !grepl("^C\\d+", from_id)) {
+      if (is.null(gene_info[[from_id]])) {
+        gene_info[[from_id]] <- list(
+          required = FALSE,
+          marker = FALSE
+        )
+      }
+      if (!is.null(edge$required) && edge$required) {
+        gene_info[[from_id]]$required <- TRUE
+      }
+      if (!is.null(edge$marker) && edge$marker) {
+        gene_info[[from_id]]$marker <- TRUE
       }
     }
 
-    step_completion[[as.character(step_num)]] <- step_detected
+    if (!is.null(to_id) && !grepl("^C\\d+", to_id)) {
+      if (is.null(gene_info[[to_id]])) {
+        gene_info[[to_id]] <- list(
+          required = FALSE,
+          marker = FALSE
+        )
+      }
+      if (!is.null(edge$required) && edge$required) {
+        gene_info[[to_id]]$required <- TRUE
+      }
+      if (!is.null(edge$marker) && edge$marker) {
+        gene_info[[to_id]]$marker <- TRUE
+      }
+    }
   }
 
-  # Calculate completion (all steps)
-  total_steps_detected <- sum(unlist(step_completion))
-  total_steps <- length(steps)
-  fraction <- total_steps_detected / total_steps
+  if (length(gene_info) == 0) {
+    # No genes in pathway
+    return(list(
+      genome = genome_name,
+      potato = potato_id,
+      potato_name = potato_name,
+      pathway = pathway_id,
+      pathway_name = pathway$name,
+      total_steps_detected = 0,
+      total_steps = 0,
+      fraction = 0,
+      min_fraction = 0.75,
+      present = FALSE,
+      essential_total_steps_detected = NA_integer_,
+      essential_steps = NA_integer_,
+      essential_fraction = NA_real_,
+      essential_pathway_present = NA
+    ))
+  }
+
+  # Build merged genes: global detection methods + pathway-specific attributes
+  merged_genes <- list()
+  for (gene_id in names(gene_info)) {
+    # Find global gene
+    global_gene <- Find(function(g) g$id == gene_id, global_nodes)
+
+    if (is.null(global_gene)) {
+      cli::cli_warn("Pathway '{pathway_id}' references gene '{gene_id}' not found in global genes")
+      next
+    }
+
+    # Merge: global databases + pathway-specific required/marker
+    merged_gene <- global_gene
+    merged_gene$required <- gene_info[[gene_id]]$required
+    merged_gene$marker <- gene_info[[gene_id]]$marker
+
+    merged_genes[[length(merged_genes) + 1]] <- merged_gene
+  }
+
+  # V2: no steps, just count genes detected
+  # Check detection for each gene
+  genes_detected <- sapply(merged_genes, function(gene) {
+    is_node_detected_network(gene, potato_id, genome_hits)
+  })
+
+  # Calculate completion (all genes)
+  total_steps_detected <- sum(genes_detected)
+  total_steps <- length(merged_genes)
+  fraction <- if (total_steps > 0) total_steps_detected / total_steps else 0
 
   # Determine presence based on min_fraction threshold
   min_fraction <- pathway$scoring$min_fraction
@@ -322,23 +337,17 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
 
   present <- fraction >= min_fraction
 
-  # Calculate completion for required steps only
-  required_steps <- Filter(function(step_num) {
-    step_nodes <- Filter(function(n) {
-      s <- if (is.list(n$step)) n$step[[1]] else n$step
-      s == step_num
-    }, merged_nodes)
-    # Step is required if ANY node at that step is required
-    any(sapply(step_nodes, function(n) n$required %||% FALSE))
-  }, steps)
+  # Calculate completion for required genes only
+  required_genes_mask <- sapply(merged_genes, function(g) g$required %||% FALSE)
+  required_genes <- merged_genes[required_genes_mask]
 
-  if (length(required_steps) > 0) {
-    essential_total_steps_detected <- sum(unlist(step_completion[as.character(required_steps)]))
-    essential_steps <- length(required_steps)
+  if (length(required_genes) > 0) {
+    essential_total_steps_detected <- sum(genes_detected[required_genes_mask])
+    essential_steps <- length(required_genes)
     essential_fraction <- essential_total_steps_detected / essential_steps
     essential_pathway_present <- essential_fraction >= min_fraction
   } else {
-    # No required steps defined
+    # No required genes defined
     essential_total_steps_detected <- NA_integer_
     essential_steps <- NA_integer_
     essential_fraction <- NA_real_
@@ -365,12 +374,12 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
 }
 
 
-#' Check if a node is detected in genome hits for network pathways (internal)
+#' Check if a gene is detected in genome hits for network pathways (internal)
 #' @noRd
-is_node_detected_network <- function(node, potato_id, genome_hits) {
+is_node_detected_network <- function(gene, potato_id, genome_hits) {
 
   # Check each database type
-  databases <- node$databases
+  databases <- gene$databases
 
   if (is.null(databases)) return(FALSE)
 
@@ -381,69 +390,69 @@ is_node_detected_network <- function(node, potato_id, genome_hits) {
   if (!is.null(databases$kofam) && !is.null(genome_hits$kofam)) {
     kofam_hits <- genome_hits$kofam
     # Match by potato_id and node_id
-    node_hits <- kofam_hits[
+    gene_hits <- kofam_hits[
       kofam_hits$potato == potato_id &
-      kofam_hits$node_id == node$id, ]
-    if (nrow(node_hits) > 0) return(TRUE)
+      kofam_hits$node_id == gene$id, ]
+    if (nrow(gene_hits) > 0) return(TRUE)
   }
 
   # Check blast
   if (!is.null(databases$blast) && !is.null(genome_hits$blast)) {
     blast_hits <- genome_hits$blast
-    node_hits <- blast_hits[
+    gene_hits <- blast_hits[
       blast_hits$potato == potato_id &
-      blast_hits$node_id == node$id, ]
-    if (nrow(node_hits) > 0) return(TRUE)
+      blast_hits$node_id == gene$id, ]
+    if (nrow(gene_hits) > 0) return(TRUE)
   }
 
   # Check hmm
   if (!is.null(databases$hmm) && !is.null(genome_hits$hmm)) {
     hmm_hits <- genome_hits$hmm
-    node_hits <- hmm_hits[
+    gene_hits <- hmm_hits[
       hmm_hits$potato == potato_id &
-      hmm_hits$node_id == node$id, ]
-    if (nrow(node_hits) > 0) return(TRUE)
+      hmm_hits$node_id == gene$id, ]
+    if (nrow(gene_hits) > 0) return(TRUE)
   }
 
   return(FALSE)
 }
 
 
-#' Check if a node is detected in genome hits (internal)
+#' Check if a gene is detected in genome hits (internal)
 #' @noRd
-is_node_detected <- function(node, potato_id, genome_hits) {
+is_node_detected <- function(gene, potato_id, genome_hits) {
 
   # Check each database type
-  databases <- node$databases
+  databases <- gene$databases
 
   if (is.null(databases)) return(FALSE)
 
   # Check kofam
   if (!is.null(databases$kofam) && !is.null(genome_hits$kofam)) {
     kofam_hits <- genome_hits$kofam
-    # Check if this node appears in filtered kofam hits
-    node_hits <- kofam_hits[
+    # Check if this gene appears in filtered kofam hits
+    gene_hits <- kofam_hits[
       kofam_hits$potato == potato_id &
-      kofam_hits$node_id == node$id, ]
-    if (nrow(node_hits) > 0) return(TRUE)
+      kofam_hits$node_id == gene$id, ]
+    if (nrow(gene_hits) > 0) return(TRUE)
   }
 
   # Check blast
   if (!is.null(databases$blast) && !is.null(genome_hits$blast)) {
     blast_hits <- genome_hits$blast
-    node_hits <- blast_hits[
+    gene_hits <- blast_hits[
       blast_hits$potato == potato_id &
-      blast_hits$node_id == node$id, ]
-    if (nrow(node_hits) > 0) return(TRUE)
+      blast_hits$node_id == gene$id, ]
+    if (nrow(gene_hits) > 0) return(TRUE)
   }
 
   # Check hmm
   if (!is.null(databases$hmm) && !is.null(genome_hits$hmm)) {
     hmm_hits <- genome_hits$hmm
-    node_hits <- hmm_hits[
+    gene_hits <- hmm_hits[
       hmm_hits$potato == potato_id &
-      hmm_hits$node_id == node$id, ]
-    if (nrow(node_hits) > 0) return(TRUE)
+      hmm_hits$node_id == gene$id, ]
+    if (nrow(gene_hits) > 0) return(TRUE)
   }
 
   return(FALSE)

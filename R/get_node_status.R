@@ -67,8 +67,8 @@ get_node_status <- function(potato, sack, genome_name) {
     # For single-pathway, extract gene ID from node_name (remove _step suffix)
     node_id <- if (is_network) node_name else sub("_\\d+$", "", node_name)
 
-    # Find corresponding node in potato
-    node <- purrr::keep(potato@nodes, ~ .x$id == node_id)
+    # Find corresponding gene in potato
+    node <- purrr::keep(potato@genes, ~ .x$id == node_id)
 
     if (length(node) == 0) {
       return(tibble::tibble(

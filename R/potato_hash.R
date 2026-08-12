@@ -12,27 +12,43 @@
 #' @return Character string with MD5 hash
 #' @keywords internal
 compute_potato_hash <- function(potato) {
-  # Strip cosmetic fields from nodes before hashing
-  nodes_functional <- lapply(potato@nodes, function(node) {
-    # Remove coordinate fields and notes
-    node[!names(node) %in% c("x", "y", "x_compounds", "y_compounds", "notes")]
-  })
+  # Handle both v1 (nodes) and v2 (genes)
+  if (S7::S7_inherits(potato, PotatoV2)) {
+    # V2 potato
+    genes_functional <- lapply(potato@genes, function(gene) {
+      # Remove coordinate fields and notes
+      gene[!names(gene) %in% c("x", "y", "x_compounds", "y_compounds", "notes")]
+    })
 
-  # Hash only functional fields that affect annotation
-  # Exclude: json_path (file metadata), graph (cached derived data),
-  #          notes (documentation), and all coordinate fields
-  hash_data <- list(
-    id = potato@id,
-    name = potato@name,
-    nodes = nodes_functional,  # Coordinates removed
-    edges = potato@edges,
-    tags = potato@tags,
-    source = potato@source,
-    # notes excluded - documentation only, doesn't affect detection
-    scoring = potato@scoring,
-    input = potato@input,
-    output = potato@output
-  )
+    hash_data <- list(
+      schema_version = potato@schema_version,
+      id = potato@id,
+      name = potato@name,
+      genes = genes_functional,
+      compounds = potato@compounds,
+      pathways = potato@pathways,
+      tags = potato@tags,
+      source = potato@source
+    )
+  } else {
+    # V1 potato
+    nodes_functional <- lapply(potato@genes, function(node) {
+      # Remove coordinate fields and notes
+      node[!names(node) %in% c("x", "y", "x_compounds", "y_compounds", "notes")]
+    })
+
+    hash_data <- list(
+      id = potato@id,
+      name = potato@name,
+      nodes = nodes_functional,
+      edges = potato@edges,
+      tags = potato@tags,
+      source = potato@source,
+      scoring = potato@scoring,
+      input = potato@input,
+      output = potato@output
+    )
+  }
 
   digest::digest(hash_data, algo = "md5")
 }

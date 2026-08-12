@@ -76,7 +76,7 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     list(
       id = p@id,
       name = p@name,
-      nodes = p@nodes
+      genes = p@genes
     )
   })
 
@@ -209,7 +209,7 @@ hmm_hits_to_tibble <- function(parsed_hits, potato_data, potato_hashes, tc_value
   profile_to_nodes <- list()
   for (potato_id in names(potato_data)) {
     potato <- potato_data[[potato_id]]
-    for (node in potato$nodes) {
+    for (node in potato$genes) {
       if (!is.null(node$databases$hmm)) {
         for (profile_name in node$databases$hmm) {
           if (is.null(profile_to_nodes[[profile_name]])) {

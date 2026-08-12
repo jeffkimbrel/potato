@@ -139,20 +139,20 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     title <- paste0(potato@name, " - ", pathway_info$name %||% pathway)
 
     # Build rows
-    rows <- lapply(names(pathway_nodes), function(node_id) {
-      global_node <- Find(function(n) n$id == node_id, potato@nodes)
-      pathway_node <- pathway_nodes[[node_id]]
+    rows <- lapply(names(pathway_nodes), function(gene_id) {
+      global_gene <- Find(function(g) g$id == gene_id, potato@genes)
+      pathway_node <- pathway_nodes[[gene_id]]
 
       # Format databases
-      dbs <- sapply(names(global_node$databases), function(db) {
-        terms <- paste(global_node$databases[[db]], collapse = ", ")
+      dbs <- sapply(names(global_gene$databases), function(db) {
+        terms <- paste(global_gene$databases[[db]], collapse = ", ")
         paste0(db, ": ", terms)
       })
       db_str <- paste(dbs, collapse = "<br>")
 
       # Get reactions used in pathway for this gene
       pathway_reactions <- unique(sapply(pathway_info$edges, function(e) {
-        if ((e$from == node_id || e$to == node_id) && !is.null(e$reaction)) {
+        if ((e$from == gene_id || e$to == gene_id) && !is.null(e$reaction)) {
           e$reaction
         } else {
           NA
@@ -161,8 +161,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
 
       # Format reactions with color coding
-      reactions_formatted <- if (length(global_node$reactions) > 0) {
-        sapply(global_node$reactions, function(rxn) {
+      reactions_formatted <- if (length(global_gene$reactions) > 0) {
+        sapply(global_gene$reactions, function(rxn) {
           if (rxn %in% pathway_reactions) {
             rxn
           } else {
@@ -174,15 +174,15 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       }
 
       list(
-        id = node_id,
+        id = gene_id,
         step = pathway_node$step,
         required = pathway_node$required,
         marker = pathway_node$marker,
-        name = global_node$name,
-        ec = paste(global_node$ec, collapse = ", "),
+        name = global_gene$name,
+        ec = paste(global_gene$ec, collapse = ", "),
         reactions = paste(reactions_formatted, collapse = ", "),
         databases = db_str,
-        notes = global_node$notes %||% ""
+        notes = global_gene$notes %||% ""
       )
     })
 
@@ -190,17 +190,17 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     # Single-pathway potato
     title <- potato@name
 
-    rows <- lapply(potato@nodes, function(node) {
+    rows <- lapply(potato@genes, function(gene) {
       # Format databases
-      dbs <- sapply(names(node$databases), function(db) {
-        terms <- paste(node$databases[[db]], collapse = ", ")
+      dbs <- sapply(names(gene$databases), function(db) {
+        terms <- paste(gene$databases[[db]], collapse = ", ")
         paste0(db, ": ", terms)
       })
       db_str <- paste(dbs, collapse = "<br>")
 
       # Get reactions used in pathway for this gene
       pathway_reactions <- unique(sapply(potato@edges, function(e) {
-        if ((e$from == node$id || e$to == node$id) && !is.null(e$reaction)) {
+        if ((e$from == gene$id || e$to == gene$id) && !is.null(e$reaction)) {
           e$reaction
         } else {
           NA
@@ -209,8 +209,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
 
       # Format reactions with color coding
-      reactions_formatted <- if (length(node$reactions) > 0) {
-        sapply(node$reactions, function(rxn) {
+      reactions_formatted <- if (length(gene$reactions) > 0) {
+        sapply(gene$reactions, function(rxn) {
           if (rxn %in% pathway_reactions) {
             rxn
           } else {
@@ -222,15 +222,15 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       }
 
       list(
-        id = node$id,
-        step = node$step,
-        required = node$required %||% TRUE,
-        marker = node$marker %||% FALSE,
-        name = node$name,
-        ec = paste(node$ec, collapse = ", "),
+        id = gene$id,
+        step = gene$step,
+        required = gene$required %||% TRUE,
+        marker = gene$marker %||% FALSE,
+        name = gene$name,
+        ec = paste(gene$ec, collapse = ", "),
         reactions = paste(reactions_formatted, collapse = ", "),
         databases = db_str,
-        notes = node$notes %||% ""
+        notes = gene$notes %||% ""
       )
     })
   }

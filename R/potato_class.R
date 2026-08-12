@@ -4,12 +4,12 @@
 #'
 #' @param id Character. Unique identifier for the potato
 #' @param name Character. Human-readable name
-#' @param nodes List. Nodes (genes/enzymes) in the pathway. Each node can have:
+#' @param genes List. Genes (enzymes) in the pathway. Each gene can have:
 #'   - `marker`: Logical. If TRUE, this gene is a diagnostic marker for the pathway
 #'   - `required`: Logical. If TRUE, pathway cannot be complete without this gene
 #'   - `type`: Character. "enzyme", "compound", or "transporter"
 #'   - `databases`: List. Detection methods by database type (e.g., kofam, blast, hmm)
-#' @param edges List. Edges connecting nodes
+#' @param edges List. Edges connecting genes or pathways object for multi-pathway networks
 #' @param tags Character vector. Tags for organizing potatoes
 #' @param source Character. Source/origin of the pathway definition
 #' @param notes Character. Additional notes about the pathway
@@ -25,7 +25,7 @@ Potato <- S7::new_class(
   properties = list(
     id = S7::class_character,
     name = S7::class_character,
-    nodes = S7::class_list,
+    genes = S7::class_list,
     edges = S7::class_list,
     tags = S7::class_character,
     source = S7::class_character,
@@ -43,8 +43,8 @@ Potato <- S7::new_class(
       "Potato must have an id"
     } else if (nchar(self@name) == 0) {
       "Potato must have a name"
-    } else if (length(self@nodes) == 0) {
-      "Potato must have at least one node"
+    } else if (length(self@genes) == 0) {
+      "Potato must have at least one gene"
     }
   }
 )
@@ -82,17 +82,17 @@ load_potato <- function(path) {
   }
 
   # Load multi-pathway network
-  nodes <- if (is.null(data$nodes)) list() else data$nodes
+  # JSON uses "nodes" but we store as "genes" in S7 object
+  genes <- if (is.null(data$nodes)) list() else data$nodes
   tags <- if (is.null(data$tags)) character(0) else unlist(data$tags)
 
-  # Store pathways in edges slot (temporary until Potato class updated)
-  # This maintains compatibility with existing S7 class structure
+  # Store pathways in edges slot for multi-pathway networks
   edges <- if (is.null(data$pathways)) list() else data$pathways
 
   Potato(
     id = data$id,
     name = data$name,
-    nodes = nodes,
+    genes = genes,
     edges = edges,  # Contains pathways for network potatoes
     tags = tags,
     source = if (is.null(data$source)) "" else data$source,
@@ -126,7 +126,7 @@ load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
 
   potatoes <- lapply(json_files, function(filepath) {
     tryCatch({
-      # Read JSON to check active flag before loading
+      # Read JSON to check schema version and active flag
       data <- jsonlite::read_json(filepath, simplifyVector = FALSE)
 
       # Skip inactive potatoes unless requested
@@ -134,14 +134,22 @@ load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
         return(NULL)
       }
 
-      # Skip single-pathway potatoes that aren't marked inactive
+      # Check if v2 schema
+      is_v2 <- !is.null(data$schema_version) && data$schema_version == "v2"
+
+      if (is_v2) {
+        # Load v2 potato
+        return(load_potato_v2(filepath))
+      }
+
+      # For v1, skip single-pathway potatoes that aren't marked inactive
       is_network <- !is.null(data$pathways) && is.list(data$pathways)
       if (!is_network && (is.null(data$active) || data$active == TRUE)) {
         warning("Skipping ", basename(filepath), ": single-pathway schema not supported (should be marked active: false)", call. = FALSE)
         return(NULL)
       }
 
-      # Load the potato
+      # Load v1 potato
       load_potato(filepath)
     }, error = function(e) {
       warning("Failed to load ", basename(filepath), ": ", e$message, call. = FALSE)
@@ -157,7 +165,7 @@ load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
     return(list())
   }
 
-  # Name by ID
+  # Name by ID (handle both v1 Potato and v2 PotatoV2 S7 objects)
   names(potatoes) <- sapply(potatoes, function(p) p@id)
 
   # Filter by tags if specified
@@ -195,7 +203,7 @@ get_enzyme_nodes <- function(potato) {
   # Filter nodes that are enzymes
   enzyme_nodes <- Filter(function(node) {
     !is.null(node$type) && node$type == "enzyme"
-  }, potato@nodes)
+  }, potato@genes)
 
   enzyme_nodes
 }
@@ -237,7 +245,7 @@ get_marker_genes <- function(potato) {
   # Filter nodes that are marked as markers
   marker_nodes <- Filter(function(node) {
     !is.null(node$marker) && node$marker == TRUE
-  }, potato@nodes)
+  }, potato@genes)
 
   marker_nodes
 }
@@ -353,7 +361,7 @@ build_potato_graph <- function(potato) {
     if (length(potato@edges) == 0) {
       # Graph with just nodes, no edges
       # Use the 'nodes' field which has id_step format, not just 'id'
-      node_names <- unlist(sapply(potato@nodes, function(n) n$nodes))
+      node_names <- unlist(sapply(potato@genes, function(n) n$nodes))
       g <- igraph::make_empty_graph(n = length(node_names), directed = TRUE)
       igraph::V(g)$name <- node_names
       return(g)
@@ -391,10 +399,11 @@ validate_potato <- function(potato, strict = FALSE) {
     if (is_s7_potato) {
       # Extract data from S7 object
       # NOTE: For multi-pathway networks, edges slot contains pathways
+      # Convert back to JSON format (uses "nodes" in JSON, "genes" in S7)
       data <- list(
         id = potato@id,
         name = potato@name,
-        nodes = potato@nodes,
+        nodes = potato@genes,  # JSON uses "nodes" field
         tags = potato@tags,
         source = potato@source,
         scoring = potato@scoring
@@ -886,7 +895,7 @@ print_validation <- function(validation_result) {
 S7::method(print, Potato) <- function(x, ...) {
   cat("<Potato:", x@id, ">\n")
   cat("  Name:", x@name, "\n")
-  cat("  Nodes:", length(x@nodes), "\n")
+  cat("  Genes:", length(x@genes), "\n")
   cat("  Edges:", length(x@edges), "\n")
   if (length(x@tags) > 0) {
     cat("  Tags:", paste(x@tags, collapse = ", "), "\n")
@@ -903,7 +912,7 @@ S7::method(print, Potato) <- function(x, ...) {
 S7::method(summary, Potato) <- function(object, ...) {
   cat("Potato:", object@name, "\n")
   cat("  ID:", object@id, "\n")
-  cat("  Nodes:", length(object@nodes), "\n")
+  cat("  Genes:", length(object@genes), "\n")
   cat("  Edges:", length(object@edges), "\n")
 
   if (length(object@tags) > 0) {
@@ -914,12 +923,12 @@ S7::method(summary, Potato) <- function(object, ...) {
     cat("  Source:", object@source, "\n")
   }
 
-  # Show enzyme nodes
-  enzyme_nodes <- get_enzyme_nodes(object)
-  if (length(enzyme_nodes) > 0) {
-    cat("\n  Enzyme nodes:\n")
-    for (node in enzyme_nodes) {
-      cat("    -", node$id, ":", node$name, "\n")
+  # Show enzyme genes
+  enzyme_genes <- get_enzyme_nodes(object)
+  if (length(enzyme_genes) > 0) {
+    cat("\n  Enzyme genes:\n")
+    for (gene in enzyme_genes) {
+      cat("    -", gene$id, ":", gene$name, "\n")
     }
   }
 

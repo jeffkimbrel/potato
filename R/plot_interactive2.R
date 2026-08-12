@@ -73,10 +73,10 @@ build_visnetwork_with_gene_connectors <- function(potato, g, node_coords, node_s
       gene_id <- enzyme_nodes$gene_id[i]
 
       # Get KO IDs
-      node_obj <- purrr::keep(potato@nodes, ~ .x$id == gene_id)
+      gene_obj <- purrr::keep(potato@genes, ~ .x$id == gene_id)
       ko_ids <- character()
-      if (length(node_obj) > 0 && !is.null(node_obj[[1]]$databases$kofam)) {
-        ko_ids <- node_obj[[1]]$databases$kofam
+      if (length(gene_obj) > 0 && !is.null(gene_obj[[1]]$databases$kofam)) {
+        ko_ids <- gene_obj[[1]]$databases$kofam
       }
 
       # Get step number from pathway

@@ -49,7 +49,7 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
 
     # Get unique node IDs across all selected pathways
     all_node_ids <- unique(all_node_ids)
-    potato_filtered@nodes <- Filter(function(n) n$id %in% all_node_ids, potato@nodes)
+    potato_filtered@genes <- Filter(function(n) n$id %in% all_node_ids, potato@genes)
 
     potato <- potato_filtered
   }
@@ -139,13 +139,13 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
                                    sub("_\\d+$", "", node_status$name))
   }
 
-  # Get EC numbers, required, marker from potato nodes
+  # Get EC numbers, required, marker from potato genes
   node_status$ec <- purrr::map_chr(seq_len(nrow(node_status)), function(i) {
     if (node_status$is_compound_node[i]) return("")
     id <- node_status$gene_id[i]
-    node <- purrr::keep(potato@nodes, ~ .x$id == id)
-    if (length(node) > 0 && !is.null(node[[1]]$ec)) {
-      ec_nums <- node[[1]]$ec
+    gene <- purrr::keep(potato@genes, ~ .x$id == id)
+    if (length(gene) > 0 && !is.null(gene[[1]]$ec)) {
+      ec_nums <- gene[[1]]$ec
       if (length(ec_nums) > 0) {
         return(paste0("\n[", ec_nums[1], "]"))
       }
@@ -172,9 +172,9 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
       }
       return(FALSE)
     } else {
-      # Single-pathway potato (legacy)
-      node <- purrr::keep(potato@nodes, ~ .x$id == id)
-      if (length(node) > 0) return(node[[1]]$required %||% FALSE)
+      # Single-pathway potato
+      gene <- purrr::keep(potato@genes, ~ .x$id == id)
+      if (length(gene) > 0) return(gene[[1]]$required %||% FALSE)
       return(FALSE)
     }
   })
@@ -197,9 +197,9 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
       }
       return(FALSE)
     } else {
-      # Single-pathway potato (legacy)
-      node <- purrr::keep(potato@nodes, ~ .x$id == id)
-      if (length(node) > 0) return(node[[1]]$marker %||% FALSE)
+      # Single-pathway potato
+      gene <- purrr::keep(potato@genes, ~ .x$id == id)
+      if (length(gene) > 0) return(gene[[1]]$marker %||% FALSE)
       return(FALSE)
     }
   })
@@ -243,10 +243,10 @@ prepare_potato_for_plotting <- function(potato, sack, genome_name, show_compound
 
       # Get databases info
       id <- node_status$gene_id[i]
-      node <- purrr::keep(potato@nodes, ~ .x$id == id)
+      gene <- purrr::keep(potato@genes, ~ .x$id == id)
       databases_str <- ""
-      if (length(node) > 0 && !is.null(node[[1]]$databases)) {
-        dbs <- node[[1]]$databases
+      if (length(gene) > 0 && !is.null(gene[[1]]$databases)) {
+        dbs <- gene[[1]]$databases
         db_lines <- character()
         for (db_name in names(dbs)) {
           terms <- paste(dbs[[db_name]], collapse = ", ")
@@ -326,18 +326,18 @@ calculate_node_layout <- function(potato, g, is_multi_pathway, show_compounds, l
     y_field <- if (show_compounds) "y_compounds" else "y"
 
     node_coords_list <- list()
-    for (node in potato@nodes) {
-      x_val <- node[[x_field]]
-      y_val <- node[[y_field]]
+    for (gene in potato@genes) {
+      x_val <- gene[[x_field]]
+      y_val <- gene[[y_field]]
 
       # Fall back to regular x,y if compound-specific coords don't exist
       if (show_compounds && (is.null(x_val) || is.null(y_val))) {
-        x_val <- node$x
-        y_val <- node$y
+        x_val <- gene$x
+        y_val <- gene$y
       }
 
       if (!is.null(x_val) && !is.null(y_val)) {
-        node_coords_list[[node$id]] <- c(x_val, y_val)
+        node_coords_list[[gene$id]] <- c(x_val, y_val)
       }
     }
 

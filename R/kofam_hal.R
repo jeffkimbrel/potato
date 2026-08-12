@@ -17,9 +17,9 @@ create_kofam_hal <- function(sack, potato_names = NULL) {
   # Extract all unique KO IDs across potatoes
   all_kos <- character()
   for (potato in potatoes) {
-    for (node in potato@nodes) {
-      if (!is.null(node$databases$kofam)) {
-        all_kos <- c(all_kos, node$databases$kofam)
+    for (gene in potato@genes) {
+      if (!is.null(gene$databases$kofam)) {
+        all_kos <- c(all_kos, gene$databases$kofam)
       }
     }
   }

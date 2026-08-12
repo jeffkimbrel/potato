@@ -7,7 +7,7 @@
 Potato(
   id = character(0),
   name = character(0),
-  nodes = list(),
+  genes = list(),
   edges = list(),
   tags = character(0),
   source = character(0),
@@ -25,7 +25,7 @@ Potato(
 
 \item{name}{Character. Human-readable name}
 
-\item{nodes}{List. Nodes (genes/enzymes) in the pathway. Each node can have:
+\item{genes}{List. Genes (enzymes) in the pathway. Each gene can have:
 \itemize{
 \item \code{marker}: Logical. If TRUE, this gene is a diagnostic marker for the pathway
 \item \code{required}: Logical. If TRUE, pathway cannot be complete without this gene
@@ -33,7 +33,7 @@ Potato(
 \item \code{databases}: List. Detection methods by database type (e.g., kofam, blast, hmm)
 }}
 
-\item{edges}{List. Edges connecting nodes}
+\item{edges}{List. Edges connecting genes or pathways object for multi-pathway networks}
 
 \item{tags}{Character vector. Tags for organizing potatoes}
 
