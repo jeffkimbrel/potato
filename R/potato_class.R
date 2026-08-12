@@ -275,6 +275,14 @@ build_potato_graph <- function(potato) {
         from_id <- edge$from
         to_id <- edge$to
 
+        # Skip edges with NULL endpoints (external compounds)
+        # Note: jsonlite may read null as empty list
+        from_is_null <- is.null(from_id) || (is.list(from_id) && length(from_id) == 0)
+        to_is_null <- is.null(to_id) || (is.list(to_id) && length(to_id) == 0)
+        if (from_is_null || to_is_null) {
+          next
+        }
+
         edge_key <- paste0(from_id, "|", to_id)
 
         # Add this pathway to the edge's pathway list
@@ -312,7 +320,7 @@ build_potato_graph <- function(potato) {
 
     # Build edge list from unique edges
     edge_list <- do.call(rbind, lapply(edge_pathways, function(e) {
-      c(e$from, e$to)
+      c(as.character(e$from), as.character(e$to))
     }))
 
     g <- igraph::graph_from_edgelist(edge_list, directed = TRUE)

@@ -292,6 +292,17 @@ build_bipartite_graph <- function(potato) {
   })
   igraph::V(g)$compound_name <- compound_names
 
+  # Add compound KEGG IDs as vertex attribute
+  compound_kegg_ids <- sapply(igraph::V(g)$name, function(n) {
+    if (n %in% names(compound_info)) {
+      kegg_id <- compound_info[[n]]$kegg_id
+      if (!is.null(kegg_id) && !is.na(kegg_id)) kegg_id else NA_character_
+    } else {
+      NA_character_
+    }
+  })
+  igraph::V(g)$kegg_id <- compound_kegg_ids
+
   # Add compound status (input, output, intermediate) as vertex attribute
   compound_status_vals <- sapply(igraph::V(g)$name, function(n) {
     if (n %in% names(compound_status)) {

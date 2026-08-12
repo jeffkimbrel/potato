@@ -1797,6 +1797,74 @@ plot_threshold_sensitivity(sensitivity)
 
 ---
 
+### TIGRFAMs/PGAP HMM Integration
+
+**Motivation**: Increase annotation confidence through multi-database concordance (Kimbrel et al. 2018). Genes detected by multiple independent databases (KEGG + TIGRFAM + PFAM) provide higher confidence than single-database hits.
+
+**What are TIGRFAMs?**
+- Curated protein family HMMs from JCVI/NCBI (~4,500 profiles)
+- Used in NCBI's PGAP annotation pipeline
+- Have trusted cutoffs (TC) embedded in profiles (like PFAM)
+- Identifiers: TIGR##### format
+
+**Current Status**:
+- Potato already supports generic HMM profiles (PFAM, custom HMMs)
+- Infrastructure handles TC thresholds automatically
+- TIGRFAMs would work seamlessly with existing `run_hmm()` workflow
+
+**Implementation Approach**:
+
+1. **Download & configure**:
+   - Obtain TIGRFAMs from NCBI FTP: `ftp.ncbi.nlm.nih.gov/hmm/current/`
+   - Concatenate into single `.hmm` file (or organized by category)
+   - Add to config: `hmm.path: /path/to/tigrfams.hmm`
+
+2. **Mapping KEGG → TIGRFAM**:
+   - **Challenge**: No official KEGG ↔ TIGRFAM mapping exists
+   - **Options**:
+     - Use EC numbers (when available) to find corresponding TIGRFAMs
+     - Use third-party integration databases (eggNOG, UniProt cross-refs)
+     - Manual curation by gene function/name
+   - **Reality**: Semi-automated process, not 1:1 mapping
+
+3. **Potato enrichment**:
+   ```json
+   {
+     "id": "nifH",
+     "databases": {
+       "kofam": ["K02588"],        // Line of evidence #1
+       "hmm": ["TIGR01287"],       // Line of evidence #2 (TIGRFAM)
+       "blast": ["nifH_ref"]       // Line of evidence #3
+     }
+   }
+   ```
+
+4. **Annotation & scoring**:
+   - `run_hmm()` extracts requested TIGRFAMs from big file (via `hmmfetch`)
+   - Uses TC thresholds automatically
+   - Scoring benefits from multi-database concordance
+
+**Challenges**:
+- No automated KEGG → TIGRFAM mapping pipeline
+- Manual curation required for each gene
+- Not all KEGG genes have TIGRFAM equivalents
+- Source tracking: Need to know which HMMs came from TIGRFAM vs PFAM vs custom
+  - Could prepend source to NAME during extraction (e.g., "pgap_TIGR01287")
+  - Or add `hmm_source` column to results (deferred for now)
+
+**Pragmatic Rollout**:
+1. Start with high-priority pathways (N-fixation, key metabolic markers)
+2. Manually curate TIGRFAMs for critical genes where KEGG coverage is weak
+3. Over time, expand coverage to other potatoes
+4. Don't need 100% coverage - even partial TIGRFAM addition increases concordance
+
+**Priority**: Low-Medium (post-v1.0) - Valuable for increasing confidence, but requires manual curation effort. Could start as pilot project with N-fixation pathway.
+
+**References**:
+- Kimbrel et al. 2018. "Critical assessment of de novo transcriptome assemblies and the impact on functional annotation in the absence of a reference genome" (concordance across annotation databases)
+
+---
+
 ## Migration Path
 
 ### For Existing GATOR Users

@@ -243,15 +243,14 @@
       "name": "glyoxylate reductase",
       "databases": {
         "kofam": [
-          "K00090"
+          "K12972"
         ]
       },
       "ec": [
-        "1.1.1.26",
         "1.1.1.79"
       ],
       "type": "enzyme",
-      "notes": "Glyoxylate/hydroxypyruvate reductase - NADH-dependent reduction of glyoxylate to glycolate. Alternative to glycerate pathway for glyoxylate detoxification.",
+      "notes": "Glyoxylate/hydroxypyruvate reductase - NADP-dependent reduction of glyoxylate to glycolate. Alternative to glycerate pathway for glyoxylate detoxification.",
       "x_compounds": -2.1037,
       "y_compounds": 1.855
     },
@@ -260,15 +259,14 @@
       "name": "glyoxylate/hydroxypyruvate reductase",
       "databases": {
         "kofam": [
-          "K12972"
+          "K00090"
         ]
       },
       "ec": [
-        "1.1.1.26",
         "1.1.1.79"
       ],
       "type": "enzyme",
-      "notes": "Glyoxylate/hydroxypyruvate reductase - NADPH-dependent alternative to ghrA. Can reduce both glyoxylate and hydroxypyruvate.",
+      "notes": "Glyoxylate/hydroxypyruvate reductase - NAD-dependent alternative to ghrA. Can reduce both glyoxylate and hydroxypyruvate.",
       "x_compounds": -2.1037,
       "y_compounds": 3.7774
     },
@@ -283,10 +281,7 @@
       "ec": [
         "2.3.1.9"
       ],
-      "type": "enzyme",
-      "notes": "Acetyl-CoA C-acetyltransferase - condenses two acetyl-CoA to acetoacetyl-CoA. First step of ethylmalonyl-CoA pathway upper branch. Also involved in many other CoA metabolism pathways.",
-      "x_compounds": -4.0936,
-      "y_compounds": -5.7167
+      "type": "enzyme"
     },
     {
       "id": "phbB",
@@ -299,10 +294,7 @@
       "ec": [
         "1.1.1.36"
       ],
-      "type": "enzyme",
-      "notes": "Acetoacetyl-CoA reductase - reduces acetoacetyl-CoA to 3-hydroxybutyryl-CoA. Second step of EMC pathway upper branch.",
-      "x_compounds": -9.8946,
-      "y_compounds": -8.5329
+      "type": "enzyme"
     },
     {
       "id": "croR",
@@ -315,10 +307,7 @@
       "ec": [
         "4.2.1.55"
       ],
-      "type": "enzyme",
-      "notes": "3-hydroxybutyryl-CoA dehydratase - converts 3-hydroxybutyryl-CoA to crotonyl-CoA. Third step of EMC pathway upper branch.",
-      "x_compounds": -11.6906,
-      "y_compounds": -14.4013
+      "type": "enzyme"
     },
     {
       "id": "ccr",
@@ -331,10 +320,20 @@
       "ec": [
         "1.3.1.85"
       ],
-      "type": "enzyme",
-      "notes": "Crotonyl-CoA carboxylase/reductase - carboxylates and reduces crotonyl-CoA to ethylmalonyl-CoA. Key enzyme of EMC pathway. Diagnostic marker for this pathway.",
-      "x_compounds": -9.8946,
-      "y_compounds": -20
+      "type": "enzyme"
+    },
+    {
+      "id": "mcee",
+      "name": "methylmalonyl-CoA/ethylmalonyl-CoA epimerase",
+      "databases": {
+        "kofam": [
+          "K05606"
+        ]
+      },
+      "ec": [
+        "5.1.99.1"
+      ],
+      "type": "enzyme"
     },
     {
       "id": "ecm",
@@ -347,10 +346,7 @@
       "ec": [
         "5.4.99.63"
       ],
-      "type": "enzyme",
-      "notes": "Ethylmalonyl-CoA mutase - isomerizes ethylmalonyl-CoA to methylsuccinyl-CoA. Diagnostic enzyme of EMC pathway. Branching point for lower branches.",
-      "x_compounds": -4.0936,
-      "y_compounds": -20
+      "type": "enzyme"
     },
     {
       "id": "mcd",
@@ -363,10 +359,7 @@
       "ec": [
         "1.3.8.12"
       ],
-      "type": "enzyme",
-      "notes": "Methylsuccinyl-CoA dehydrogenase - converts methylsuccinyl-CoA to methylfumaryl-CoA. Step in EMC pathway upper branch leading to malyl-CoA cleavage.",
-      "x_compounds": 0.1897,
-      "y_compounds": -14.4013
+      "type": "enzyme"
     },
     {
       "id": "mch",
@@ -379,27 +372,7 @@
       "ec": [
         "4.2.1.148"
       ],
-      "type": "enzyme",
-      "notes": "2-methylfumaryl-CoA hydratase - converts methylfumaryl-CoA to malyl-CoA. Also listed as mcd in some databases. Penultimate step before malyl-CoA cleavage.",
-      "x_compounds": 0.1897,
-      "y_compounds": -8.5329
-    },
-    {
-      "id": "mcl",
-      "name": "malyl-CoA/(S)-citramalyl-CoA lyase",
-      "databases": {
-        "kofam": [
-          "K08691"
-        ]
-      },
-      "ec": [
-        "4.1.3.24",
-        "4.1.3.25"
-      ],
-      "type": "enzyme",
-      "notes": "Malyl-CoA lyase - cleaves malyl-CoA to acetyl-CoA and glyoxylate (upper branch) or acts on citramalyl-CoA. Key branch point enzyme.",
-      "x_compounds": 0.1897,
-      "y_compounds": -1.7201
+      "type": "enzyme"
     },
     {
       "id": "mcl2",
@@ -412,14 +385,11 @@
       "ec": [
         "3.1.2.30"
       ],
-      "type": "enzyme",
-      "notes": "Malyl-CoA thioesterase - alternative to mcl lyase activity. Hydrolyzes malyl-CoA to malate (lower-malate branch). Diagnostic for malate-producing variant.",
-      "x_compounds": 3.6636,
-      "y_compounds": -5.7167
+      "type": "enzyme"
     },
     {
       "id": "pccAB",
-      "name": "propionyl-CoA carboxylase complex",
+      "name": "propionyl-CoA carboxylase",
       "databases": {
         "kofam": [
           "K01965",
@@ -429,29 +399,10 @@
       "ec": [
         "6.4.1.3"
       ],
-      "type": "enzyme",
-      "notes": "Propionyl-CoA carboxylase complex - biotin-dependent carboxylase with two subunits (pccA alpha, pccB beta). Both subunits required for activity. Converts propionyl-CoA to methylmalonyl-CoA.",
-      "x_compounds": 6.1931,
-      "y_compounds": -5.7167
+      "type": "enzyme"
     },
     {
-      "id": "epi",
-      "name": "methylmalonyl-CoA/ethylmalonyl-CoA epimerase",
-      "databases": {
-        "kofam": [
-          "K05606"
-        ]
-      },
-      "ec": [
-        "5.1.99.1"
-      ],
-      "type": "enzyme",
-      "notes": "Methylmalonyl-CoA epimerase - interconverts R and S stereoisomers of methylmalonyl-CoA. Required for both EMC pathway and propionate metabolism.",
-      "x_compounds": 11.6906,
-      "y_compounds": -8.5329
-    },
-    {
-      "id": "MUT",
+      "id": "mutAB",
       "name": "methylmalonyl-CoA mutase",
       "databases": {
         "kofam": [
@@ -461,10 +412,21 @@
       "ec": [
         "5.4.99.2"
       ],
+      "type": "enzyme"
+    },
+    {
+      "id": "mcl",
+      "name": "malyl-CoA lyase",
+      "databases": {
+        "kofam": [
+          "K08691"
+        ]
+      },
+      "ec": [
+        "4.1.3.24"
+      ],
       "type": "enzyme",
-      "notes": "Methylmalonyl-CoA mutase - converts methylmalonyl-CoA to succinyl-CoA (lower-succinyl-CoA branch). B12-dependent enzyme. Links to TCA cycle.",
-      "x_compounds": 8.4612,
-      "y_compounds": -2.9848
+      "notes": "Malyl-CoA lyase - bifunctional enzyme that cleaves L-erythro-3-methylmalyl-CoA (R00934) and ligates acetyl-CoA + glyoxylate to form L-malyl-CoA (R00473)"
     }
   ],
   "pathways": {
@@ -555,7 +517,7 @@
     "glyoxylate_shunt": {
       "name": "Glyoxylate Shunt / Glyoxylate Cycle",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "kegg_module": "M00012",
       "source": "KEGG M00012",
       "notes": "Classic glyoxylate shunt that bypasses CO2-releasing steps of TCA cycle. Enables growth on C2 compounds (acetate, fatty acids) by conserving carbon. aceA cleaves isocitrate to succinate + glyoxylate, aceB condenses glyoxylate + acetyl-CoA to malate.",
@@ -618,7 +580,7 @@
     "glycerate_pathway": {
       "name": "Glycerate Pathway (Tartronate Semialdehyde Pathway)",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "kegg_module": {},
       "source": "KEGG map00630",
       "notes": "Alternative glyoxylate assimilation pathway via tartronate semialdehyde and D-glycerate. Net reaction: 2 Glyoxylate + NADH + ATP → 2-Phosphoglycerate (feeds into glycolysis). Independent of both BHAC and glyoxylate shunt - provides different route for glyoxylate detoxification and carbon assimilation.",
@@ -673,10 +635,10 @@
         "notes": "All three genes required for complete pathway. gcl is highly diagnostic - glyoxylate carboligase is specific to this pathway."
       }
     },
-    "glycolate_oxidase": {
+    "glcDEF_transport": {
       "name": "Glycolate Oxidase Pathway",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "kegg_module": {},
       "source": "KEGG map00630",
       "notes": "Glycolate oxidation to glyoxylate via glcDEF complex. Provides glyoxylate substrate for other pathways (BHAC, glyoxylate shunt, glycerate pathway). Important feeder pathway - organisms with glycolate oxidase can utilize external glycolate as carbon source.",
@@ -707,10 +669,10 @@
         "notes": "Single complex node with three required subunits (glcD, glcE, glcF - all KOs must be found). Not pathway-specific (glycolate oxidase found in many contexts), so no marker gene defined."
       }
     },
-    "glycolate_transport": {
+    "permease_transport": {
       "name": "Glycolate Transport",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "kegg_module": {},
       "source": "KEGG",
       "notes": "Glycolate permease imports glycolate from external environment. Provides substrate for glycolate oxidase pathway. Transport alone doesn't indicate glyoxylate metabolism - must be interpreted with downstream pathways. Both glcA (glycolate-specific) and lldP (L-lactate permease with glycolate activity) can transport glycolate.",
@@ -751,7 +713,7 @@
     "phosphoglycolate_pathway": {
       "name": "Phosphoglycolate to Glyoxylate Pathway",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "kegg_module": {},
       "source": "KEGG map00630",
       "notes": "Two related detoxification activities: (1) PGP dephosphorylates 2-phosphoglycolate to glycolate (photorespiration salvage), (2) ghrA/ghrB reduce glyoxylate to glycolate (glyoxylate detoxification). These are independent reactions, not a connected pathway - both produce glycolate but from different toxic substrates.",
@@ -817,7 +779,7 @@
       "verified": false,
       "kegg_module": "M00373",
       "source": "KEGG M00373",
-      "notes": "Complete ethylmalonyl-CoA pathway for C2 (acetyl-CoA) assimilation with two terminal branches at malyl-CoA. Main trunk: 2 acetyl-CoA → ethylmalonyl-CoA → methylsuccinyl-CoA → malyl-CoA. Terminal branches: (A) mcl cleaves malyl-CoA to acetyl-CoA + glyoxylate (producing propionyl-CoA which continues via pccAB → epi → MUT → succinyl-CoA), (B) mcl2 hydrolyzes malyl-CoA to malate. Found in Methylobacterium and marine Rhodobacterales. Organisms use different branch combinations depending on metabolic needs.",
+      "notes": "Ethylmalonyl-CoA pathway for C2 assimilation. Main trunk converts acetyl-CoA through ethylmalonyl-CoA to methylmalyl-CoA. Branches at methylmalyl-CoA: (1) mcl cleaves to propanoyl-CoA + glyoxylate, which can continue to succinyl-CoA, or (2) mcl2 hydrolyzes L-malyl-CoA intermediate to malate.",
       "nodes": {
         "atoB": {
           "step": 1,
@@ -839,43 +801,49 @@
           "required": true,
           "marker": true
         },
-        "ecm": {
-          "step": 5,
+        "mcee": {
+          "step": [
+            5,
+            13
+          ],
           "required": true,
-          "marker": true
+          "marker": false
         },
-        "mcd": {
+        "ecm": {
           "step": 6,
           "required": true,
           "marker": true
         },
-        "mch": {
+        "mcd": {
           "step": 7,
           "required": true,
-          "marker": true
+          "marker": false
+        },
+        "mch": {
+          "step": 8,
+          "required": true,
+          "marker": false
         },
         "mcl": {
-          "step": 8,
+          "step": [
+            9,
+            10
+          ],
           "required": false,
           "marker": true
         },
         "mcl2": {
-          "step": 8,
+          "step": 11,
           "required": false,
           "marker": true
         },
         "pccAB": {
-          "step": 9,
+          "step": 12,
           "required": false,
           "marker": false
         },
-        "epi": {
-          "step": 10,
-          "required": false,
-          "marker": false
-        },
-        "MUT": {
-          "step": 11,
+        "mutAB": {
+          "step": 14,
           "required": false,
           "marker": false
         }
@@ -890,8 +858,8 @@
         {
           "from": "phbB",
           "to": "croR",
-          "compound": "3-Hydroxybutyryl-CoA",
-          "kegg_compound": "C01144"
+          "compound": "(R)-3-Hydroxybutanoyl-CoA",
+          "kegg_compound": "C03561"
         },
         {
           "from": "croR",
@@ -901,83 +869,84 @@
         },
         {
           "from": "ccr",
+          "to": "mcee",
+          "compound": "(2S)-Ethylmalonyl-CoA",
+          "kegg_compound": "C18026"
+        },
+        {
+          "from": "mcee",
           "to": "ecm",
-          "compound": "Ethylmalonyl-CoA",
-          "kegg_compound": "C04130"
+          "compound": "(2R)-Ethylmalonyl-CoA",
+          "kegg_compound": "C20238"
         },
         {
           "from": "ecm",
           "to": "mcd",
-          "compound": "Methylsuccinyl-CoA",
-          "kegg_compound": "C04346"
+          "compound": "(2S)-Methylsuccinyl-CoA",
+          "kegg_compound": "C18324"
         },
         {
           "from": "mcd",
           "to": "mch",
-          "compound": "Methylfumaryl-CoA",
-          "kegg_compound": "C17647"
+          "compound": "2-Methylfumaryl-CoA",
+          "kegg_compound": "C06028"
         },
         {
           "from": "mch",
           "to": "mcl",
-          "compound": "Malyl-CoA",
-          "kegg_compound": "C04348"
-        },
-        {
-          "from": "mch",
-          "to": "mcl2",
-          "compound": "Malyl-CoA",
-          "kegg_compound": "C04348"
+          "compound": "L-erythro-3-Methylmalyl-CoA",
+          "kegg_compound": "C06027"
         },
         {
           "from": "mcl",
           "to": "pccAB",
-          "compound": "Propionyl-CoA",
+          "compound": "Propanoyl-CoA",
           "kegg_compound": "C00100"
         },
         {
-          "from": "pccAB",
-          "to": "epi",
-          "compound": "Methylmalonyl-CoA",
-          "kegg_compound": "C02557"
+          "from": "mcl",
+          "to": "mcl2",
+          "compound": "Glyoxylate",
+          "kegg_compound": "C00048"
         },
         {
-          "from": "epi",
-          "to": "MUT",
+          "from": "mcl",
+          "to": "mcl2",
+          "compound": "L-Malyl-CoA",
+          "kegg_compound": "C04348"
+        },
+        {
+          "from": "pccAB",
+          "to": "mcee",
           "compound": "(S)-Methylmalonyl-CoA",
           "kegg_compound": "C00683"
         },
         {
-          "from": "mcl",
-          "to": {},
-          "compound": "Acetyl-CoA",
-          "kegg_compound": "C00024",
-          "structural": false,
-          "notes": "Acetyl-CoA product of mcl cleavage - recycled into other pathways"
+          "from": "mcee",
+          "to": "mutAB",
+          "compound": "(R)-Methylmalonyl-CoA",
+          "kegg_compound": "C01213"
         },
         {
-          "from": "mcl",
-          "to": {},
-          "compound": "Glyoxylate",
-          "kegg_compound": "C00048",
-          "structural": false,
-          "notes": "Glyoxylate product of mcl cleavage - recycled into other pathways"
+          "from": null,
+          "to": "mcl",
+          "compound": "Acetyl-CoA (EMC recycled)",
+          "kegg_compound": "C00024",
+          "structural": false
         },
         {
           "from": "mcl2",
-          "to": {},
-          "compound": "Malate",
+          "to": null,
+          "compound": "(S)-Malate",
           "kegg_compound": "C00149",
-          "structural": false,
-          "notes": "Terminal product of mcl2 branch"
+          "structural": false
         },
         {
-          "from": "MUT",
-          "to": {},
+          "from": "mutAB",
+          "to": null,
           "compound": "Succinyl-CoA",
           "kegg_compound": "C00091",
-          "structural": false,
-          "notes": "Terminal product of pccAB branch, feeds TCA cycle"
+          "structural": false
         }
       ],
       "input": {
@@ -988,18 +957,48 @@
         ]
       },
       "output": {
-        "compound": "Multiple products",
+        "compound": "Glyoxylate / Malate / Succinyl-CoA",
         "sources": [
           "mcl",
           "mcl2",
-          "MUT"
-        ],
-        "notes": "Three alternative outputs: acetyl-CoA + glyoxylate (mcl), malate (mcl2), or succinyl-CoA (MUT)"
+          "mutAB"
+        ]
       },
       "scoring": {
         "min_fraction": 0.7,
-        "marker_mode": "any",
-        "notes": "Main trunk (atoB through mch) required. Terminal branches are alternatives - organism needs at least ONE of: mcl, mcl2, or pccAB/epi/MUT. ccr and ecm are highly diagnostic markers. 7/10 threshold allows for missing terminal branch genes."
+        "marker_mode": "any"
+      },
+      "steps": {
+        "5": {
+          "reaction": "R09979",
+          "enzyme": "mcee",
+          "substrate": "C18026",
+          "product": "C20238"
+        },
+        "9": {
+          "reaction": "R00934",
+          "enzyme": "mcl",
+          "substrate": "C06027",
+          "products": [
+            "C00100",
+            "C00048"
+          ]
+        },
+        "10": {
+          "reaction": "R00473",
+          "enzyme": "mcl",
+          "substrates": [
+            "C00024",
+            "C00048"
+          ],
+          "product": "C04348"
+        },
+        "13": {
+          "reaction": "R02765",
+          "enzyme": "mcee",
+          "substrate": "C00683",
+          "product": "C01213"
+        }
       }
     }
   },
@@ -1079,20 +1078,10 @@
       "x": -11.6906,
       "y": 7.4874
     },
-    "COMPOUND_C00332": {
-      "id": "COMPOUND_C00332",
-      "x": -7.0784,
-      "y": -5.7167
-    },
     "COMPOUND_C01144": {
       "id": "COMPOUND_C01144",
       "x": -11.6906,
       "y": -11.4165
-    },
-    "COMPOUND_C00877": {
-      "id": "COMPOUND_C00877",
-      "x": -11.6906,
-      "y": -17.3019
     },
     "COMPOUND_C04130": {
       "id": "COMPOUND_C04130",
@@ -1114,30 +1103,10 @@
       "x": 0.1897,
       "y": -5.7167
     },
-    "COMPOUND_C00100": {
-      "id": "COMPOUND_C00100",
-      "x": 3.6636,
-      "y": -2.9848
-    },
     "COMPOUND_C02557": {
       "id": "COMPOUND_C02557",
       "x": 8.4612,
       "y": -8.5329
-    },
-    "COMPOUND_C00683": {
-      "id": "COMPOUND_C00683",
-      "x": 10.645,
-      "y": -5.7167
-    },
-    "COMPOUND_C00091": {
-      "id": "COMPOUND_C00091",
-      "x": 11.6906,
-      "y": -2.9848
-    },
-    "COMPOUND_Multiple_products": {
-      "id": "COMPOUND_Multiple_products",
-      "x": 4.8103,
-      "y": -2.9848
     }
   }
 }
