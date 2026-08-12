@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** v0.9.3 (2026-08-05) - Multi-pathway networks with full scoring support, essential-only scoring metrics, result export functions, 27% test coverage (91 passing tests).
+**Current Status:** v0.9.4-dev (2026-08-12) - V2 schema migration complete. All V1 backward compatibility removed. Uses `@genes`, `@compounds`, `@pathways` structure with edges carrying `required`/`marker` attributes. 41 passing tests.
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -110,126 +110,149 @@ bioinformatics tools (kofamscan, hmmer3, blastp)
 
 ---
 
-## Potato JSON Structure
+## Potato JSON Structure (V2 Schema)
 
-Each potato is a self-contained pathway definition with genes and topology:
+**CRITICAL:** POTATO now uses V2 schema exclusively. All potatoes use this network structure.
+
+Each potato is a self-contained network with genes, compounds, and pathways:
 
 ```json
 {
-  "id": "pathway_id",
-  "name": "Human Readable Name",
-  "source": "KEGG M00123 / custom",
-  "verified": false,
+  "schema_version": "v2",
+  "id": "pathway_network_id",
+  "name": "Human Readable Network Name",
+  "source": "KEGG M00123, M00456 / custom",
   "tags": ["metabolism", "energy"],
   "notes": "Brief description",
   
-  "input": {
-    "compound": "substrate name",
-    "kegg_compound": "C00001",
-    "targets": ["geneA_1"]
-  },
-  
-  "output": {
-    "compound": "product name",
-    "kegg_compound": "C00002",
-    "sources": ["geneZ_5"]
-  },
-  
-  "nodes": [
+  "genes": [
     {
       "id": "geneSymbol",
-      "step": 1,
-      "nodes": ["geneSymbol_1"],
-      "type": "enzyme",
       "name": "enzyme name",
+      "type": "enzyme",
       "databases": {
         "kofam": ["K00001"],              // KEGG Orthology IDs
         "blast": ["ref_seq_id"],          // BLAST reference sequence IDs
         "hmm": ["PF00001", "custom_hmm"]  // HMM profile NAMEs (includes PFAM)
       },
-      "thresholds": {                     // OPTIONAL: per-gene overrides
-        "blast_evalue": 1e-20,
-        "hmm_evalue": 1e-15
-      },
       "ec": ["1.1.1.1"],
-      "required": true,
-      "marker": false,
+      "reactions": ["R00001"],
       "notes": "Biological context"
     }
   ],
   
-  "edges": [
+  "compounds": [
     {
-      "from": "geneA_1",
-      "to": "geneB_2",
-      "compound": "metabolite name",
+      "id": "C00031",
+      "name": "D-glucose",
       "kegg_compound": "C00031"
     }
   ],
   
-  "scoring": {
-    "min_fraction": 0.75,
-    "marker_mode": "any"
+  "pathways": {
+    "pathway_id": {
+      "name": "Pathway Display Name",
+      "type": "variant",  // or "independent"
+      "kegg_module": "M00123",
+      "verified": false,  // ALWAYS false unless manually validated
+      "notes": "Pathway-specific notes",
+      
+      "input": {
+        "compound": "substrate name",
+        "kegg_compound": "C00031",
+        "targets": ["geneA"]
+      },
+      
+      "output": {
+        "compound": "product name",
+        "kegg_compound": "C00002",
+        "sources": ["geneZ"]
+      },
+      
+      "edges": [
+        {
+          "from": "C00031",
+          "to": "geneA",
+          "required": true,
+          "marker": true,
+          "reaction": "R00001"
+        },
+        {
+          "from": "geneA",
+          "to": "C00118",
+          "required": true,
+          "marker": true,
+          "reaction": "R00001"
+        },
+        {
+          "from": "C00118",
+          "to": "geneB",
+          "required": false,
+          "marker": false,
+          "reaction": "R00002"
+        }
+      ],
+      
+      "scoring": {
+        "min_fraction": 0.75,
+        "marker_mode": "any"
+      }
+    }
   }
 }
 ```
 
-**Key fields:**
-- `verified`: **CRITICAL** - Always set to `false` for new/unverified potatoes. **NEVER set to true**. Only the user manually sets this after validation.
-  - **NEVER EDIT VERIFIED POTATOES**: If a potato or pathway has `"verified": true`, DO NOT make any edits without explicit user approval. Alert the user that they are requesting changes to a verified pathway and ask for confirmation before proceeding.
-- `input`/`output`: Starting substrate and final product (optional but recommended)
-  - For metabolic pathways: actual metabolites (e.g., "D-glucose", "pyruvate")
-  - For transporters: location-qualified (e.g., "NH4_external", "NH4_internal")
-  - `targets`/`sources`: which DAG nodes connect to input/output
-- `databases`: Detection methods using standard types (kofam, blast, hmm, pfam)
-- `step`: Sequential step number (or array for bifunctional enzymes)
-- `nodes`: DAG node IDs in `id_step` format
-- `marker`: Diagnostic gene for this pathway
-- `required`: Must be present for pathway completion
+**Key V2 Schema Features:**
+- `schema_version`: **Required** - Must be "v2"
+- `genes`: Global gene definitions with detection methods only
+- `compounds`: Global compound definitions
+- `pathways`: One or more pathways, each with its own topology
+- `edges`: Connect genes and compounds, carry `required`/`marker` attributes
+- `verified`: **CRITICAL** - Per-pathway field, always `false` for new pathways. **NEVER set to true**. Only humans verify.
+  - **NEVER EDIT VERIFIED PATHWAYS**: If `"verified": true`, DO NOT make edits without explicit user approval.
 
-**Important notes:**
-- **Verified field:** Agents and Claude should ALWAYS set `"verified": false` and NEVER change it to true. Only humans verify potatoes.
-- **Active field:** Optional `"active": false` marks deprecated potatoes that shouldn't be loaded by default
-- **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names like `kofam118`, `gator_blast`)
-- **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database), NOT separate `pfam` field
-- **HMM profile names:** Use NAME from HMM file header (e.g., `NAME mlrA`), not filename
-- **Per-gene thresholds:** Optional `thresholds` field for overriding global defaults (use sparingly)
-- **No legacy fields:** Don't use `ko`, `blast_terms`, `hmm_path`, etc. Use `databases` only
-- **Notes fields:** Use liberally to document biological context, alternatives, caveats, marker rationale
-- **Input/output:** For transporters moving compounds across membranes, use location qualifiers like "_external", "_internal", "_periplasm"
+**Important Notes:**
+- **No step numbers** - Genes are counted directly, no sequential steps
+- **No node IDs** - Edges reference gene/compound IDs directly
+- **required/marker on edges** - Not on genes, because same gene can have different roles in different pathways
+- **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names)
+- **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database)
+- **Input/output:** For transporters, use location qualifiers ("NH4_external", "NH4_internal")
+- **Pathway types:** 
+  - `variant` - Alternative routes to same outcome (Mo-nif vs V-nif)
+  - `independent` - Different functions, shared metabolic space (TCA vs glyoxylate shunt)
 
 ---
 
-## Multi-Pathway Schema (New in v0.9.0)
+## V2 Schema Design Philosophy
 
-**Design Philosophy:** Related pathways that share metabolic context should be consolidated into network potatoes with multiple sub-pathways. This provides biological context that isolated potatoes cannot capture.
+**All potatoes use V2 schema** - Related pathways that share metabolic context are grouped into network potatoes with multiple sub-pathways. This provides biological context that isolated pathways cannot capture.
 
-### When to Use Multi-Pathway Schema
+### When to Group Multiple Pathways
 
-**Use multi-pathway networks when:**
+**Group pathways together when:**
 - Pathways are **alternative routes** to the same biological outcome (e.g., Mo vs V nitrogenase)
 - Pathways share **metabolic intermediates** and spatial context (e.g., ED pathway variants)
 - Finding one variant **explains the absence** of another (e.g., "ED classic absent because ED semi-phos present")
 - Pathways **overlay spatially** but serve different purposes (e.g., TCA + glyoxylate shunt)
 
-**Keep as separate potatoes when:**
+**Keep as separate potato files when:**
 - Pathways are functionally unrelated
 - No shared genes or metabolic context
 - Independent detection is more informative
 
-### Multi-Pathway Structure
+### V2 Schema Example
 
 ```json
 {
+  "schema_version": "v2",
   "id": "entner_doudoroff_network",
   "name": "Entner-Doudoroff Pathway Network",
   "source": "KEGG M00006, M00309, M00308, M00633",
-  "active": true,
-  "verified": false,
   "tags": ["metabolism", "carbohydrate"],
   "notes": "Four ED variants with different phosphorylation strategies.",
   
-  "nodes": [
+  "genes": [
     {
       "id": "gnaD",
       "name": "gluconate dehydratase",
@@ -243,7 +266,13 @@ Each potato is a self-contained pathway definition with genes and topology:
       "databases": {"kofam": ["K01690"]},
       "ec": ["4.2.1.12"]
     }
-    // ... all 20 unique genes (detection methods only)
+    // ... all genes (detection methods only)
+  ],
+  
+  "compounds": [
+    {"id": "C00031", "name": "D-glucose", "kegg_compound": "C00031"},
+    {"id": "C00668", "name": "D-glucose-6P", "kegg_compound": "C00668"}
+    // ... all compounds
   ],
   
   "pathways": {
@@ -251,24 +280,16 @@ Each potato is a self-contained pathway definition with genes and topology:
       "name": "Classic ED (Phosphorylative)",
       "type": "variant",
       "kegg_module": "M00006",
+      "verified": false,
       "notes": "Fully phosphorylated pathway",
       
-      "nodes": {
-        "glk": {"step": 1, "required": true, "marker": false},
-        "zwf": {"step": 2, "required": true, "marker": false},
-        "pgl": {"step": 3, "required": false, "marker": false},
-        "ybhE": {"step": 3, "required": false, "marker": false},
-        "edd": {"step": 4, "required": true, "marker": true},
-        "eda": {"step": 5, "required": true, "marker": true}
-      },
-      
       "edges": [
-        {"from": "glk", "to": "zwf", "compound": "D-glucose-6P"},
-        {"from": "zwf", "to": "pgl", "compound": "6-phospho-D-glucono-1,5-lactone"},
-        {"from": "zwf", "to": "ybhE", "compound": "6-phospho-D-glucono-1,5-lactone"},
-        {"from": "pgl", "to": "edd", "compound": "6-phospho-D-gluconate"},
-        {"from": "ybhE", "to": "edd", "compound": "6-phospho-D-gluconate"},
-        {"from": "edd", "to": "eda", "compound": "KDPG"}
+        {"from": "C00031", "to": "glk", "required": true, "marker": false},
+        {"from": "glk", "to": "C00668", "required": true, "marker": false},
+        {"from": "C00668", "to": "zwf", "required": true, "marker": false},
+        {"from": "zwf", "to": "pgl", "required": false, "marker": false},
+        {"from": "pgl", "to": "edd", "required": true, "marker": true},
+        {"from": "edd", "to": "eda", "required": true, "marker": true}
       ],
       
       "input": {
@@ -299,29 +320,30 @@ Each potato is a self-contained pathway definition with genes and topology:
 ### Key Principles
 
 **1. Genes Defined Once**
-- Global `nodes` array: Detection methods, EC numbers, enzyme names
-- Pathway-specific `nodes`: Step number, required/marker status (contextual)
-- Same gene can be step 1 in one pathway, step 3 in another
-- Same gene can be marker in one pathway, not in another
+- Global `genes` array: Detection methods, EC numbers, enzyme names
+- No step numbers, no required/marker on genes
+- Same gene can have different roles in different pathways
 
 **2. Pathway Types**
 - `"type": "variant"` - Alternative routes to same outcome (Mo vs V nitrogenase, ED variants)
 - `"type": "independent"` - Different purpose, shares metabolic space (TCA vs glyoxylate shunt)
 
-**3. Pathway-Specific Attributes**
-- `step`, `required`, `marker` - All pathway-specific, defined per pathway
-- `edges` - Each pathway has its own topology
-- `input`/`output` - Each pathway has its own substrates/products
-- `scoring` - Each pathway scored independently
+**3. Edges Carry Context**
+- `required`, `marker` on edges (not genes)
+- Edges connect genes and compounds
+- Same gene can be required/marker in one pathway, optional/non-marker in another
 
-**4. Shared Genes**
-- Gene `gnaD` appears in 3 ED pathways at step 1
+**4. No Step Numbers**
+- V2 scoring counts genes detected, not sequential steps
+- Simpler than V1, still effective for presence/absence
+
+**5. Shared Genes**
+- Gene `gnaD` appears in 3 ED pathways
 - Detecting `gnaD` once satisfies all 3 pathways
 - Each pathway evaluates completion independently
 
-### Scoring Multi-Pathway Networks
+### Scoring V2 Potatoes
 
-**Current implementation (to be updated):**
 Each pathway scored independently, results show per-pathway status:
 
 ```

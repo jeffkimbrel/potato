@@ -1,8 +1,8 @@
 # POTATO v1 - Development Roadmap
 
-**Current Version:** v0.9.3 (2026-08-10)
+**Current Version:** v0.9.4-dev (2026-08-12)
 
-**Status:** Multi-pathway networks fully implemented and production-ready. ED network verified and tested. Enhanced visualization and print functions. Test coverage at 27%.
+**Status:** V2 schema migration complete. All V1 backward compatibility removed. Uses `@genes`, `@compounds`, `@pathways` S7 structure with edges carrying `required`/`marker` attributes. Test coverage: 41 passing tests.
 
 **What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (all + essential genes) → interactive/static visualization with curated layouts → export results as tibbles → analyze near-misses → print pathways with compound details
 
@@ -65,40 +65,24 @@ potato/
 
 ## File Formats
 
-### 1. Potato JSON Structure (v0.8.0 - v0.9.0)
+### 1. Potato JSON Structure (V2 Schema - v0.9.4)
 
-**Two schema versions:**
-1. **Single-pathway potatoes** (current, v0.8.0) - One pathway per file
-2. **Multi-pathway networks** (NEW, v0.9.0) - Related pathways in one file
+**All potatoes use V2 schema** - Bipartite graph structure with genes, compounds, and pathways.
 
-#### Single-Pathway Schema (v0.8.0)
+#### V2 Schema (Current)
 
 ```json
 {
+  "schema_version": "v2",
   "id": "microcystin_degradation",
   "name": "Microcystin Degradation",
   "source": "Literature (Bourne et al. 1996)",
-  "active": true,
-  "verified": false,
   "tags": ["toxin_degradation"],
   "notes": "mlrABCD gene cluster",
   
-  "input": {
-    "compound": "microcystin-LR (cyclic)",
-    "kegg_compound": "C05371",
-    "targets": ["mlrA_1"]
-  },
-  
-  "output": {
-    "compound": "ADDA + small peptides",
-    "sources": ["mlrC_3"]
-  },
-  
-  "nodes": [
+  "genes": [
     {
       "id": "mlrA",
-      "step": 1,
-      "nodes": ["mlrA_1"],
       "type": "enzyme",
       "name": "microcystinase",
       "databases": {
@@ -107,51 +91,70 @@ potato/
         "blast": ["mlrA_AF411068_partial", "QVQ24103.1_mlrA"]
       },
       "ec": ["3.4.99.-"],
-      "required": true,
-      "marker": true,
       "notes": "Diagnostic enzyme - cleaves cyclic MC-LR"
     },
     {
       "id": "mlrB",
-      "step": 2,
-      "nodes": ["mlrB_2"],
       "type": "enzyme",
       "name": "serine hydrolase",
       "databases": {
         "hmm": ["mlrB_aligned"],
         "blast": ["mlrB_AF411069_partial"]
-      },
-      "required": true,
-      "marker": false
+      }
     }
   ],
   
-  "edges": [
-    {"from": "mlrA_1", "to": "mlrB_2", "compound": "linear microcystin-LR"}
+  "compounds": [
+    {"id": "C05371", "name": "microcystin-LR (cyclic)", "kegg_compound": "C05371"},
+    {"id": "linear_MC", "name": "linear microcystin-LR"}
   ],
   
-  "scoring": {
-    "min_fraction": 0.75,
-    "marker_mode": "any"
+  "pathways": {
+    "main": {
+      "name": "Microcystin Degradation",
+      "type": "independent",
+      "verified": false,
+      
+      "input": {
+        "compound": "microcystin-LR (cyclic)",
+        "kegg_compound": "C05371",
+        "targets": ["mlrA"]
+      },
+      
+      "output": {
+        "compound": "ADDA + small peptides",
+        "sources": ["mlrC"]
+      },
+      
+      "edges": [
+        {"from": "C05371", "to": "mlrA", "required": true, "marker": true},
+        {"from": "mlrA", "to": "linear_MC", "required": true, "marker": true},
+        {"from": "linear_MC", "to": "mlrB", "required": true, "marker": false}
+      ],
+      
+      "scoring": {
+        "min_fraction": 0.75,
+        "marker_mode": "any"
+      }
+    }
   }
 }
 ```
 
-#### Multi-Pathway Network Schema (v0.9.0 - NEW)
+#### V2 Schema with Multiple Pathways
 
-For related pathways sharing metabolic context:
+For related pathways sharing metabolic context (all V2 potatoes can have multiple pathways):
 
 ```json
 {
+  "schema_version": "v2",
   "id": "entner_doudoroff_network",
   "name": "Entner-Doudoroff Pathway Network",
   "source": "KEGG M00006, M00309, M00308, M00633",
-  "active": true,
-  "verified": false,
   "tags": ["metabolism", "carbohydrate"],
   "notes": "Four ED variants with different phosphorylation strategies",
   
-  "nodes": [
+  "genes": [
     {
       "id": "gnaD",
       "name": "gluconate dehydratase",
@@ -167,24 +170,26 @@ For related pathways sharing metabolic context:
     }
   ],
   
+  "compounds": [
+    {"id": "C00031", "name": "D-glucose", "kegg_compound": "C00031"},
+    {"id": "C00668", "name": "D-glucose-6P", "kegg_compound": "C00668"},
+    {"id": "C00204", "name": "KDG", "kegg_compound": "C00204"}
+  ],
+  
   "pathways": {
     "classic": {
       "name": "Classic ED (Phosphorylative)",
       "type": "variant",
       "kegg_module": "M00006",
+      "verified": false,
       "notes": "Fully phosphorylated pathway",
       
-      "nodes": {
-        "glk": {"step": 1, "required": true, "marker": false},
-        "zwf": {"step": 2, "required": true, "marker": false},
-        "edd": {"step": 4, "required": true, "marker": true},
-        "eda": {"step": 5, "required": true, "marker": true}
-      },
-      
       "edges": [
-        {"from": "glk", "to": "zwf", "compound": "D-glucose-6P"},
-        {"from": "zwf", "to": "edd", "compound": "6-phosphogluconate"},
-        {"from": "edd", "to": "eda", "compound": "KDPG"}
+        {"from": "C00031", "to": "glk", "required": true, "marker": false},
+        {"from": "glk", "to": "C00668", "required": true, "marker": false},
+        {"from": "C00668", "to": "zwf", "required": true, "marker": false},
+        {"from": "zwf", "to": "edd", "required": true, "marker": true},
+        {"from": "edd", "to": "eda", "required": true, "marker": true}
       ],
       
       "input": {
@@ -206,26 +211,27 @@ For related pathways sharing metabolic context:
       "name": "Non-Phosphorylative ED",
       "type": "variant",
       "kegg_module": "M00309",
-      "nodes": {
-        "gnaD": {"step": 1, "required": true, "marker": true},
-        "kdgA": {"step": 2, "required": true, "marker": true}
-      },
+      "verified": false,
+      
       "edges": [
-        {"from": "gnaD", "to": "kdgA", "compound": "KDG"}
+        {"from": "gnaD", "to": "C00204", "required": true, "marker": true},
+        {"from": "C00204", "to": "kdgA", "required": true, "marker": true}
       ],
+      
       "scoring": {"min_fraction": 0.75}
     }
   }
 }
 ```
 
-**Key Features:**
-- **Active flag**: `"active": false` deprecates old potatoes (kept for reference, not loaded by default)
-- **Genes defined once**: Global `nodes` array has detection methods
-- **Pathway-specific attributes**: Each pathway defines `step`, `required`, `marker` for its own context
+**Key V2 Features:**
+- **schema_version**: Required `"v2"` field
+- **Genes defined once**: Global `genes` array has detection methods only
+- **Compounds as nodes**: Full bipartite graph structure
+- **Edges carry context**: `required` and `marker` on edges (not genes)
+- **No step numbers**: Genes counted directly, not sequential steps
 - **Pathway types**: `"variant"` (alternative routes) vs `"independent"` (different purposes, shared space)
 - **Standard database types**: `kofam`, `blast`, `hmm` only (no custom names)
-- **Compounds on edges**: Optional metabolite information
 - **Per-pathway scoring**: Each pathway scored independently
 
 **Threshold Philosophy (v0.8.0):**

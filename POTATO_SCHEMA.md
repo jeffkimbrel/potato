@@ -1,27 +1,33 @@
-# POTATO Multi-Pathway Network Schema
+# POTATO V2 Schema
 
-**Version:** 0.9.3  
-**Date:** 2026-08-10  
-**Last Updated:** 2026-08-10
+**Version:** 0.9.4-dev  
+**Date:** 2026-08-12  
+**Last Updated:** 2026-08-12
 
 ## Overview
 
-POTATO uses multi-pathway network JSON files to represent related metabolic pathways that share genes or metabolic context. Each potato defines:
+**All POTATO files use V2 schema.** Each potato JSON defines:
 1. **Global genes** - Detection methods (KO IDs, BLAST refs, HMM profiles) and metadata
-2. **Pathways** - Pathway-specific topology, gene roles, and scoring parameters
+2. **Global compounds** - Metabolites and substrate/product definitions
+3. **Pathways** - Pathway-specific topology with edges carrying gene context (`required`, `marker`)
 
 ## Top-Level Structure
 
 ```json
 {
+  "schema_version": "v2",
   "id": "pathway_network_id",
   "name": "Human Readable Network Name",
   "source": "KEGG M00XXX, M00YYY",
   "tags": ["metabolism", "carbohydrate"],
   "notes": "Brief description of the network",
   
-  "nodes": [
+  "genes": [
     /* Global gene definitions */
+  ],
+  
+  "compounds": [
+    /* Global compound definitions */
   ],
   
   "pathways": {
@@ -31,9 +37,11 @@ POTATO uses multi-pathway network JSON files to represent related metabolic path
 }
 ```
 
-## Global Nodes Array
+## Global Genes Array
 
 Defines **detection methods** for all genes in the network. Each gene appears **once** in this array.
+
+**CRITICAL:** Genes only define detection methods. No `step`, `required`, or `marker` fields here.
 
 ```json
 {
@@ -58,7 +66,7 @@ Defines **detection methods** for all genes in the network. Each gene appears **
 - `id` must be unique across all genes
 - `databases` lists detection methods by tool type
 - Coordinates (`x`, `y`, `x_compounds`, `y_compounds`) are optional for visualization
-- **NO step, required, or marker fields** - these are pathway-specific
+- **NO step, required, or marker fields** - these live on edges in V2
 
 ## Pathways Object
 
@@ -108,25 +116,24 @@ Each pathway key maps to a pathway definition with:
 }
 ```
 
-## Pathway-Specific Attributes
+## Edge Attributes (V2)
 
-These fields are defined **per pathway** in the `pathways.pathway_id.nodes` object:
+**CRITICAL:** In V2, `required` and `marker` are on **edges**, not nodes.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `step` | integer | Sequential reaction step (1, 2, 3...) |
-| `required` | boolean | Must be present for pathway completion? |
-| `marker` | boolean | Diagnostic gene for this pathway? |
+| `required` | boolean | Must this edge be present for pathway completion? |
+| `marker` | boolean | Is this edge diagnostic for this pathway? |
 
-**Important:** The same gene can have different `step`, `required`, and `marker` values in different pathways.
+**Why edges?** Same gene can be required in one pathway, optional in another. Edges capture the gene's role in each specific pathway context.
 
 **Example:**
 ```json
-// In pathway "classic"
-"gnaD": {"step": 3, "required": true, "marker": true}
+// In pathway "classic" - gnaD is non-marker
+{"from": "C00257", "to": "gnaD", "required": true, "marker": false}
 
-// In pathway "non_phosphorylative"  
-"gnaD": {"step": 1, "required": true, "marker": true}
+// In pathway "non_phosphorylative" - same gene, now marker
+{"from": "C00257", "to": "gnaD", "required": true, "marker": true}
 ```
 
 ## Edge Format
@@ -175,10 +182,11 @@ A gene used by multiple pathways is:
 ## Scoring
 
 Each pathway is scored independently:
-- Count genes detected at each step
-- Calculate `fraction = detected_steps / total_steps`
+- Count genes detected (no steps in V2)
+- Calculate `fraction = detected_genes / total_genes`
 - Compare to `min_fraction` threshold
 - Pathway is `present` if `fraction >= min_fraction`
+- Track `required` genes separately (`essential_fraction`)
 
 ## Input/Output Fields
 
@@ -286,20 +294,21 @@ Diagnostic genes specific to this pathway:
 
 ## Validation Rules
 
-1. All `edges.from` and `edges.to` must reference genes in global `nodes`
-2. All pathway `nodes` keys must reference genes in global `nodes`
-3. Step numbers should be sequential (1, 2, 3...)
-4. At least one gene should have `marker: true` per pathway
-5. No cycles allowed in edge topology (must be DAG)
-6. `input.targets` and `output.sources` must reference genes in pathway `nodes`
+1. All `edges.from` and `edges.to` must reference IDs in global `genes` or `compounds`
+2. At least one edge should have `marker: true` per pathway
+3. No cycles allowed in edge topology (must be DAG)
+4. `input.targets` and `output.sources` must reference gene IDs used in pathway edges
+5. `schema_version` must be "v2"
 
 ## Design Principles
 
-1. **Genes defined once** - Detection methods in global `nodes`, context in pathway `nodes`
-2. **Pathway-specific roles** - Same gene can be step 1 in one pathway, step 3 in another
-3. **Independent scoring** - Each pathway evaluated separately
-4. **Biological context** - Pathway types explain relationships (variant vs independent)
-5. **Shared detection** - Gene detected once, counts for all pathways
+1. **Genes defined once** - Detection methods in global `genes`, no context on genes
+2. **Edges carry context** - `required` and `marker` on edges, not genes
+3. **No step numbers** - Simpler scoring (count genes), still effective
+4. **Bipartite graph** - Genes and compounds both nodes, edges connect them
+5. **Independent scoring** - Each pathway evaluated separately
+6. **Biological context** - Pathway types explain relationships (variant vs independent)
+7. **Shared detection** - Gene detected once, counts for all pathways
 
 ## Further Reading
 

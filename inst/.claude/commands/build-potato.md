@@ -41,25 +41,29 @@ Help users build well-structured potato JSON files through:
 
 **Don't just accept what the user says.** Push back when requests are vague or unrealistic. Force specificity.
 
-# Potato JSON Schema
+# Potato JSON Schema (V2)
+
+**CRITICAL:** All potatoes use V2 schema. No V1 compatibility.
 
 ## Required Fields
 
 ```json
 {
+  "schema_version": "v2",            // REQUIRED
   "id": "pathway_name",              // snake_case identifier
   "name": "Human Readable Name",
   "source": "KEGG M00123 / custom",
   "tags": ["metabolism", "energy"],
   "notes": "Brief biological description",
   
-  "nodes": [/* gene definitions */],
+  "genes": [/* gene definitions */],
+  "compounds": [/* compound definitions */],
   
   "pathways": {
     "pathway_id": {
       "name": "Pathway Name",
       "type": "variant",              // or "independent"
-      "verified": false,              // ALWAYS false - NEVER set to true (per-pathway field)
+      "verified": false,              // ALWAYS false - NEVER set to true
       "input": {                      // RECOMMENDED: starting substrate
         "compound": "substrate name",
         "kegg_compound": "C00001",
@@ -70,22 +74,21 @@ Help users build well-structured potato JSON files through:
         "kegg_compound": "C00002",
         "sources": ["geneZ"]
       },
-      "nodes": {/* pathway-specific attributes */},
-      "edges": [/* pathway topology */],
+      "edges": [/* bipartite graph: genes + compounds */],
       "scoring": {/* scoring parameters */}
     }
   }
 }
 ```
 
-## Gene Definition (nodes)
+## Gene Definition (V2)
 
-**For multi-pathway networks (recommended):**
-- Global `nodes` array defines **detection methods only** (databases, EC, name, type)
-- Pathway-specific `nodes` object defines **context** (step, required, marker)
+**V2 Schema:**
+- Global `genes` array defines **detection methods only** (databases, EC, name, type)
+- **NO step, required, marker on genes** - these go on edges
 - Same gene can have different roles in different pathways
 
-**Global node example:**
+**Global gene example:**
 ```json
 {
   "id": "gnaD",
@@ -94,6 +97,7 @@ Help users build well-structured potato JSON files through:
     "kofam": ["K05308"]
   },
   "ec": ["4.2.1.140"],
+  "reactions": ["R01541"],
   "type": "enzyme",
   "notes": "Bifunctional: acts on gluconate and galactonate",
   "x": 100,        // Optional: visualization coordinates
@@ -101,47 +105,51 @@ Help users build well-structured potato JSON files through:
 }
 ```
 
-**Pathway-specific node example (in `pathways.pathway_id.nodes`):**
+## Compound Definition (V2)
+
+**V2 Schema:**
+- Global `compounds` array defines all metabolites
+
+**Compound example:**
 ```json
-"gnaD": {
-  "step": 1,
-  "required": true,
-  "marker": true
+{
+  "id": "C00031",
+  "name": "D-glucose",
+  "kegg_compound": "C00031"
 }
 ```
 
 **Key Rules:**
-- **CRITICAL:** `"verified": false` - For multi-pathway networks, this field goes in EACH pathway definition (not at potato level or node level). ALWAYS set to false. NEVER set to true. Only humans verify pathways after review.
-- In multi-pathway networks, `step`, `required`, and `marker` are **pathway-specific**, not global
-- Same gene can be step 1 in one pathway, step 3 in another
-- For OR branches (alternative enzymes), multiple genes share same `step` number
-- At least ONE gene should have `marker: true` per pathway (diagnostic for that pathway)
+- **CRITICAL:** `"verified": false` - This field goes in EACH pathway definition. ALWAYS set to false. NEVER set to true. Only humans verify pathways after review.
 - **Detection methods:** Use `databases` field. Include multiple sources when possible:
   - **kofam** - KEGG Orthology IDs (K##### format)
   - **hmm** - HMM profile NAMEs (includes PFAM like PF##### and custom HMMs)
   - **blast** - Custom reference sequence IDs
 - **IMPORTANT:** PFAM profiles go in `hmm` field (PFAM is a type of HMM database), NOT a separate `pfam` field
 
-## Edges (pathway topology)
+## Edges (V2 bipartite graph)
 
-**For multi-pathway networks (recommended):**
-Edges use **gene IDs** (not step-based node IDs):
+**V2 Schema:**
+- Edges connect genes AND compounds
+- `required` and `marker` on edges (not genes)
+- Same gene can be required in one pathway, optional in another
 
 ```json
 {
-  "from": "geneA",                  // Source gene ID (no _step suffix)
-  "to": "geneB",                    // Target gene ID (no _step suffix)
-  "compound": "glucose",            // Metabolite transferred (optional but recommended)
-  "kegg_compound": "C00031"         // KEGG compound ID (optional but recommended)
+  "from": "C00031",                 // Can be gene ID or compound ID
+  "to": "geneA",                    // Can be gene ID or compound ID
+  "required": true,                 // Is this edge required for pathway?
+  "marker": false,                  // Is this edge diagnostic?
+  "reaction": "R00001"              // KEGG reaction ID (optional)
 }
 ```
 
 **Important notes:**
 - Edges are defined per pathway in `pathways.pathway_id.edges`
-- Use bare gene IDs, not step-based node IDs
-- **Compound name normalization:** Multi-part compounds (e.g., "pyruvate + G3P") will have parts sorted alphabetically during graph construction, so "A + B" and "B + A" are treated as equivalent
-- **Empty edges:** Transporter pathways may have `edges: []` since their topology is defined by input → genes → output connections
-- **OR Branches:** When step N has alternatives, create edges from ALL previous genes to ALL alternatives
+- Bipartite graph: compounds and genes both nodes
+- `required`/`marker` on edges because same gene has different roles in different pathways
+- **Compound name normalization:** Multi-part compounds have parts sorted alphabetically
+- **OR Branches:** Create edges from previous step to ALL alternatives
 
 Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
 ```json
