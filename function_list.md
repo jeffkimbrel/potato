@@ -12,14 +12,32 @@
 			- PotatoV2 (S7 class)
 - add_genomes
 	- jakomics_to_genome_file
+- run_kofam
+	- create_kofam_hal
+	- compute_potato_hash
+	- get_potato_hashes
+	- find_conda
+	- run_kofam_cmd (embedded within run_kofam)
+	- kofam_hits_to_tibble
+- run_blast
+	- create_blast_db
+	- run_blast_cmd (embedded within run_blast)
+	- blast_hits_to_tibble
+- run_hmm
+	- create_hmm_profile
+	- hmm_hits_to_tibble
+- plot_annotation_coverage
+
+## Removed
+
+- annotate_sack_simple
+- export_potato_dot
+
 
 ## Not Checked
 
 - align_coordinates
-- plot_annotation_coverage
 - print_provenance
-- annotate_sack_simple
-- blast_hits_to_tibble
 - build_bipartite_graph
 - build_graph_v2
 - build_potato_graph
@@ -27,13 +45,7 @@
 - build_visnetwork_with_gene_connectors
 - calculate_node_layout
 - check_verified_status
-- compute_potato_hash
-- create_blast_db
-- create_hmm_profile
-- create_kofam_hal
 - create_step_layout
-- export_potato_dot
-- find_conda
 - find_near_miss_pathways
 - format_gene
 - format_gene_compact
@@ -43,14 +55,11 @@
 - get_marker_genes
 - get_node_status
 - get_pathway_scores
-- get_potato_hashes
 - get_step_output_compounds
 - get_verification_status
-- hmm_hits_to_tibble
 - is_node_detected
 - is_node_detected_network
 - jakomics_to_genome_file
-- kofam_hits_to_tibble
 - load_test_potato
 - normalize_compound_name
 - plot_all_pathways_heatmap
@@ -67,9 +76,6 @@
 - print_pathway_detail
 - print_potato
 - print_validation
-- run_blast
-- run_hmm
-- run_kofam
 - score_pathways
 - score_single_pathway
 - score_single_pathway_network

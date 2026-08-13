@@ -355,18 +355,3 @@ create_step_layout <- function(potato, node_names, is_bipartite = FALSE) {
 
 
 
-
-#' Export potato DAG to graphviz DOT format
-#'
-#' @param potato Potato object
-#' @param file Output file path (optional, returns string if NULL)
-#' @export
-export_potato_dot <- function(potato, file = NULL) {
-  g <- build_potato_graph(potato)
-
-  if (is.null(file)) {
-    return(igraph::write_graph(g, file = tempfile(), format = "dot"))
-  } else {
-    igraph::write_graph(g, file = file, format = "dot")
-  }
-}

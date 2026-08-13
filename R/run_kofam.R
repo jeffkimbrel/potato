@@ -110,6 +110,7 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   } else {
     "exec_annotation --version 2>&1"
   }
+
   tool_version <- tryCatch({
     version_output <- suppressWarnings(system(version_cmd, intern = TRUE))
     # Take first non-empty line

@@ -165,8 +165,8 @@ plot_annotation_coverage <- function(sack) {
     ggplot2::geom_tile(color = "white", linewidth = 0.5) +
     ggplot2::scale_fill_manual(
       values = c(
-        "checked" = "#2ECC71",  # Green
-        "none" = "#95A5A6",     # Gray
+        "checked" = "#2165de",  #
+        "none" = "gray40",     # Gray
         "gap" = "#E74C3C"       # Red
       ),
       labels = c(

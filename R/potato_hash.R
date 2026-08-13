@@ -11,6 +11,7 @@
 #' @param potato Potato S7 object
 #' @return Character string with MD5 hash
 #' @keywords internal
+
 compute_potato_hash <- function(potato) {
   # Handle both v1 (nodes) and v2 (genes)
   if (S7::S7_inherits(potato, PotatoV2)) {
