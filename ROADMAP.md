@@ -776,6 +776,58 @@ sack <- run_kofam(sack, potato_names = "pathway_B")  # ERROR!
 
 ---
 
+#### 1.5.3 Centralized Provenance Writing Helper (Future Enhancement)
+
+**Current status:** Each function directly assigns to `sack@provenance$tool` with different behaviors (append vs overwrite)
+
+**Observation:** This works well at current scale but has potential issues:
+- No centralized validation of provenance structure
+- Append logic duplicated (genomes vs future use cases)
+- Format changes require updates in multiple places
+- Risk of creating inconsistent structures
+
+**Potential solution:** `write_provenance()` helper function
+```r
+write_provenance <- function(sack, type, data, append = FALSE) {
+  # Validation
+  if (!is.list(data)) cli::cli_abort("Provenance data must be a list")
+  if (is.null(data$timestamp)) cli::cli_abort("Provenance must include timestamp")
+  
+  # Write
+  if (append) {
+    if (is.null(sack@provenance[[type]])) {
+      sack@provenance[[type]] <- list(data)
+    } else {
+      sack@provenance[[type]][[length(sack@provenance[[type]]) + 1]] <- data
+    }
+  } else {
+    sack@provenance[[type]] <- data
+  }
+  
+  sack
+}
+
+# Usage in functions:
+sack <- write_provenance(sack, "kofam", list(...), append = FALSE)
+sack <- write_provenance(sack, "genomes", genome_provenance, append = TRUE)
+```
+
+**Benefits:**
+- Centralized validation of provenance structure
+- Single place to add features (versioning, export hooks)
+- Consistent error messages
+- Easier to extend provenance system
+
+**When to implement:**
+- More provenance types added (>5)
+- Need for stricter validation
+- Want features like provenance versioning/export
+- Want to add provenance hooks (e.g., auto-export on write)
+
+**Priority:** LOW - Nice to have, not urgent. Direct assignment is working well.
+
+---
+
 ### Phase 2: Input/Output Validation & DAG Connectivity
 
 **Goal:** Elevate input/output from plotting metadata to core validation requirements. Pathways must define biologically complete units with reachable inputs and connected outputs.
