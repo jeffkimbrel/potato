@@ -50,62 +50,6 @@ Potato <- S7::new_class(
 )
 
 
-#' Load a potato from JSON
-#'
-#' Loads multi-pathway network potatoes (new schema). Does not support
-#' single-pathway schema.
-#'
-#' @param path Path to potato JSON file
-#' @return Potato object (for multi-pathway networks, stores pathways in edges slot)
-#' @export
-load_potato <- function(path) {
-  if (!file.exists(path)) {
-    stop("Potato file not found: ", path, call. = FALSE)
-  }
-
-  data <- jsonlite::read_json(path, simplifyVector = FALSE)
-
-  # Check if single-pathway potato
-  is_network <- !is.null(data$pathways) && is.list(data$pathways)
-
-  if (!is_network) {
-    # Check if marked as inactive
-    if (!is.null(data$active) && data$active == FALSE) {
-      warning("Potato '", data$id, "' is inactive (active: false). ",
-              "Consider using the updated multi-pathway network version.",
-              call. = FALSE)
-    } else {
-      stop("Single-pathway schema is no longer supported. ",
-           "Only multi-pathway network potatoes can be loaded.",
-           call. = FALSE)
-    }
-  }
-
-  # Load multi-pathway network
-  # JSON uses "nodes" but we store as "genes" in S7 object
-  genes <- if (is.null(data$nodes)) list() else data$nodes
-  tags <- if (is.null(data$tags)) character(0) else unlist(data$tags)
-
-  # Store pathways in edges slot for multi-pathway networks
-  edges <- if (is.null(data$pathways)) list() else data$pathways
-
-  Potato(
-    id = data$id,
-    name = data$name,
-    genes = genes,
-    edges = edges,  # Contains pathways for network potatoes
-    tags = tags,
-    source = if (is.null(data$source)) "" else data$source,
-    notes = if (is.null(data$notes)) "" else data$notes,
-    scoring = if (is.null(data$scoring)) list() else data$scoring,
-    input = if (is.null(data$input)) list() else data$input,
-    output = if (is.null(data$output)) list() else data$output,
-    json_path = path,
-    graph = NULL,
-    compound_coordinates = if (is.null(data$compound_coordinates)) list() else data$compound_coordinates
-  )
-}
-
 
 #' Load multiple potatoes from directory
 #'
@@ -117,9 +61,10 @@ load_potato <- function(path) {
 #' @param include_inactive Logical. If TRUE, loads inactive potatoes (active: false)
 #' @return Named list of Potato objects
 #' @export
+
 load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
   if (!dir.exists(dir)) {
-    stop("Directory not found: ", dir, call. = FALSE)
+    cli::cli_abort("Directory not found: {.path {dir}}")
   }
 
   json_files <- list.files(dir, pattern = "\\.json$", full.names = TRUE)
@@ -134,23 +79,7 @@ load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
         return(NULL)
       }
 
-      # Check if v2 schema
-      is_v2 <- !is.null(data$schema_version) && data$schema_version == "v2"
-
-      if (is_v2) {
-        # Load v2 potato
-        return(load_potato_v2(filepath))
-      }
-
-      # For v1, skip single-pathway potatoes that aren't marked inactive
-      is_network <- !is.null(data$pathways) && is.list(data$pathways)
-      if (!is_network && (is.null(data$active) || data$active == TRUE)) {
-        warning("Skipping ", basename(filepath), ": single-pathway schema not supported (should be marked active: false)", call. = FALSE)
-        return(NULL)
-      }
-
-      # Load v1 potato
-      load_potato(filepath)
+      return(load_potato_v2(filepath))
     }, error = function(e) {
       warning("Failed to load ", basename(filepath), ": ", e$message, call. = FALSE)
       NULL

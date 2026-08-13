@@ -34,6 +34,7 @@ PotatoV2 <- S7::new_class(
 #' Load potato v2 schema
 #' @param path Path to v2 potato JSON
 #' @export
+
 load_potato_v2 <- function(path) {
   potato_data <- jsonlite::read_json(path, simplifyVector = FALSE)
 

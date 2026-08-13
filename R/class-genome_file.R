@@ -48,11 +48,13 @@ jakomics_to_genome_file <- function(jakomics_file) {
   # Extract file extension without the leading dot
   file_type <- sub("^\\.", "", jakomics_file$suffix)
 
+  jakomics_file$get_md5()
+
   GenomeFile(
     short_name = jakomics_file$short_name,
     file_path = jakomics_file$file_path,
     name = jakomics_file$name,
     file_type = file_type,
-    md5 = ""  # Could compute if needed: jakomics_file$get_md5()
+    md5 = jakomics_file$md5
   )
 }

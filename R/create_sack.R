@@ -8,33 +8,27 @@
 #'
 #' @returns PotatoSack S7 object
 #' @export
+
 create_sack <- function(path = NULL) {
 
   # Auto-find sack directory if not specified
   if (is.null(path)) {
-    sack_root <- find_potato_sack()
-    if (is.null(sack_root)) {
-      stop("Not in a potato sack directory.\n",
-           "  Run initialize_potato_sack() to create one, or\n",
-           "  Provide path to existing sack directory",
-           call. = FALSE)
-    }
-    path <- sack_root
+    path <- find_potato_sack()
   }
 
   # Validate directory exists
   if (!dir.exists(path)) {
-    stop("Directory not found: ", path, call. = FALSE)
+    cli::cli_abort("Directory not found: {.path {path}}")
   }
 
   sack_root <- normalizePath(path)
   config_path <- file.path(sack_root, "potato_config.yaml")
 
   if (!file.exists(config_path)) {
-    stop("No potato_config.yaml found in: ", sack_root, call. = FALSE)
+    cli::cli_abort("No {.file potato_config.yaml} found in: {.path {sack_root}}")
   }
 
-  message("Creating PotatoSack from: ", basename(sack_root))
+  cli::cli_inform("Creating PotatoSack from: {.path {basename(sack_root)}}")
 
   # Load config
   config <- load_potato_config(config_path)
@@ -42,19 +36,15 @@ create_sack <- function(path = NULL) {
   # Load potatoes
   potatoes_dir <- file.path(sack_root, config$paths$potatoes)
   if (!dir.exists(potatoes_dir)) {
-    warning("Potatoes directory not found: ", potatoes_dir)
-    potatoes <- list()
+    cli::cli_abort("Potatoes directory not found: {.path {potatoes_dir}}")
   } else {
-    potatoes <- load_potatoes(potatoes_dir)
-    message("  Loaded ", length(potatoes), " potato(es)")
+    potatoes <- load_potatoes(potatoes_dir) # TODO abilty to utilize tags
+    cli::cli_inform("Loaded {length(potatoes)} potato(es)")
   }
-
-  # Generate sack ID
-  sack_id <- basename(sack_root)
 
   # Create PotatoSack object (genomes are empty - use add_genomes())
   sack <- PotatoSack(
-    sack_id = sack_id,
+    sack_id = basename(sack_root),
     sack_root = sack_root,
     config = config,
     potatoes = potatoes,
@@ -69,7 +59,7 @@ create_sack <- function(path = NULL) {
     )
   )
 
-  message("  Sack created. Use add_genomes() to register genome files.")
+  cli::cli_inform("  Sack created. Use add_genomes() to register genome files.")
 
   sack
 }

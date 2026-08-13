@@ -11,7 +11,19 @@ create_kofam_hal <- function(sack, potato_names = NULL) {
   if (is.null(potato_names)) {
     potatoes <- sack@potatoes
   } else {
+    # Validate potato names exist
+    available_names <- names(sack@potatoes)
+    invalid_names <- setdiff(potato_names, available_names)
+
+    if (length(invalid_names) > 0) {
+      cli::cli_abort(c(
+        "Invalid potato names: {.val {invalid_names}}",
+        "i" = "Available potatoes: {.val {available_names}}"
+      ))
+    }
+
     potatoes <- sack@potatoes[potato_names]
+
   }
 
   # Extract all unique KO IDs across potatoes

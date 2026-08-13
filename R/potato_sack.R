@@ -16,9 +16,10 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
   name <- basename(project_path)
 
   if (dir.exists(project_path)) {
-    stop("Directory already exists: ", project_path, "\n",
-         "Choose a different name or remove the existing folder.",
-         call. = FALSE)
+    cli::cli_abort(c(
+      "Directory already exists: {project_path}",
+      "i" = "Choose a different name or remove the existing folder."
+    ), call = NULL)
   }
 
   # --- Folder structure ---
@@ -43,7 +44,7 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
       potato_files <- list.files(package_potatoes, pattern = "\\.json$", full.names = TRUE)
       if (length(potato_files) > 0) {
         file.copy(potato_files, file.path(project_path, "potatoes"), overwrite = FALSE)
-        cat("  Copied", length(potato_files), "example potatoes\n")
+        cli::cli_alert_success("Copied {length(potato_files)} example potato{?es}")
       }
     }
   }
@@ -67,7 +68,7 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
 
         file.copy(src_file, dest_file, overwrite = FALSE)
       }
-      cat("  Copied Claude agents to .claude/\n")
+      cli::cli_alert_success("Copied Claude agents to .claude/")
     }
   }
 
@@ -223,22 +224,20 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
   }
 
   # --- Summary ---
-  cat("\n")
-  cat("Potato sack initialized: ", project_path, "\n", sep = "")
-  cat("  Config   : ", file.path(project_path, "potato_config.yaml"), "\n", sep = "")
-  cat("  RStudio  : ", file.path(project_path, paste0(name, ".Rproj")), "\n", sep = "")
-  cat("  Potatoes : ", file.path(project_path, "potatoes/"), "\n", sep = "")
-  cat("  Genomes  : ", file.path(project_path, "genomes/"), "\n", sep = "")
-  cat("  Results  : ", file.path(project_path, "results/"), "\n", sep = "")
-  cat("  Agents   : ", file.path(project_path, ".claude/"), "\n", sep = "")
-  cat("\n")
-  cat("Next steps:\n")
-  cat("  1. Open", paste0(name, ".Rproj"), "in RStudio or load folder in Positron\n")
-  cat("  2. Edit potato_config.yaml to set your database paths\n")
-  cat("  3. Run: sack <- create_sack()\n")
-  cat("  4. Add genomes: sack <- add_genomes(sack, \"path/to/genomes/*.faa\")\n")
-  cat("  5. Save: saveRDS(sack, \"sack.rds\")  |  Load: sack <- readRDS(\"sack.rds\")\n")
-  cat("\n")
+  cli::cli_alert_info("Potato sack initialized: {project_path}")
+  cli::cli_alert_info("Config   : {file.path(project_path, 'potato_config.yaml')}")
+  cli::cli_alert_info("RStudio  : {file.path(project_path, paste0(name, '.Rproj'))}")
+  cli::cli_alert_info("Potatoes : {file.path(project_path, 'potatoes/')}")
+  cli::cli_alert_info("Genomes  : {file.path(project_path, 'genomes/')}")
+  cli::cli_alert_info("Results  : {file.path(project_path, 'results/')}")
+  cli::cli_alert_info("Agents   : {file.path(project_path, '.claude/')}")
+
+  cli::cli_alert_info("Next steps:")
+  cli::cli_alert_info("1. Open {name}.Rproj in RStudio or load folder in Positron")
+  cli::cli_alert_info("2. Edit potato_config.yaml to set your database paths")
+  cli::cli_alert_info("3. Run: sack <- create_sack()")
+  cli::cli_alert_info('4. Add genomes: sack <- add_genomes(sack, "path/to/genomes/*.faa")')
+  cli::cli_alert_info('5. Save: saveRDS(sack, "sack.rds")  |  Load: sack <- readRDS("sack.rds")')
 
   invisible(project_path)
 }
@@ -253,6 +252,7 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
 #'
 #' @returns Character path to the project root, or NULL if not inside a potato sack.
 #' @export
+
 find_potato_sack <- function(path = NULL) {
   if (is.null(path)) {
     path <- getwd()
@@ -263,7 +263,9 @@ find_potato_sack <- function(path = NULL) {
   while (TRUE) {
     if (file.exists(file.path(path, "potato_config.yaml"))) return(path)
     parent <- dirname(path)
-    if (identical(parent, path)) return(NULL)
+    if (identical(parent, path)) {
+      cli::cli_abort("No {.file potato_config.yaml} found in {.path {path}} or any parent directory.")
+    }
     path <- parent
   }
 }

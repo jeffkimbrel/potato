@@ -9,15 +9,18 @@
   tryCatch({
     reticulate::use_condaenv(conda_env, required = FALSE)
     reticulate::py_require("jakomics")
-    jakomics <<- reticulate::import("jakomics", delay_load = TRUE)
+    # Store in package namespace, not global environment
+    assign("jakomics", reticulate::import("jakomics", delay_load = TRUE), envir = parent.env(environment()))
   }, error = function(e) {
     # Silent - will notify in .onAttach
   })
 }
 
 .onAttach <- function(libname, pkgname) {
-  # Check if jakomics was loaded successfully
-  if (!exists("jakomics") || is.null(jakomics)) {
+  # Check if jakomics was loaded successfully in package namespace
+  jakomics_loaded <- exists("jakomics", envir = asNamespace(pkgname), inherits = FALSE)
+
+  if (!jakomics_loaded) {
     packageStartupMessage("Note: jakomics not loaded. Tool execution will be unavailable.")
     packageStartupMessage("")
     packageStartupMessage("To enable annotation tools:")
