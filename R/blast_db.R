@@ -18,7 +18,10 @@ create_blast_db <- function(sack, potato_names = NULL) {
   }
 
   # Extract all unique BLAST subject IDs across potatoes
+  # Track which potatoes contributed BLAST terms
   all_subjects <- character()
+  potatoes_with_blast <- character()
+
   for (potato in potatoes) {
     # Handle both v1 (nodes) and v2 (genes)
     genes <- if (S7::S7_inherits(potato, PotatoV2)) {
@@ -27,13 +30,20 @@ create_blast_db <- function(sack, potato_names = NULL) {
       potato@genes
     }
 
+    potato_subjects <- character()
     for (gene in genes) {
       if (!is.null(gene$databases$blast)) {
-        all_subjects <- c(all_subjects, gene$databases$blast)
+        potato_subjects <- c(potato_subjects, gene$databases$blast)
       }
+    }
+
+    if (length(potato_subjects) > 0) {
+      all_subjects <- c(all_subjects, potato_subjects)
+      potatoes_with_blast <- c(potatoes_with_blast, potato@id)
     }
   }
   all_subjects <- unique(all_subjects)
+  potatoes_with_blast <- unique(potatoes_with_blast)
 
   if (length(all_subjects) == 0) {
     cli::cli_abort("No blast terms found in selected potatoes")
@@ -138,5 +148,11 @@ create_blast_db <- function(sack, potato_names = NULL) {
 
   cli::cli_alert_success("Created filtered FASTA with {length(needed_seqs)} sequence{?s}")
 
-  list(blast_db = filtered_fasta, sack = sack)
+  list(
+    blast_db = filtered_fasta,
+    all_subjects = all_subjects,
+    potatoes_with_blast = potatoes_with_blast,
+    fasta_content = fasta_lines,  # For provenance
+    sack = sack
+  )
 }

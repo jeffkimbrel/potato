@@ -56,6 +56,9 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
   hmm_result <- create_hmm_profile(sack, potato_names)
   hmm_profile <- hmm_result$hmm_profile
   tc_values <- hmm_result$tc_values
+  all_profiles <- hmm_result$all_profiles
+  potatoes_with_hmm <- hmm_result$potatoes_with_hmm
+  profile_content <- hmm_result$profile_content
   sack <- hmm_result$sack
 
   # Get annotation session directory (created by create_hmm_profile)
@@ -98,6 +101,21 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
       ))
     }
   }
+
+  # Capture tool version for provenance
+  version_cmd <- if (!is.null(conda_env)) {
+    sprintf("%s run -n %s hmmsearch -h 2>&1 | head -2", conda_cmd, conda_env)
+  } else {
+    "hmmsearch -h 2>&1 | head -2"
+  }
+  tool_version <- tryCatch({
+    version_output <- suppressWarnings(system(version_cmd, intern = TRUE))
+    # hmmsearch version is in first 2 lines
+    version_line <- paste(version_output[1:2], collapse = " ")
+    if (is.na(version_line) || nchar(version_line) == 0) "unknown" else version_line
+  }, error = function(e) {
+    "unknown"
+  })
 
   # STEP 1: Run hmmsearch commands in parallel (just execute, return raw output + command)
   run_hmm_cmd <- function(genome_path, genome_name, hmm_profile, conda_cmd, conda_env) {
@@ -195,6 +213,30 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
 
   # Add to sack results
   sack@results$hmm <- hmm_results
+
+  # Add provenance tracking
+  # Build command template with placeholders
+  hmmsearch_template <- "hmmsearch --tblout {tblout} --noali {hmm_profile} {genome_path} > /dev/null"
+  if (!is.null(conda_env)) {
+    hmmsearch_template <- sprintf("%s run -n %s %s", conda_cmd, conda_env, hmmsearch_template)
+  }
+
+  sack@provenance$hmm <- list(
+    timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+    tool_version = tool_version,
+    conda_env = conda_env,
+    workers = workers,
+    potatoes_requested = names(potatoes),
+    potatoes_with_genes = potatoes_with_hmm,
+    n_genomes = length(genome_paths),
+    n_profiles = length(all_profiles),
+    commands = list(
+      profile_content = profile_content,
+      hmm_profile = hmm_profile,
+      hmmsearch_template = hmmsearch_template,
+      genome_paths = genome_paths
+    )
+  )
 
   cli::cli_alert_success("HMM annotation complete")
 

@@ -4,7 +4,7 @@
 
 **POTATO** (Pathway annOTATOr) is an R package for annotating MAGs (metagenome-assembled genomes) against curated metabolic pathways. It's the successor to GATOR (Genome annotATOR), redesigned around self-contained pathway definitions (potatoes) as DAG structures in JSON.
 
-**Current Status:** v0.9.4-dev (2026-08-12) - V2 schema migration complete. All V1 backward compatibility removed. Uses `@genes`, `@compounds`, `@pathways` structure with edges carrying `required`/`marker` attributes. 41 passing tests.
+**Current Status:** v0.10.2-dev (2026-08-13) - V2 schema migration complete. Provenance tracking implemented for all annotation and scoring steps. Full reproducibility with command templates and tool versions.
 
 **Key Innovation:** Each "potato" (pathway) is a self-contained JSON file defining:
 - Genes with multi-tool detection methods (KEGG, PFAM, BLAST, HMM)
@@ -17,7 +17,8 @@
 ## Important Files
 
 - **[ROADMAP.md](ROADMAP.md)** - Complete implementation plan, phases, file formats, future enhancements
-- **[WORKFLOW.md](WORKFLOW.md)** - Mermaid diagrams of current workflow and architecture
+- **[WORKFLOW.md](WORKFLOW.md)** - Function call architecture and workflow
+- **[PROVENANCE.md](PROVENANCE.md)** - Provenance tracking system documentation
 - **[environment.yaml](environment.yaml)** - Conda environment with bioinformatics tools
 - **R/zzz.R** - Reticulate setup, loads Python backend on package load
 - **inst/python/** - Python backend code (will be rewritten for v1)
@@ -621,7 +622,7 @@ sack <- readRDS("sack.rds")  # Standard R load
 
 ---
 
-## Complete Workflow Status (v0.9.3)
+## Complete Workflow Status (v0.10.2)
 
 ### Fully Implemented and Tested ✓
 
@@ -830,6 +831,10 @@ All features above have been implemented and basic testing done on:
 - `get_gene_results(sack)` - Export gene-level annotation results with threshold pass/fail
 - `get_pathway_scores(sack)` - Export pathway scores with essential metrics and potato_hash
 - `get_node_status(potato, sack, genome_name)` - Get detection status for plotting (internal)
+
+### Provenance Functions
+- `print_provenance(sack)` - Pretty-print all provenance data with timestamps and tool versions
+- `plot_annotation_coverage(sack)` - Heatmap showing annotation coverage gaps (which pathways checked with which databases)
 
 ### Config Functions
 - `load_potato_config(config_path = NULL)` - Load and validate config YAML
@@ -1580,6 +1585,7 @@ When you return to work on POTATO:
 
 ## Version History
 
+- **v0.10.2-dev** - Provenance tracking system (add_genomes, run_kofam, run_blast, run_hmm, score_pathways), plot_annotation_coverage diagnostic, print_provenance reporting
 - **v0.9.3** - Essential-only scoring metrics, result export functions (get_gene_results, get_pathway_scores), multi-line pathway hover text, test coverage 27% (91 tests)
 - **v0.9.2** - Multi-pathway scoring implementation (score each pathway independently)
 - **v0.9.1** - Input/output compound visualization and static plot improvements  
@@ -1593,7 +1599,7 @@ When you return to work on POTATO:
 - **v0.4.0** - Bug fixes and UX improvements (pre-cleanup)
 - **v1.0.0** - Target: gene specificity weighting + LLM agents + polished documentation
 
-## Complete Example Workflow (v0.7.0)
+## Complete Example Workflow (v0.10.2)
 
 ```r
 library(potato)
@@ -1613,16 +1619,20 @@ sack <- run_hmm(sack, conda_env = "potato", workers = 8)
 # 4. Score pathways
 sack <- score_pathways(sack)
 
-# 5. Save results
+# 5. Check provenance and annotation coverage
+print_provenance(sack)
+plot_annotation_coverage(sack)  # Shows which pathways checked with which databases
+
+# 6. Save results
 saveRDS(sack, "sack.rds")
 
-# 6. Visualize results
+# 7. Visualize results
 plot_pathway_heatmap(sack)
 plot_genome_pathways(sack, "genome_name")
 plot_potato(sack@potatoes$glyoxylate_cycle, sack, "genome_name")
 plot_pathway_summary(sack)
 
-# 7. Export results
+# 8. Export results
 gene_results <- get_gene_results(sack)
 pathway_scores <- get_pathway_scores(sack)
 write.csv(gene_results, "gene_results.csv")

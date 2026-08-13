@@ -117,6 +117,20 @@ add_genomes <- function(sack, path, validate = TRUE, recursive = FALSE) {
     sack@results <- dplyr::bind_rows(sack@results, new_results)
   }
 
+  # Add provenance tracking (append, since add_genomes can be called multiple times)
+  genome_provenance <- list(
+    timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+    n_added = length(new_genomes),
+    genome_names = sapply(new_genomes, function(g) g@short_name),
+    genome_paths = sapply(new_genomes, function(g) g@file_path)
+  )
+
+  if (is.null(sack@provenance$genomes)) {
+    sack@provenance$genomes <- list(genome_provenance)
+  } else {
+    sack@provenance$genomes[[length(sack@provenance$genomes) + 1]] <- genome_provenance
+  }
+
   cli::cli_alert_success("Added {length(new_genomes)} genome{?s}. Total: {length(sack@genomes)}")
 
   sack

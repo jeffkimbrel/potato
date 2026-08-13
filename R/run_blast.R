@@ -59,6 +59,9 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   # Create filtered BLAST database from potato reference sequences
   blast_result <- create_blast_db(sack, potato_names)
   blast_db <- blast_result$blast_db
+  all_subjects <- blast_result$all_subjects
+  potatoes_with_blast <- blast_result$potatoes_with_blast
+  fasta_content <- blast_result$fasta_content
   sack <- blast_result$sack
 
   # Get annotation session directory (created by create_blast_db)
@@ -110,6 +113,21 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
       ))
     }
   }
+
+  # Capture tool version for provenance
+  version_cmd <- if (!is.null(conda_env)) {
+    sprintf("%s run -n %s blastp -version 2>&1", conda_cmd, conda_env)
+  } else {
+    "blastp -version 2>&1"
+  }
+  tool_version <- tryCatch({
+    version_output <- suppressWarnings(system(version_cmd, intern = TRUE))
+    # Take first non-empty line
+    version_line <- version_output[nchar(version_output) > 0][1]
+    if (is.na(version_line)) "unknown" else version_line
+  }, error = function(e) {
+    "unknown"
+  })
 
   # STEP 1: Run blast commands in parallel (just execute, return raw output + command)
   run_blast_cmd <- function(genome_path, genome_name, blast_db, conda_cmd, conda_env) {
@@ -212,6 +230,36 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
 
   # Add to sack results
   sack@results$blast <- blast_results
+
+  # Add provenance tracking
+  # Build command templates with placeholders
+  makedb_template <- sprintf("makeblastdb -in %s -dbtype prot", "{blast_db}")
+  if (!is.null(conda_env)) {
+    makedb_template <- sprintf("conda run -n %s %s", conda_env, makedb_template)
+  }
+
+  blastp_template <- "blastp -query {genome_path} -db {blast_db} -outfmt 6 -num_threads 1 -evalue 1e-5 -max_target_seqs 500"
+  if (!is.null(conda_env)) {
+    blastp_template <- sprintf("%s run -n %s %s", conda_cmd, conda_env, blastp_template)
+  }
+
+  sack@provenance$blast <- list(
+    timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+    tool_version = tool_version,
+    conda_env = conda_env,
+    workers = workers,
+    potatoes_requested = names(potatoes),
+    potatoes_with_genes = potatoes_with_blast,
+    n_genomes = length(genome_paths),
+    n_subjects = length(all_subjects),
+    commands = list(
+      fasta_content = fasta_content,
+      blast_db = blast_db,
+      makeblastdb_template = makedb_template,
+      blastp_template = blastp_template,
+      genome_paths = genome_paths
+    )
+  )
 
   cli::cli_alert_success("BLAST annotation complete")
 

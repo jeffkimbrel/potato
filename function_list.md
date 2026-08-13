@@ -16,6 +16,8 @@
 ## Not Checked
 
 - align_coordinates
+- plot_annotation_coverage
+- print_provenance
 - annotate_sack_simple
 - blast_hits_to_tibble
 - build_bipartite_graph

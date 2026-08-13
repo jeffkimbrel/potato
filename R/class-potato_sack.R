@@ -83,6 +83,13 @@ S7::method(print, PotatoSack) <- function(x, ...) {
       cli::cli_h2("Scores")
       cli::cli_text("Pathway scores: {nrow(x@scores)} result{?s}")
     }
+
+    if (!is.null(x@provenance) && length(x@provenance) > 0) {
+      cli::cli_h2("Provenance")
+      prov_steps <- names(x@provenance)
+      cli::cli_text("Tracked: {paste(prov_steps, collapse = ', ')}")
+      cli::cli_text("Run {.code print_provenance(sack)} for details")
+    }
   }
 
   invisible(x)

@@ -19,7 +19,10 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
   }
 
   # Extract all unique HMM profile NAMEs across potatoes
+  # Track which potatoes contributed HMM profiles
   all_profiles <- character()
+  potatoes_with_hmm <- character()
+
   for (potato in potatoes) {
     # Handle both v1 (nodes) and v2 (genes)
     genes <- if (S7::S7_inherits(potato, PotatoV2)) {
@@ -28,13 +31,20 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
       potato@genes
     }
 
+    potato_profiles <- character()
     for (gene in genes) {
       if (!is.null(gene$databases$hmm)) {
-        all_profiles <- c(all_profiles, gene$databases$hmm)
+        potato_profiles <- c(potato_profiles, gene$databases$hmm)
       }
+    }
+
+    if (length(potato_profiles) > 0) {
+      all_profiles <- c(all_profiles, potato_profiles)
+      potatoes_with_hmm <- c(potatoes_with_hmm, potato@id)
     }
   }
   all_profiles <- unique(all_profiles)
+  potatoes_with_hmm <- unique(potatoes_with_hmm)
 
   if (length(all_profiles) == 0) {
     cli::cli_abort("No hmm terms found in selected potatoes")
@@ -172,5 +182,12 @@ create_hmm_profile <- function(sack, potato_names = NULL) {
   cli::cli_alert_success("Created filtered HMM with {length(needed_profiles)} profile{?s}")
   cli::cli_alert_info("TC values: {n_with_tc} with TC, {n_without_tc} without")
 
-  list(hmm_profile = filtered_hmm, tc_values = tc_values, sack = sack)
+  list(
+    hmm_profile = filtered_hmm,
+    tc_values = tc_values,
+    all_profiles = all_profiles,
+    potatoes_with_hmm = potatoes_with_hmm,
+    profile_content = profile_lines,  # For provenance
+    sack = sack
+  )
 }

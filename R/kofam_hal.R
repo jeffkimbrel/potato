@@ -27,15 +27,24 @@ create_kofam_hal <- function(sack, potato_names = NULL) {
   }
 
   # Extract all unique KO IDs across potatoes
+  # Track which potatoes contributed KOs
   all_kos <- character()
+  potatoes_with_kofam <- character()
+
   for (potato in potatoes) {
+    potato_kos <- character()
     for (gene in potato@genes) {
       if (!is.null(gene$databases$kofam)) {
-        all_kos <- c(all_kos, gene$databases$kofam)
+        potato_kos <- c(potato_kos, gene$databases$kofam)
       }
+    }
+    if (length(potato_kos) > 0) {
+      all_kos <- c(all_kos, potato_kos)
+      potatoes_with_kofam <- c(potatoes_with_kofam, potato@id)
     }
   }
   all_kos <- unique(all_kos)
+  potatoes_with_kofam <- unique(potatoes_with_kofam)
 
   if (length(all_kos) == 0) {
     cli::cli_abort("No kofam KOs found in selected potatoes")
@@ -93,5 +102,11 @@ create_kofam_hal <- function(sack, potato_names = NULL) {
     cli::cli_alert_info("Using existing {.file {basename(hal_path)}}")
   }
 
-  list(hal_path = hal_path, sack = sack)
+  list(
+    hal_path = hal_path,
+    hal_content = hmm_paths,  # For provenance
+    all_kos = all_kos,
+    potatoes_with_kofam = potatoes_with_kofam,
+    sack = sack
+  )
 }

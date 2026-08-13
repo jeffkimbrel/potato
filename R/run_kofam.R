@@ -47,6 +47,9 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   cli::cli_alert_info("Preparing kofam annotation...")
   hal_result <- create_kofam_hal(sack, potato_names)
   hal_path <- hal_result$hal_path
+  hal_content <- hal_result$hal_content
+  all_kos <- hal_result$all_kos
+  potatoes_with_kofam <- hal_result$potatoes_with_kofam
   sack <- hal_result$sack
 
   # Get kofam config
@@ -100,6 +103,21 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
       ))
     }
   }
+
+  # Capture tool version for provenance
+  version_cmd <- if (!is.null(conda_env)) {
+    sprintf("%s run -n %s exec_annotation --version 2>&1", conda_cmd, conda_env)
+  } else {
+    "exec_annotation --version 2>&1"
+  }
+  tool_version <- tryCatch({
+    version_output <- suppressWarnings(system(version_cmd, intern = TRUE))
+    # Take first non-empty line
+    version_line <- version_output[nchar(version_output) > 0][1]
+    if (is.na(version_line)) "unknown" else version_line
+  }, error = function(e) {
+    "unknown"
+  })
 
   # STEP 1: Run kofam commands in parallel (just execute, return raw output + command)
   run_kofam_cmd <- function(genome_path, genome_name, hal_path, ko_list, conda_cmd, conda_env) {
@@ -194,6 +212,31 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
 
   # Add to sack results
   sack@results$kofam <- kofam_results
+
+  # Add provenance tracking
+  # Build command template with placeholders
+  cmd_template <- "exec_annotation --no-report-unannotated -k {ko_list} --tmp-dir {tmp_dir} '{genome_path}' --cpu 1 --profile {hal_path} -f detail-tsv"
+  if (!is.null(conda_env)) {
+    cmd_template <- sprintf("%s run -n %s %s", conda_cmd, conda_env, cmd_template)
+  }
+
+  sack@provenance$kofam <- list(
+    timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+    tool_version = tool_version,
+    conda_env = conda_env,
+    workers = workers,
+    potatoes_requested = names(potatoes),
+    potatoes_with_genes = potatoes_with_kofam,
+    n_genomes = length(genome_paths),
+    n_kos = length(all_kos),
+    commands = list(
+      hal_content = hal_content,
+      hal_path = hal_path,
+      ko_list = kofam_config$ko_list,
+      exec_annotation_template = cmd_template,
+      genome_paths = genome_paths
+    )
+  )
 
   cli::cli_alert_success("Kofam annotation complete")
 

@@ -1,19 +1,26 @@
 # POTATO v1 - Development Roadmap
 
-**Current Version:** v0.9.4-dev (2026-08-12)
+**Current Version:** v0.10.2-dev (2026-08-13)
 
-**Status:** V2 schema migration complete. All V1 backward compatibility removed. Uses `@genes`, `@compounds`, `@pathways` S7 structure with edges carrying `required`/`marker` attributes. Test coverage: 41 passing tests.
+**Status:** V2 schema migration complete. Provenance tracking implemented for all annotation and scoring steps. Full reproducibility with command templates and tool versions.
 
-**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (all + essential genes) → interactive/static visualization with curated layouts → export results as tibbles → analyze near-misses → print pathways with compound details
+**What works:** Annotate genomes with kofam/BLAST/HMM → score pathways (all + essential genes) → interactive/static visualization with curated layouts → export results as tibbles → analyze near-misses → print pathways with compound details → track full provenance
 
-**Recent additions (2026-08-10):**
-- Compound name normalization (merge "A + B" and "B + A")
-- Enhanced `print_potato()` with `show_databases` parameter and angle-bracket compound display
-- Transporter pathway support (empty edges arrays)
-- Verification system for multi-pathway networks (per-pathway `verified` field)
-- Entner-Doudoroff network completed with 6 pathways (4 verified, 2 independent)
+**Recent additions (2026-08-13):**
+- **Provenance tracking system** - Complete history of all annotation/scoring steps
+  - Tool versions, command templates with placeholders, timestamps
+  - Tracks which potatoes requested vs. which had genes for each database
+  - Genome addition history with full paths
+- **Annotation coverage visualization** - `plot_annotation_coverage()` heatmap
+  - Shows which pathways checked/missing/N/A for each database
+  - Immediately identifies annotation gaps
+- **`print_provenance()`** - Pretty-printed provenance summary
+- Enhanced PotatoSack print method shows provenance status
 
-**What's next:** Gene specificity weighting, threshold sensitivity analysis, annotation workflow optimization
+**What's next (HIGH PRIORITY):**
+1. **Potato locking** - Prevent modification when results exist (data integrity)
+2. **Incremental annotation** - Merge results from multiple runs, not overwrite
+3. Gene specificity weighting, threshold sensitivity analysis
 
 ---
 
@@ -632,6 +639,142 @@ For enforcing consistency across potatoes. Lives at `inst/canonical_genes.json`.
 - [x] At least 1 network potato created and tested (ED network with 6 pathways)
 - [ ] Build-potato agent can create networks (deferred)
 - [x] Documentation updated (CLAUDE.md, ROADMAP.md)
+
+### Phase 1.5: Data Integrity & Workflow Improvements (HIGH PRIORITY)
+
+**Goal:** Ensure results always match potato definitions and support incremental annotation workflows.
+
+**Status:** Identified during provenance implementation (v0.10.2). Critical for data integrity before expanding feature set.
+
+#### 1.5.1 Potato Locking System
+
+**Problem:** User can edit potato JSON after annotation, causing hash mismatch between results and current potato definition. Results become meaningless.
+
+**Example:**
+```r
+sack <- run_kofam(sack)  # Results stored with potato_hash ABC
+# User edits potato JSON → now hash DEF
+# Results say ABC but potato is DEF → data corruption!
+```
+
+**Solution:** Lock potatoes when results exist
+
+- [ ] **Detect hash mismatches on sack load**
+  ```r
+  # When loading sack from RDS or creating from directory
+  result_hashes <- unique(c(sack@results$kofam$potato_hash, 
+                            sack@results$blast$potato_hash, 
+                            sack@results$hmm$potato_hash))
+  current_hashes <- sapply(sack@potatoes, compute_potato_hash)
+  
+  mismatches <- setdiff(result_hashes, current_hashes)
+  if (length(mismatches) > 0) {
+    cli::cli_abort(c(
+      "Potato definitions don't match results (hash mismatch)",
+      "i" = "Results exist for modified potatoes",
+      "i" = "Either: revert potato JSONs, or clear results with sack@results <- NULL"
+    ))
+  }
+  ```
+
+- [ ] **Add potato locking flag to PotatoSack**
+  ```r
+  PotatoSack <- S7::new_class(
+    properties = list(
+      ...,
+      potatoes_locked = S7::class_logical  # TRUE when results exist
+    )
+  )
+  ```
+
+- [ ] **Check lock status in modification functions**
+  - Any function that loads/updates potato definitions
+  - Clear error message with remedy
+
+**Benefits:**
+- Prevents data corruption
+- Forces intentional workflow (modify potato → new sack)
+- Results always match potato definition
+- No ambiguity about which version produced results
+
+**Priority:** HIGH - Data integrity is critical
+
+---
+
+#### 1.5.2 Incremental Annotation (Merge Results)
+
+**Problem:** Running annotation twice fails unless `overwrite = TRUE`, which replaces ALL results. Can't incrementally add potatoes.
+
+**Current behavior:**
+```r
+sack <- run_kofam(sack, potato_names = "pathway_A")  # Works
+sack <- run_kofam(sack, potato_names = "pathway_B")  # ERROR!
+```
+
+**Solution:** Merge results based on genome+potato_hash uniqueness
+
+- [ ] **Conflict detection**
+  ```r
+  # Identify which genome+potato_hash combinations already exist
+  existing_keys <- paste(sack@results$kofam$genome, 
+                        sack@results$kofam$potato_hash)
+  new_keys <- paste(new_results$genome, new_results$potato_hash)
+  conflicts <- intersect(existing_keys, new_keys)
+  ```
+
+- [ ] **Merge logic**
+  ```r
+  if (length(conflicts) > 0) {
+    if (!overwrite) {
+      cli::cli_warn(c(
+        "Results already exist for {length(conflicts)} genome+potato combinations",
+        "i" = "Use {.code overwrite = TRUE} to replace, or continuing with existing"
+      ))
+      # Skip conflicting rows from new_results
+      new_results <- new_results %>%
+        filter(!paste(genome, potato_hash) %in% conflicts)
+    } else {
+      # Remove conflicting rows from existing results
+      sack@results$kofam <- sack@results$kofam %>%
+        filter(!paste(genome, potato_hash) %in% conflicts)
+    }
+  }
+  
+  # Add new results
+  sack@results$kofam <- bind_rows(sack@results$kofam, new_results)
+  ```
+
+- [ ] **Provenance as history (list of runs)**
+  ```r
+  # Append to provenance history instead of replacing
+  sack@provenance$kofam <- c(
+    sack@provenance$kofam,  # Existing runs (list)
+    list(new_run)           # This run
+  )
+  ```
+
+- [ ] **Update plot_annotation_coverage()**
+  - Check if potato was requested in ANY run (not just latest)
+  - `any(sapply(sack@provenance$kofam, function(run) potato_id %in% run$potatoes_requested))`
+
+- [ ] **Update print_provenance()**
+  - Show multiple runs for each tool
+  - Format as chronological list
+
+**Benefits:**
+- Incremental workflows ("annotate as you go")
+- No wasted computation (don't re-run what you already have)
+- Potato JSON updates coexist (different hash = different results)
+- Can compare before/after potato edits
+
+**Edge case handling:**
+- If user edits potato JSON, old hash results stay, new hash results are added
+- Both coexist in results → user can compare
+- This is **good** - enables A/B testing of potato definitions
+
+**Priority:** HIGH - Major workflow improvement
+
+---
 
 ### Phase 2: Input/Output Validation & DAG Connectivity
 

@@ -113,6 +113,27 @@ score_pathways <- function(sack,
   # Combine into tibble
   sack@scores <- dplyr::bind_rows(all_scores)
 
+  # Add provenance tracking
+  n_pathways <- sum(sapply(sack@potatoes, function(p) {
+    if (!is.null(p@pathways) && is.list(p@pathways)) {
+      length(p@pathways)
+    } else {
+      1
+    }
+  }))
+
+  sack@provenance$scoring <- list(
+    timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+    thresholds = list(
+      kofam_threshold = kofam_threshold,
+      blast_evalue = blast_evalue,
+      blast_bitscore = blast_bitscore,
+      hmm_evalue = hmm_evalue
+    ),
+    n_pathways = n_pathways,
+    n_genomes = length(genome_names)
+  )
+
   cli::cli_alert_success("Scored {length(sack@potatoes)} pathway{?s} across {length(genome_names)} genome{?s}")
 
   sack
