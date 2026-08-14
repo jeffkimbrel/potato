@@ -40,8 +40,14 @@
 	- build_graph_v2
 	- plot_v2_interactive
 	- get_compound_name (embedded in view_pathway_detail)
+- potato_theme
+- get_gene_results
+- get_pathway_scores
 
+## Planned but not in use
 
+- align_coordinates
+- update_potato_coordinates
 
 ## Removed
 
@@ -73,18 +79,12 @@
 
 ## Not Checked
 
-- align_coordinates
 - find_near_miss_pathways
 - get_enzyme_nodes
-- get_gene_results
-- get_pathway_scores
 - is_node_detected
-- jakomics_to_genome_file
 - normalize_compound_name
 - plot_all_pathways_heatmap
 - plot_near_miss_pathways
 - plot_pathway_prevalence
 - plot_pathway_uniqueness
-- potato_theme
 - summarize_missing_genes
-- update_potato_coordinates

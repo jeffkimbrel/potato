@@ -15,8 +15,7 @@ get_gene_results <- function(sack) {
   }
 
   if (is.null(sack@results) || nrow(sack@results) == 0) {
-    cli::cli_warn("No annotation results found in sack")
-    return(tibble::tibble())
+    cli::cli_abort("No annotation results found in sack. Run annotation tools first (run_kofam, run_blast, run_hmm).")
   }
 
   # Get threshold settings from config
@@ -70,8 +69,7 @@ get_gene_results <- function(sack) {
   }
 
   if (length(all_results) == 0) {
-    cli::cli_warn("No annotation data to export")
-    return(tibble::tibble())
+    cli::cli_abort("No annotation data to export. Run annotation tools first (run_kofam, run_blast, run_hmm).")
   }
 
   # Combine all tools - use bind_rows which handles different columns
@@ -105,8 +103,7 @@ get_pathway_scores <- function(sack) {
   }
 
   if (is.null(sack@scores) || nrow(sack@scores) == 0) {
-    cli::cli_warn("No scoring results found in sack. Run score_pathways() first.")
-    return(tibble::tibble())
+    cli::cli_abort("No scoring results found in sack. Run score_pathways() first.")
   }
 
   scores <- sack@scores
