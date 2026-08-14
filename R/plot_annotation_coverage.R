@@ -29,12 +29,12 @@ plot_annotation_coverage <- function(sack) {
   rows <- list()
 
   for (potato in sack@potatoes) {
-    # Determine if this is a multi-pathway network or single pathway
-    is_network <- !is.null(potato@pathways) &&
-                  is.list(potato@pathways) &&
-                  length(names(potato@pathways)) > 0
+    # Determine if this is a multi-pathway network (> 1 pathway)
+    is_multi_pathway <- !is.null(potato@pathways) &&
+                        is.list(potato@pathways) &&
+                        length(potato@pathways) > 1
 
-    if (is_network) {
+    if (is_multi_pathway) {
       # Multi-pathway network: one row per pathway
       for (pathway_id in names(potato@pathways)) {
         pathway <- potato@pathways[[pathway_id]]

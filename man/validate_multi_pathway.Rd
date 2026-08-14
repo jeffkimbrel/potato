@@ -2,11 +2,11 @@
 % Please edit documentation in R/potato_class.R
 \name{validate_multi_pathway}
 \alias{validate_multi_pathway}
-\title{Validate multi-pathway network potato (new schema)}
+\title{Validate multi-pathway network potato (V2 schema)}
 \usage{
 validate_multi_pathway(data, strict)
 }
 \description{
-Validate multi-pathway network potato (new schema)
+Validate multi-pathway network potato (V2 schema)
 }
 \keyword{internal}

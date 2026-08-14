@@ -10,53 +10,27 @@
 #' @export
 view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
-  # Load if path provided
+  # Load if path provided (V2 only)
   if (is.character(potato)) {
-    # Check schema version
-    potato_data <- jsonlite::read_json(potato, simplifyVector = FALSE)
-    if (!is.null(potato_data$schema_version) && potato_data$schema_version == "v2") {
-      # V2 schema
-      potato <- load_potato_v2(potato)
-      is_v2 <- TRUE
-    } else {
-      # V1 schema
-      potato <- load_potato(potato)
-      is_v2 <- FALSE
-    }
-  } else {
-    # Check if v2 object (list with schema_version)
-    is_v2 <- is.list(potato) && !is.null(potato$schema_version) && potato$schema_version == "v2"
+    potato <- load_potato_v2(potato)  # Validates automatically
   }
 
-  # Check if multi-pathway network
-  if (is_v2) {
-    is_network <- !is.null(potato$pathways) && length(potato$pathways) > 1
-  } else {
-    is_network <- !is.null(potato@edges) &&
-                  is.list(potato@edges) &&
-                  length(names(potato@edges)) > 0 &&
-                  !is.null(potato@edges[[1]]$type)
-  }
+  # All potatoes are V2 now
+  # Check if multi-pathway network (> 1 pathway)
+  is_multi_pathway <- !is.null(potato$pathways) && length(potato$pathways) > 1
 
   # Get available pathways
-  available_pathways <- if (is_v2) {
-    names(potato$pathways)
-  } else if (is_network) {
-    names(potato@edges)
-  } else {
-    NULL
-  }
+  available_pathways <- names(potato$pathways)
 
-  # For v2 single-pathway, set pathway to first one
-  if (is_v2 && is.null(pathway)) {
+  # For single-pathway, set pathway to first one
+  if (is.null(pathway)) {
+    if (is_multi_pathway) {
+      cli::cli_abort(c(
+        "Multi-pathway network requires pathway parameter",
+        "i" = "Available pathways: {paste(available_pathways, collapse=', ')}"
+      ))
+    }
     pathway <- names(potato$pathways)[1]
-  }
-
-  if (is_network && is.null(pathway)) {
-    cli::cli_abort(c(
-      "Multi-pathway network requires pathway parameter",
-      "i" = "Available pathways: {paste(available_pathways, collapse=', ')}"
-    ))
   }
 
   if (!is.null(pathway) && length(pathway) > 1) {
@@ -71,214 +45,82 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     cli::cli_abort("Pathway '{pathway}' not found. Available: {available}")
   }
 
-  # Build rows based on schema version
-  if (is_v2) {
-    # V2 schema
-    pathway_info <- potato$pathways[[pathway]]
-    title <- paste0(potato$name, " - ", pathway_info$name %||% pathway)
+  # Build rows (V2 schema)
+  pathway_info <- potato$pathways[[pathway]]
+  title <- paste0(potato$name, " - ", pathway_info$name %||% pathway)
 
-    rows <- lapply(potato$genes, function(gene) {
-      # Format databases
-      dbs <- sapply(names(gene$databases), function(db) {
-        terms <- paste(gene$databases[[db]], collapse = ", ")
-        paste0(db, ": ", terms)
-      })
-      db_str <- paste(dbs, collapse = "<br>")
-
-      # Get pathway-specific attributes from edges
-      pathway_edges <- pathway_info$edges
-      is_required <- any(sapply(pathway_edges, function(e) {
-        (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
-      }))
-      is_marker <- any(sapply(pathway_edges, function(e) {
-        (e$from == gene$id || e$to == gene$id) && !is.null(e$marker) && e$marker
-      }))
-
-      # Get reactions used in pathway for this gene
-      pathway_reactions <- unique(sapply(pathway_edges, function(e) {
-        if ((e$from == gene$id || e$to == gene$id) && !is.null(e$reaction)) {
-          e$reaction
-        } else {
-          NA
-        }
-      }))
-      pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
-
-      # Format reactions with color coding
-      reactions_formatted <- if (length(gene$reactions) > 0) {
-        sapply(gene$reactions, function(rxn) {
-          if (rxn %in% pathway_reactions) {
-            # Pathway reaction - normal color
-            rxn
-          } else {
-            # Not in pathway - gray
-            paste0("<span style='color: #999;'>", rxn, "</span>")
-          }
-        })
-      } else {
-        character(0)
-      }
-
-      list(
-        id = gene$id,
-        step = NA,  # V2 doesn't have step numbers
-        required = is_required,
-        marker = is_marker,
-        name = gene$name,
-        ec = paste(gene$ec, collapse = ", "),
-        reactions = paste(reactions_formatted, collapse = ", "),
-        databases = db_str,
-        notes = gene$notes %||% ""
-      )
+  rows <- lapply(potato$genes, function(gene) {
+    # Format databases
+    dbs <- sapply(names(gene$databases), function(db) {
+      terms <- paste(gene$databases[[db]], collapse = ", ")
+      paste0(db, ": ", terms)
     })
+    db_str <- paste(dbs, collapse = "<br>")
 
-  } else if (is_network && !is.null(pathway)) {
-    # Multi-pathway: extract specific pathway (single only for table view)
-    pathway_info <- potato@edges[[pathway]]
-    pathway_nodes <- pathway_info$nodes
-    title <- paste0(potato@name, " - ", pathway_info$name %||% pathway)
+    # Get pathway-specific attributes from edges
+    pathway_edges <- pathway_info$edges
+    is_required <- any(sapply(pathway_edges, function(e) {
+      (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
+    }))
+    is_marker <- any(sapply(pathway_edges, function(e) {
+      (e$from == gene$id || e$to == gene$id) && !is.null(e$marker) && e$marker
+    }))
 
-    # Build rows
-    rows <- lapply(names(pathway_nodes), function(gene_id) {
-      global_gene <- Find(function(g) g$id == gene_id, potato@genes)
-      pathway_node <- pathway_nodes[[gene_id]]
-
-      # Format databases
-      dbs <- sapply(names(global_gene$databases), function(db) {
-        terms <- paste(global_gene$databases[[db]], collapse = ", ")
-        paste0(db, ": ", terms)
-      })
-      db_str <- paste(dbs, collapse = "<br>")
-
-      # Get reactions used in pathway for this gene
-      pathway_reactions <- unique(sapply(pathway_info$edges, function(e) {
-        if ((e$from == gene_id || e$to == gene_id) && !is.null(e$reaction)) {
-          e$reaction
-        } else {
-          NA
-        }
-      }))
-      pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
-
-      # Format reactions with color coding
-      reactions_formatted <- if (length(global_gene$reactions) > 0) {
-        sapply(global_gene$reactions, function(rxn) {
-          if (rxn %in% pathway_reactions) {
-            rxn
-          } else {
-            paste0("<span style='color: #999;'>", rxn, "</span>")
-          }
-        })
+    # Get reactions used in pathway for this gene
+    pathway_reactions <- unique(sapply(pathway_edges, function(e) {
+      if ((e$from == gene$id || e$to == gene$id) && !is.null(e$reaction)) {
+        e$reaction
       } else {
-        character(0)
+        NA
       }
+    }))
+    pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
 
-      list(
-        id = gene_id,
-        step = pathway_node$step,
-        required = pathway_node$required,
-        marker = pathway_node$marker,
-        name = global_gene$name,
-        ec = paste(global_gene$ec, collapse = ", "),
-        reactions = paste(reactions_formatted, collapse = ", "),
-        databases = db_str,
-        notes = global_gene$notes %||% ""
-      )
-    })
-
-  } else {
-    # Single-pathway potato
-    title <- potato@name
-
-    rows <- lapply(potato@genes, function(gene) {
-      # Format databases
-      dbs <- sapply(names(gene$databases), function(db) {
-        terms <- paste(gene$databases[[db]], collapse = ", ")
-        paste0(db, ": ", terms)
-      })
-      db_str <- paste(dbs, collapse = "<br>")
-
-      # Get reactions used in pathway for this gene
-      pathway_reactions <- unique(sapply(potato@edges, function(e) {
-        if ((e$from == gene$id || e$to == gene$id) && !is.null(e$reaction)) {
-          e$reaction
+    # Format reactions with color coding
+    reactions_formatted <- if (length(gene$reactions) > 0) {
+      sapply(gene$reactions, function(rxn) {
+        if (rxn %in% pathway_reactions) {
+          # Pathway reaction - normal color
+          rxn
         } else {
-          NA
+          # Not in pathway - gray
+          paste0("<span style='color: #999;'>", rxn, "</span>")
         }
-      }))
-      pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
+      })
+    } else {
+      character(0)
+    }
 
-      # Format reactions with color coding
-      reactions_formatted <- if (length(gene$reactions) > 0) {
-        sapply(gene$reactions, function(rxn) {
-          if (rxn %in% pathway_reactions) {
-            rxn
-          } else {
-            paste0("<span style='color: #999;'>", rxn, "</span>")
-          }
-        })
-      } else {
-        character(0)
-      }
-
-      list(
-        id = gene$id,
-        step = gene$step,
-        required = gene$required %||% TRUE,
-        marker = gene$marker %||% FALSE,
-        name = gene$name,
-        ec = paste(gene$ec, collapse = ", "),
-        reactions = paste(reactions_formatted, collapse = ", "),
-        databases = db_str,
-        notes = gene$notes %||% ""
-      )
-    })
-  }
+    list(
+      id = gene$id,
+      step = NA,  # V2 doesn't have step numbers
+      required = is_required,
+      marker = is_marker,
+      name = gene$name,
+      ec = paste(gene$ec, collapse = ", "),
+      reactions = paste(reactions_formatted, collapse = ", "),
+      databases = db_str,
+      notes = gene$notes %||% ""
+    )
+  })
 
   # Generate plot
   plot_widget <- NULL
   tryCatch({
     # Create interactive plot with fixed height for embedding
-    if (is_v2) {
-      g <- build_graph_v2(potato)
-      plot_widget <- plot_v2_interactive(g, layout = layout, height = "600px")
-    } else if (is_network) {
-      plot_widget <- plot_potato_interactive2(potato, pathway = pathway, show_compounds = TRUE, layout = layout)
-    } else {
-      plot_widget <- plot_potato_interactive2(potato, show_compounds = TRUE, layout = layout)
-    }
+    g <- build_graph_v2(potato)
+    plot_widget <- plot_v2_interactive(g, layout = layout, height = "600px")
   }, error = function(e) {
     cli::cli_warn("Could not generate plot: {e$message}")
   })
 
-  # Get pathway-specific metadata
-  if (is_v2) {
-    source_info <- potato$source
-    notes_info <- pathway_info$notes %||% ""
-    input_info <- NULL  # V2 doesn't have input/output at pathway level yet
-    output_info <- NULL
-    scoring_info <- pathway_info$scoring
-    verified <- !is.null(pathway_info$verified) && pathway_info$verified == TRUE
-  } else if (is_network) {
-    source_info <- paste0("KEGG: ", pathway_info$kegg_module %||% "N/A")
-    notes_info <- pathway_info$notes %||% ""
-    input_info <- pathway_info$input
-    output_info <- pathway_info$output
-    scoring_info <- pathway_info$scoring
-    verified <- !is.null(pathway_info$verified) && pathway_info$verified == TRUE
-  } else {
-    source_info <- potato@source
-    notes_info <- potato@notes %||% ""
-    input_info <- tryCatch(potato@input, error = function(e) NULL)
-    output_info <- tryCatch(potato@output, error = function(e) NULL)
-    scoring_info <- potato@scoring
-    # Check for verified field in top-level data
-    verified <- FALSE
-    if (!is.null(potato@json_path) && file.exists(potato@json_path)) {
-      data <- jsonlite::read_json(potato@json_path, simplifyVector = FALSE)
-      verified <- !is.null(data$verified) && data$verified == TRUE
-    }
-  }
+  # Get pathway-specific metadata (V2 schema)
+  source_info <- potato$source
+  notes_info <- pathway_info$notes %||% ""
+  input_info <- NULL  # V2 doesn't have input/output at pathway level yet
+  output_info <- NULL
+  scoring_info <- pathway_info$scoring
+  verified <- !is.null(pathway_info$verified) && pathway_info$verified == TRUE
 
   # Build verification status banner
   verification_html <- if (verified) {
@@ -319,23 +161,15 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     )
   })
 
-  # Build edges section
-  if (is_v2) {
-    edges_data <- pathway_info$edges
-  } else if (is_network) {
-    edges_data <- pathway_info$edges
-  } else {
-    edges_data <- potato@edges
-  }
+  # Build edges section (V2 schema)
+  edges_data <- pathway_info$edges
 
   # Helper to look up compound name from ID
   get_compound_name <- function(node_id) {
-    if (is_v2) {
-      # V2: search compounds list
-      compound <- Find(function(c) c$id == node_id, potato$compounds)
-      if (!is.null(compound)) {
-        return(paste0(compound$name, " [", node_id, "]"))
-      }
+    # V2: search compounds list
+    compound <- Find(function(c) c$id == node_id, potato$compounds)
+    if (!is.null(compound)) {
+      return(paste0(compound$name, " [", node_id, "]"))
     }
     # Return ID if not found or not a compound
     return(node_id)

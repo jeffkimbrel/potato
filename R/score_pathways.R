@@ -140,100 +140,6 @@ score_pathways <- function(sack,
 }
 
 
-#' Score a single pathway for a single genome (internal)
-#' @noRd
-score_single_pathway <- function(potato, genome_name, genome_hits) {
-
-  # Get all genes in pathway
-  genes <- potato@genes
-
-  # Group genes by step (for handling OR branches)
-  steps <- unique(sapply(genes, function(g) {
-    step_val <- g$step
-    if (is.list(step_val)) {
-      # If step is a list, get first element
-      step_val <- step_val[[1]]
-    }
-    # Ensure it's numeric
-    as.numeric(step_val)
-  }))
-  steps <- sort(steps)
-
-  # Track which steps are complete
-  step_completion <- list()
-
-  for (step_num in steps) {
-    # Get all genes at this step (OR alternatives)
-    step_genes <- Filter(function(g) {
-      s <- if (is.list(g$step)) g$step[[1]] else g$step
-      s == step_num
-    }, genes)
-
-    # Check if ANY gene at this step is detected
-    step_detected <- FALSE
-
-    for (gene in step_genes) {
-      gene_detected <- is_node_detected(gene, potato@id, genome_hits)
-      if (gene_detected) {
-        step_detected <- TRUE
-        break  # OR branch satisfied
-      }
-    }
-
-    step_completion[[as.character(step_num)]] <- step_detected
-  }
-
-  # Calculate completion (all steps)
-  total_steps_detected <- sum(unlist(step_completion))
-  total_steps <- length(steps)
-  fraction <- total_steps_detected / total_steps
-
-  # Determine presence based on min_fraction threshold
-  min_fraction <- potato@scoring$min_fraction
-  if (is.null(min_fraction)) min_fraction <- 0.75
-
-  present <- fraction >= min_fraction
-
-  # Calculate completion for required steps only
-  required_steps <- Filter(function(step_num) {
-    step_genes <- Filter(function(g) {
-      s <- if (is.list(g$step)) g$step[[1]] else g$step
-      s == step_num
-    }, genes)
-    # Step is required if ANY gene at that step is required
-    any(sapply(step_genes, function(g) g$required %||% FALSE))
-  }, steps)
-
-  if (length(required_steps) > 0) {
-    essential_total_steps_detected <- sum(unlist(step_completion[as.character(required_steps)]))
-    essential_steps <- length(required_steps)
-    essential_fraction <- essential_total_steps_detected / essential_steps
-    essential_pathway_present <- essential_fraction >= min_fraction
-  } else {
-    # No required steps defined
-    essential_total_steps_detected <- NA_integer_
-    essential_steps <- NA_integer_
-    essential_fraction <- NA_real_
-    essential_pathway_present <- NA
-  }
-
-  # Return score
-  list(
-    genome = genome_name,
-    potato = potato@id,
-    potato_name = potato@name,
-    total_steps_detected = total_steps_detected,
-    total_steps = total_steps,
-    fraction = fraction,
-    min_fraction = min_fraction,
-    present = present,
-    essential_total_steps_detected = essential_total_steps_detected,
-    essential_steps = essential_steps,
-    essential_fraction = essential_fraction,
-    essential_pathway_present = essential_pathway_present
-  )
-}
-
 
 #' Score a single pathway in a multi-pathway network (internal)
 #' @noRd
@@ -397,6 +303,7 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
 
 #' Check if a gene is detected in genome hits for network pathways (internal)
 #' @noRd
+
 is_node_detected_network <- function(gene, potato_id, genome_hits) {
 
   # Check each database type

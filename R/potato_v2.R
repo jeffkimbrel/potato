@@ -43,6 +43,24 @@ load_potato_v2 <- function(path) {
     cli::cli_abort("Not a v2 schema potato (missing or wrong schema_version)")
   }
 
+  # Validate potato structure
+  validation <- validate_potato(potato_data, strict = FALSE)
+  if (!validation$valid) {
+    cli::cli_abort(c(
+      "Potato validation failed: {basename(path)}",
+      "x" = "Errors found:",
+      set_names(validation$errors, rep("*", length(validation$errors)))
+    ))
+  }
+
+  # Show warnings if any
+  if (length(validation$warnings) > 0) {
+    cli::cli_alert_warning("Potato has validation warnings:")
+    for (warning in validation$warnings) {
+      cli::cli_text("  {.emph {warning}}")
+    }
+  }
+
   cli::cli_alert_success("Loaded v2 potato: {potato_data$name}")
   cli::cli_alert_info("Genes: {length(potato_data$genes %||% list())}, Compounds: {length(potato_data$compounds %||% list())}")
 
