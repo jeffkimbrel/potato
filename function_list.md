@@ -35,6 +35,11 @@
 - validate_potato
 	- validate_multi_pathway
 - get_verification_status
+- plot_v2
+- view_pathway_detail
+	- build_graph_v2
+	- plot_v2_interactive
+	- get_compound_name (embedded in view_pathway_detail)
 
 
 
@@ -55,35 +60,31 @@
 - prepare_potato_for_plotting
 - plot_potato_interactive2
 - calculate_node_layout
+- build_bipartite_graph
+- build_visnetwork_with_gene_connectors
+- create_step_layout
+- get_detection_terms
+- get_marker_genes
+- get_node_status
+- build_potato_graph
+- print_pathway_detail
+- load_test_potato
 
 
 ## Not Checked
 
 - align_coordinates
-- build_bipartite_graph
-- build_graph_v2
-- build_potato_graph
-- build_visnetwork_with_gene_connectors
-- create_step_layout
 - find_near_miss_pathways
-- get_detection_terms
 - get_enzyme_nodes
 - get_gene_results
-- get_marker_genes
-- get_node_status
 - get_pathway_scores
 - is_node_detected
 - jakomics_to_genome_file
-- load_test_potato
 - normalize_compound_name
 - plot_all_pathways_heatmap
 - plot_near_miss_pathways
 - plot_pathway_prevalence
 - plot_pathway_uniqueness
-- plot_v2
-- plot_v2_interactive
 - potato_theme
-- print_pathway_detail
 - summarize_missing_genes
 - update_potato_coordinates
-- view_pathway_detail

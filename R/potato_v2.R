@@ -410,7 +410,7 @@ plot_v2_interactive <- function(g, layout = "fr", height = "100vh") {
     dashes = FALSE,
     stringsAsFactors = FALSE
   )
-  edges_df$color <- replicate(nrow(edges_df), list(color = "#2B7CE9", highlight = "#2B7CE9"), simplify = FALSE)
+  edges_df$color <- replicate(nrow(edges_df), list(color = "#216bde", highlight = "#216bde"), simplify = FALSE)
 
   # Add red dashed edges between split gene nodes (same gene, different reactions)
   gene_nodes <- igraph::V(g)$name[igraph::V(g)$type == "gene"]

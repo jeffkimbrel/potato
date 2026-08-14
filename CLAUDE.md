@@ -700,7 +700,6 @@ sack <- readRDS("sack.rds")  # Standard R load
   - Shows per-pathway threshold markers (red vertical bars)
   - Each pathway displays its actual min_fraction threshold
 - ✅ `plot_pathway_summary()` - ggplot2 stacked bars (pathways per genome)
-- ✅ `export_potato_dot()` - Export to graphviz format
 - ✅ `update_potato_coordinates()` - Import visNetwork coordinates to potato JSON
 - ✅ All plots use tidyverse/ggplot2 (no base graphics)
 - ✅ `potato_theme()` - Consistent theming with transparent backgrounds
@@ -782,9 +781,8 @@ All features above have been implemented and basic testing done on:
 - Standard R: `saveRDS(sack, "file.rds")` and `readRDS("file.rds")`
 
 ### Potato Functions
-- `load_potato(path)` - Load single potato JSON (multi-pathway networks supported)
+- `load_potato_v2(path)` - Load single V2 potato JSON (multi-pathway networks supported)
 - `load_potatoes(dir, tags = NULL)` - Load all potatoes from directory (filters active=false)
-- `load_test_potato()` - Load example test potato
 - `print_potato(potato, compact, show_compounds, show_databases, show_ec)` - Text-based pathway view
   - Handles both single-pathway and multi-pathway networks
   - Compact notation: `*` = marker, `^` = optional, `{n}` = complex, `(A|B)` = alternatives
@@ -793,13 +791,6 @@ All features above have been implemented and basic testing done on:
   - Example: `<D-glucose [C00031]> -> glk -> <D-glucose-6P [C00668]> -> zwf -> (pgl^ | ybhE^) -> edd* -> eda*`
   - Multi-pathway: prints top-level notes, then each pathway separately with pathway-specific notes
 - `get_enzyme_nodes(potato)` - Extract enzyme nodes
-- `get_detection_terms(potato, database_name)` - Extract KO/blast/hmm terms
-- `get_marker_genes(potato)` - Extract marker gene nodes
-- `build_potato_graph(potato)` - Build igraph DAG (gene-based for multi-pathway)
-- `build_bipartite_graph(potato)` - Build bipartite graph with compound nodes
-  - Normalizes compound names by sorting parts ("pyruvate + G3P" == "G3P + pyruvate")
-  - Supports pathways with empty edges arrays (e.g., transporters)
-- `print_validation(validation_result)` - Pretty print validation
 - `compute_potato_hash(potato)` - Generate MD5 hash of functional fields
 - `update_potato_coordinates(potato_path, coords_path, with_compounds)` - Import coordinates
   - Auto-detects if coordinates include compounds
@@ -817,11 +808,13 @@ All features above have been implemented and basic testing done on:
 - `score_pathways(sack, kofam_threshold, blast_evalue, blast_bitscore, hmm_evalue)` - Score all pathways
 
 ### Visualization Functions
-- `plot_potato(potato, sack, genome_name, layout)` - Network plot with detection status
+- `plot_v2(potato_or_graph, interactive, layout)` - Main V2 plotting function (interactive or static)
+- `plot_v2_interactive(g, layout, height)` - Interactive visNetwork plot
+- `build_graph_v2(potato_v2, pathway_id)` - Build igraph from V2 potato
+- `view_pathway_detail(potato, pathway, layout)` - HTML table view in browser with embedded plot
 - `plot_pathway_heatmap(sack, cluster_rows, cluster_cols)` - Presence/absence heatmap
 - `plot_genome_pathways(sack, genome_name, show_thresholds)` - Completion bars with per-pathway thresholds
 - `plot_pathway_summary(sack)` - Pathways detected per genome
-- `export_potato_dot(potato, file)` - Export to graphviz DOT format
 - `potato_theme()` - Consistent theme for all plots (transparent backgrounds)
 
 ### Analysis Functions
@@ -830,7 +823,6 @@ All features above have been implemented and basic testing done on:
 - `plot_near_miss_pathways(sack, genome_name, buffer)` - Visualize near-miss status
 - `get_gene_results(sack)` - Export gene-level annotation results with threshold pass/fail
 - `get_pathway_scores(sack)` - Export pathway scores with essential metrics and potato_hash
-- `get_node_status(potato, sack, genome_name)` - Get detection status for plotting (internal)
 
 ### Provenance Functions
 - `print_provenance(sack)` - Pretty-print all provenance data with timestamps and tool versions
@@ -844,6 +836,27 @@ All features above have been implemented and basic testing done on:
 - `GenomeFile` - S7 class for serialization-safe genome metadata
 - `jakomics_to_genome_file()` - Convert Python FILE objects to R S7 objects
 - `find_conda()` - Locate conda executable (PATH, CONDA_EXE, common locations)
+
+### Removed V1 Legacy Functions (v0.10.1.9003)
+The following V1-only functions were removed during V2 schema migration:
+- `load_potato()` - replaced by `load_potato_v2()`
+- `load_test_potato()` - convenience function, no longer needed
+- `build_potato_graph()` - V1 graph builder, replaced by `build_graph_v2()`
+- `build_bipartite_graph()` - V1 compound graph builder
+- `get_node_status()` - V1 detection status, replaced by V2 scoring
+- `get_detection_terms()` - replaced by direct access to `potato@genes$databases`
+- `get_marker_genes()` - replaced by checking edges for marker attribute
+- `print_validation()` - validation errors now shown inline
+- `print_pathway_detail()` - redundant with `print_potato()`
+- `export_potato_dot()` - graphviz export, not currently needed
+- `build_visnetwork()` - replaced by `build_visnetwork_with_gene_connectors()`
+- `calculate_node_layout()` - orphaned V1 layout function
+- `prepare_potato_for_plotting()` - V1 plotting helper
+- `plot_potato_interactive2()` - V1 plotting function
+- `create_step_layout()` - V1 step-based layouts
+- `check_verified_status()` - merged into `get_verification_status()`
+
+**Note:** V2 schema uses `potato@genes` (not `@nodes`), `potato@pathways` (not `@edges`), and stores required/marker on edges (not genes).
 
 ### Test Suite
 - 91 passing tests (v0.9.3)

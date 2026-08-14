@@ -15,12 +15,11 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     potato <- load_potato_v2(potato)  # Validates automatically
   }
 
-  # All potatoes are V2 now
   # Check if multi-pathway network (> 1 pathway)
-  is_multi_pathway <- !is.null(potato$pathways) && length(potato$pathways) > 1
+  is_multi_pathway <- !is.null(potato@pathways) && length(potato@pathways) > 1
 
   # Get available pathways
-  available_pathways <- names(potato$pathways)
+  available_pathways <- names(potato@pathways)
 
   # For single-pathway, set pathway to first one
   if (is.null(pathway)) {
@@ -30,7 +29,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
         "i" = "Available pathways: {paste(available_pathways, collapse=', ')}"
       ))
     }
-    pathway <- names(potato$pathways)[1]
+    pathway <- names(potato@pathways)[1]
   }
 
   if (!is.null(pathway) && length(pathway) > 1) {
@@ -46,10 +45,10 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   }
 
   # Build rows (V2 schema)
-  pathway_info <- potato$pathways[[pathway]]
-  title <- paste0(potato$name, " - ", pathway_info$name %||% pathway)
+  pathway_info <- potato@pathways[[pathway]]
+  title <- paste0(potato@name, " - ", pathway_info$name %||% pathway)
 
-  rows <- lapply(potato$genes, function(gene) {
+  rows <- lapply(potato@genes, function(gene) {
     # Format databases
     dbs <- sapply(names(gene$databases), function(db) {
       terms <- paste(gene$databases[[db]], collapse = ", ")
@@ -115,7 +114,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   })
 
   # Get pathway-specific metadata (V2 schema)
-  source_info <- potato$source
+  source_info <- potato@source
   notes_info <- pathway_info$notes %||% ""
   input_info <- NULL  # V2 doesn't have input/output at pathway level yet
   output_info <- NULL
@@ -167,7 +166,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   # Helper to look up compound name from ID
   get_compound_name <- function(node_id) {
     # V2: search compounds list
-    compound <- Find(function(c) c$id == node_id, potato$compounds)
+    compound <- Find(function(c) c$id == node_id, potato@compounds)
     if (!is.null(compound)) {
       return(paste0(compound$name, " [", node_id, "]"))
     }
