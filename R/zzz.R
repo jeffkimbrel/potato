@@ -7,7 +7,16 @@
   # Try to load jakomics for tool execution
   # Suppress errors here - we'll notify in .onAttach if needed
   tryCatch({
-    reticulate::use_condaenv(conda_env, required = FALSE)
+    # Force reticulate to use conda environment (required = TRUE)
+    # This prevents falling back to system Python
+    reticulate::use_condaenv(conda_env, required = TRUE)
+
+    # Verify we're using the right Python
+    py_config <- reticulate::py_config()
+    if (!grepl("conda|miniconda|miniforge", py_config$python, ignore.case = TRUE)) {
+      stop("Not using conda Python. Found: ", py_config$python)
+    }
+
     reticulate::py_require("jakomics")
     # Store in package namespace, not global environment
     assign("jakomics", reticulate::import("jakomics", delay_load = TRUE), envir = parent.env(environment()))
