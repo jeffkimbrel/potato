@@ -43,6 +43,13 @@
 - potato_theme
 - get_gene_results
 - get_pathway_scores
+- get_enzyme_nodes
+- plot_all_pathways_heatmap
+- plot_pathway_prevalence
+- plot_pathway_uniqueness
+- summarize_missing_genes
+- find_near_miss_pathways
+- inspect_gene_thresholds
 
 ## Planned but not in use
 
@@ -75,16 +82,6 @@
 - build_potato_graph
 - print_pathway_detail
 - load_test_potato
-
-
-## Not Checked
-
-- find_near_miss_pathways
-- get_enzyme_nodes
 - is_node_detected
 - normalize_compound_name
-- plot_all_pathways_heatmap
-- plot_near_miss_pathways
-- plot_pathway_prevalence
-- plot_pathway_uniqueness
-- summarize_missing_genes
+- plot_near_miss_pathways (was too complicated, and won't scale to many genomes/pathways)

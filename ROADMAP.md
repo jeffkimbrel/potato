@@ -89,6 +89,46 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 
 ## Data Integrity & Workflow
 
+### Gap-Based Scoring System **[HIGH PRIORITY]**
+
+**Problem:** Fraction-based scoring has fundamental limitations:
+- Float precision issues (0.67 threshold fails 2/3 genes at 0.6666...)
+- Doesn't distinguish complete vs. incomplete routes in multi-pathway networks
+- Ignores DAG connectivity (80% with middle gap fails, 60% with full path succeeds)
+
+**Solution:** Add gap-based scoring as alternative to fraction-based
+
+**Phase 1: Schema Update**
+- [ ] Add `scoring.method` field: "fraction" (default), "gaps", or "both"
+- [ ] Add `scoring.max_gaps` field: integer, number of allowed missing genes in best path
+- [ ] Update validation to support both methods
+- [ ] Both methods optional; fall back to run-level defaults if not specified
+- [ ] Document in schema reference
+
+**Phase 2: Scoring Implementation**
+- [ ] Implement DAG traversal to find best path (fewest gaps)
+- [ ] Calculate gap count for each pathway
+- [ ] When `method: "both"`, calculate and return both scores
+- [ ] Update results tibble to include: `gap_count`, `gap_present` (boolean)
+- [ ] Maintain backward compatibility with existing fraction-only potatoes
+
+**Example potato scoring block:**
+```json
+"scoring": {
+  "method": "gaps",
+  "max_gaps": 1,
+  "min_fraction": 0.67  // ignored when method = "gaps"
+}
+```
+
+**Benefits:**
+- Biologically meaningful ("allow 1 missing gene")
+- Handles alternative routes correctly
+- No float precision issues
+- True DAG traversal (checks connectivity)
+
+---
+
 ### Potato Locking System **[HIGH PRIORITY]**
 
 **Problem:** User edits potato JSON after annotation → hash mismatch → results meaningless
@@ -150,6 +190,15 @@ sack <- run_kofam(sack, potato_names = "pathway_B")  # Should merge
 - [ ] Weighted scoring: `sum(specificity of found) / sum(specificity of all)`
 - [ ] Output: raw score + weighted score + high-value genes
 
+**Context-Aware Threshold Adjustment:**
+
+- [ ] Query KEGG API for pathway membership per KO
+- [ ] Identify pathway-specific marker genes (only in one pathway)
+- [ ] Relax thresholds for borderline hits when marker genes present
+- [ ] Example: `gcl` scores 450 (threshold 678), BUT `glxK` (specific marker) present → likely real pathway
+
+**Use case:** Genome has glxR (ubiquitous) + glxK (specific marker only in glycerate pathway) + borderline gcl hit → context suggests gcl is real, not a paralog
+
 ---
 
 ### Input/Output Validation **[MEDIUM PRIORITY]**
@@ -203,6 +252,21 @@ ED network: transport + npED → gluconate available → FUNCTIONAL
 
 ---
 
+### Normalized Margin Calculation **[LOW PRIORITY]**
+
+**Goal:** Make threshold margins comparable across different metric types in `inspect_gene_thresholds()`
+
+**Problem:** E-value margins (1e-11) vs bitscore margins (10) vs score margins (50) are on completely different scales
+
+**Solution:**
+
+- [ ] Add percent-of-threshold calculation: `(score/threshold) * 100` or `(threshold/evalue) * 100`
+- [ ] Values >100% = passing, <100% = failing
+- [ ] Allows meaningful sorting across different metric types
+- [ ] Alternative: add margin_type column and sort within types only
+
+---
+
 ## Visualization
 
 ### V2 Coordinate System **[MEDIUM PRIORITY]**
@@ -223,6 +287,18 @@ plot_v2(pot, interactive = TRUE, layout = "fr")
 # Arrange nodes → Export → Import
 update_potato_coordinates("pathway.json", "coords.json")
 ```
+
+---
+
+### Near-Miss Pathway Visualization **[LOW PRIORITY]**
+
+**Goal:** Visual way to identify pathways close to detection threshold
+
+**Challenge:** Doesn't scale well - faceting by genome fails with 100+ genomes, faceting by pathway fails with dozens of pathways
+
+**Current workaround:** `find_near_miss_pathways()` returns filtered tibble, `plot_genome_pathways()` shows per-genome view with thresholds
+
+**Future idea:** Interactive filtering or small-multiples view for targeted subsets
 
 ---
 

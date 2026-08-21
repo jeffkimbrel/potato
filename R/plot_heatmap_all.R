@@ -13,27 +13,26 @@
 #'
 #' @return A ggplot2 object
 #' @export
+
 plot_all_pathways_heatmap <- function(sack, normalize_by_threshold = TRUE,
                                        cluster_rows = FALSE, cluster_cols = TRUE,
                                        show_labels = TRUE, clustering_method = "complete") {
 
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg ggplot2} is required")
-  }
 
   if (is.null(sack@scores) || nrow(sack@scores) == 0) {
     cli::cli_abort("No scores found. Run {.fn score_pathways} first.")
   }
 
   # Prepare data
-  scores_df <- sack@scores
-
-  # For multi-pathway networks, create pathway_label
-  scores_df$pathway_label <- ifelse(
-    !is.na(scores_df$pathway) & scores_df$pathway != "",
-    paste0(scores_df$potato, ": ", scores_df$pathway_name),
-    scores_df$potato
-  )
+  scores_df <- sack@scores |>
+    mutate(potato_count = n_distinct(potato), .by = "pathway_name") |> 
+    dplyr::mutate(
+      pathway_label = dplyr::case_when(
+        potato_count == 1 ~ pathway_name,
+    TRUE ~ paste0(potato, " : ", pathway_name)
+      )
+    ) |>
+    select(-potato_count)
 
   # Calculate metric for heatmap
   if (normalize_by_threshold) {
@@ -49,10 +48,10 @@ plot_all_pathways_heatmap <- function(sack, normalize_by_threshold = TRUE,
   # Prepare matrix for optional clustering
   if (cluster_rows || cluster_cols) {
     # Create wide matrix (pathways × genomes)
-    mat <- scores_df %>%
-      dplyr::select(pathway_label, genome, value) %>%
-      tidyr::pivot_wider(names_from = genome, values_from = value, values_fill = 0) %>%
-      tibble::column_to_rownames("pathway_label") %>%
+    mat <- scores_df |>
+      dplyr::select(pathway_label, genome, value) |>
+      tidyr::pivot_wider(names_from = genome, values_from = value, values_fill = 0) |>
+      tibble::column_to_rownames("pathway_label") |>
       as.matrix()
 
     # Cluster rows (pathways)
@@ -85,12 +84,12 @@ plot_all_pathways_heatmap <- function(sack, normalize_by_threshold = TRUE,
     ) +
     potato_theme() +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1, face = "plain"),
-      axis.text.y = ggplot2::element_text(face = "plain"),
-      axis.title = ggplot2::element_text(face = "bold"),
-      plot.title = ggplot2::element_text(face = "bold"),
-      panel.grid = ggplot2::element_blank(),
-      text = ggplot2::element_text(family = "")  # Use default sans font
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1),
+      # axis.text.y = ggplot2::element_text(face = "plain"),
+      # axis.title = ggplot2::element_text(face = "bold"),
+      # plot.title = ggplot2::element_text(face = "bold"),
+      # text = ggplot2::element_text(family = ""),  # Use default sans font
+      panel.grid = ggplot2::element_blank()
     )
 
   # Color scale

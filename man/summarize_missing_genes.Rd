@@ -7,16 +7,16 @@
 summarize_missing_genes(sack, potato_name = NULL, min_genomes = 3)
 }
 \arguments{
-\item{sack}{PotatoSack object with scores}
+\item{sack}{PotatoSack object with annotation results and scores}
 
 \item{potato_name}{Optional: filter to specific pathway}
 
 \item{min_genomes}{Minimum genomes to consider (default: 3)}
 }
 \value{
-Tibble showing genes and how often they're missing
+Tibble showing genes and detection status across thresholds
 }
 \description{
-Analyzes which genes are systematically missing, suggesting issues with
-database representation or thresholds.
+Analyzes which genes are systematically missing, with distinction between
+genes with no hits, hits below threshold, and hits passing threshold.
 }

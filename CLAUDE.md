@@ -704,10 +704,15 @@ sack <- readRDS("sack.rds")  # Standard R load
 - ✅ All plots use tidyverse/ggplot2 (no base graphics)
 - ✅ `potato_theme()` - Consistent theming with transparent backgrounds
 
-**Analysis Functions (v0.7.1, v0.9.3)**
+**Analysis Functions (v0.7.1, v0.9.3, v0.10.1.9005)**
 - ✅ `summarize_missing_genes()` - Identify genes systematically missing across genomes
+  - Distinguishes three states: no hits, below threshold, passing threshold
+  - Uses internal helper functions for threshold checks
 - ✅ `find_near_miss_pathways()` - Find pathways just below detection threshold
-- ✅ `plot_near_miss_pathways()` - Visualize near-miss status with color coding
+  - Returns filtered tibble of near-misses with distance from threshold
+- ✅ `inspect_gene_thresholds()` - Detailed view of annotation hits vs thresholds
+  - Shows score, threshold, margin for each hit
+  - Helps debug threshold issues and identify borderline genes
 - ✅ `get_gene_results()` - Export gene-level annotation results (v0.9.3)
   - Returns tibble with all hits across tools (kofam, blast, hmm)
   - Includes `passed` column for threshold filtering
@@ -820,7 +825,7 @@ All features above have been implemented and basic testing done on:
 ### Analysis Functions
 - `summarize_missing_genes(sack, potato_name, min_genomes)` - Find systematically missing genes
 - `find_near_miss_pathways(sack, buffer)` - Identify pathways just below threshold
-- `plot_near_miss_pathways(sack, genome_name, buffer)` - Visualize near-miss status
+- `inspect_gene_thresholds(sack, potato_name, show_passing)` - Detailed hit vs threshold analysis
 - `get_gene_results(sack)` - Export gene-level annotation results with threshold pass/fail
 - `get_pathway_scores(sack)` - Export pathway scores with essential metrics and potato_hash
 
@@ -837,8 +842,9 @@ All features above have been implemented and basic testing done on:
 - `jakomics_to_genome_file()` - Convert Python FILE objects to R S7 objects
 - `find_conda()` - Locate conda executable (PATH, CONDA_EXE, common locations)
 
-### Removed V1 Legacy Functions (v0.10.1.9003)
-The following V1-only functions were removed during V2 schema migration:
+### Removed Functions (v0.10.1.9003, v0.10.1.9005)
+
+**V1 Legacy Functions (removed during V2 schema migration):**
 - `load_potato()` - replaced by `load_potato_v2()`
 - `load_test_potato()` - convenience function, no longer needed
 - `build_potato_graph()` - V1 graph builder, replaced by `build_graph_v2()`
@@ -855,6 +861,11 @@ The following V1-only functions were removed during V2 schema migration:
 - `plot_potato_interactive2()` - V1 plotting function
 - `create_step_layout()` - V1 step-based layouts
 - `check_verified_status()` - merged into `get_verification_status()`
+
+**Dead Code (removed v0.10.1.9005):**
+- `is_node_detected()` - replaced by `is_node_detected_network()`, not called anywhere
+- `normalize_compound_name()` - V1 compound normalization for edge-decorated compounds
+- `plot_near_miss_pathways()` - doesn't scale (faceting by genome or pathway both fail at realistic scales), replaced by `find_near_miss_pathways()` tibble + `plot_genome_pathways()`
 
 **Note:** V2 schema uses `potato@genes` (not `@nodes`), `potato@pathways` (not `@edges`), and stores required/marker on edges (not genes).
 

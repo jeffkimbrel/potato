@@ -10,11 +10,8 @@
 #'
 #' @return A ggplot2 object
 #' @export
-plot_pathway_prevalence <- function(sack, min_genomes = 0, pathway_type = NULL, sort_by = "count") {
 
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg ggplot2} is required")
-  }
+plot_pathway_prevalence <- function(sack, min_genomes = 0, pathway_type = NULL, sort_by = "count") {
 
   if (is.null(sack@scores) || nrow(sack@scores) == 0) {
     cli::cli_abort("No scoring results found. Run score_pathways() first.")
@@ -43,9 +40,9 @@ plot_pathway_prevalence <- function(sack, min_genomes = 0, pathway_type = NULL, 
       pathway_types <- list()
       for (pot_name in names(sack@potatoes)) {
         pot <- sack@potatoes[[pot_name]]
-        if (!is.null(pot@edges) && is.list(pot@edges) && length(pot@edges) > 0) {
-          for (pathway_id in names(pot@edges)) {
-            pathway <- pot@edges[[pathway_id]]
+        if (!is.null(pot@pathways) && is.list(pot@pathways) && length(pot@pathways) > 0) {
+          for (pathway_id in names(pot@pathways)) {
+            pathway <- pot@pathways[[pathway_id]]
             pathway_types[[pathway$name %||% pathway_id]] <- pathway$type %||% "unknown"
           }
         }

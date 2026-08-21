@@ -413,6 +413,35 @@ validate_multi_pathway <- function(data, strict) {
             }
           }
         }
+
+        # Check min_fraction against gene count for float precision traps
+        if (!is.null(pathway$scoring$min_fraction) && !is.null(pathway$edges)) {
+          min_frac <- pathway$scoring$min_fraction
+          # Count unique genes in this pathway (exclude compounds)
+          gene_nodes <- unique(unlist(lapply(pathway$edges, function(e) {
+            c(if (!is.null(e$from) && e$from %in% gene_ids) e$from,
+              if (!is.null(e$to) && e$to %in% gene_ids) e$to)
+          })))
+          n_genes <- length(gene_nodes)
+
+          if (n_genes > 0) {
+            # Calculate valid fractions for this gene count
+            valid_fractions <- sapply(1:n_genes, function(i) i / n_genes)
+
+            # Check if min_fraction falls between valid fractions
+            for (i in seq_along(valid_fractions)[-length(valid_fractions)]) {
+              lower <- valid_fractions[i]
+              upper <- valid_fractions[i + 1]
+              if (min_frac > lower && min_frac < upper) {
+                warnings <- c(warnings, sprintf(
+                  "%s: min_fraction %.2f requires %d/%d genes (%.1f%%) to pass. Did you mean %.2f for %d/%d genes (%.1f%%)?",
+                  path_prefix, min_frac, i + 1, n_genes, upper * 100,
+                  round(lower, 2), i, n_genes, lower * 100
+                ))
+              }
+            }
+          }
+        }
       }
     }
   }
