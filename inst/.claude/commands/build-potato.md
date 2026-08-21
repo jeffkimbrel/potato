@@ -64,16 +64,8 @@ Help users build well-structured potato JSON files through:
       "name": "Pathway Name",
       "type": "variant",              // or "independent"
       "verified": false,              // ALWAYS false - NEVER set to true
-      "input": {                      // RECOMMENDED: starting substrate
-        "compound": "substrate name",
-        "kegg_compound": "C00001",
-        "targets": ["geneA"]
-      },
-      "output": {                     // RECOMMENDED: final product
-        "compound": "product name",
-        "kegg_compound": "C00002",
-        "sources": ["geneZ"]
-      },
+      "input": ["C00001"],            // RECOMMENDED: array of starting compound IDs
+      "output": ["C00002"],           // RECOMMENDED: array of ending compound IDs
       "edges": [/* bipartite graph: genes + compounds */],
       "scoring": {/* scoring parameters */}
     }
@@ -159,6 +151,10 @@ Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
 
 ## Scoring
 
+**CRITICAL: Two Scoring Methods Available** (as of v0.11.0)
+
+### Method 1: Fraction-Based Scoring (original method)
+
 ```json
 {
   "min_fraction": 0.75,             // Threshold for pathway presence (0.0-1.0, default: 0.75)
@@ -167,18 +163,93 @@ Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
 }
 ```
 
-**Important notes:**
-- `min_fraction` determines when pathway is called "present" (default 0.75 = 75% of steps)
-- Current scoring uses simple step counting (fraction of steps detected)
-- Does NOT verify connectivity through DAG (a pathway with broken middle step but 80% genes still scores 0.8)
-- Sufficient for most presence/absence calls, especially with incomplete MAGs
-- Each pathway can have different `min_fraction` (e.g., 1.0 for strict, 0.5 for permissive)
-- **NEW in v0.9.3:** Dual scoring tracks:
-  - **All steps:** `steps_detected` / `steps_total` (includes optional genes)
-  - **Essential only:** `steps_detected_essential` / `steps_total_essential` (only `required: true` genes)
-  - Both use same `min_fraction` threshold
-  - Example: 10 genes (5 required, 5 optional) → all 5 required present = 50% total BUT 100% essential
-  - This allows scoring pathways even when optional/accessory genes are missing
+**How it works:**
+- Counts detected genes / total genes
+- Simple presence/absence based on gene count
+- Does NOT verify connectivity through DAG
+- Example: 6/8 genes = 0.75 fraction
+
+**Limitations:**
+- Float precision issues (0.67 threshold fails 2/3 genes at 0.6666...)
+- Doesn't distinguish complete vs. incomplete routes
+- 80% with broken middle step still scores 0.8
+
+### Method 2: Gap-Based Scoring (NEW in v0.11.0)
+
+```json
+{
+  "input": ["C00048"],              // Starting compound(s) - REQUIRED for gap-based scoring
+  "output": ["C00631"],             // Ending compound(s) - REQUIRED for gap-based scoring
+  "scoring": {
+    "max_gaps": 0,                  // Maximum missing genes allowed (0 = complete path required)
+    "marker_mode": "any"
+  }
+}
+```
+
+**How it works:**
+- Uses DAG traversal from input → output compounds
+- Finds best path considering OR branches
+- Counts missing genes (gaps) along the path
+- Pathway passes if gap_count ≤ max_gaps
+
+**Benefits:**
+- Biologically meaningful ("allow 1 missing gene")
+- Handles alternative routes correctly (chooses best path)
+- No float precision issues
+- True connectivity validation (verifies complete route)
+
+**Requirements:**
+- `input` and `output` fields MUST be defined (arrays of compound IDs)
+- Compounds must exist in global `compounds` array
+- Path must be reachable (no disconnected subgraphs between input/output)
+
+### Dual Scoring (using both methods)
+
+**You can use BOTH methods together:**
+
+```json
+{
+  "input": ["C00048"],
+  "output": ["C00631"],
+  "scoring": {
+    "min_fraction": 1.0,            // Fraction-based threshold
+    "max_gaps": 0,                  // Gap-based threshold
+    "marker_mode": "any"
+  }
+}
+```
+
+**Pathway passes if EITHER method succeeds:**
+- Fraction ≥ min_fraction OR gap_count ≤ max_gaps
+- Provides flexibility for different assessment approaches
+- Both metrics reported in results
+
+### When to Use Which Method
+
+**Use fraction-based (`min_fraction` only) when:**
+- Pathway is simple/linear without critical connectivity
+- Working with incomplete MAGs where any gene presence is informative
+- You want permissive scoring (e.g., 0.5-0.7 threshold)
+
+**Use gap-based (`max_gaps` + `input`/`output`) when:**
+- Pathway connectivity is critical (broken middle step = non-functional)
+- You want strict validation (e.g., `max_gaps: 0` = complete path required)
+- Multiple alternative routes exist (gap-based finds best path)
+- Pathway is complex with branching
+
+**Use both when:**
+- You want comprehensive assessment with multiple scoring criteria
+- Uncertainty about best threshold approach
+- Research/exploratory analysis
+
+### Scoring Notes
+
+- **Essential-only tracking (v0.9.3):** Results include both all-genes and essential-only metrics
+  - `steps_detected` / `steps_total` (includes optional genes)
+  - `steps_detected_essential` / `steps_total_essential` (only `required: true` genes)
+- Each pathway can have different scoring parameters
+- Gap-based scoring ignores `required`/`marker` attributes (purely topological)
 
 # Multi-Pathway Network Potatoes (v0.9.0-v0.9.3)
 
@@ -509,11 +580,12 @@ In potato JSONs, always use these standard types:
    - For pathways with phosphorylated vs non-phosphorylated variants, verify EC specificity
    - Example: EC 3.1.1.17 (gluconolactonase) vs EC 3.1.1.31 (6-phosphogluconolactonase)
 4. **Ask about input/output compounds:**
-   - "What substrate does this pathway start with?" → set `input.compound` and `input.kegg_compound`
-   - "What product does it produce?" → set `output.compound` and `output.kegg_compound`
-   - For metabolic pathways: actual metabolites (e.g., "D-glucose-6-phosphate", "pyruvate")
-   - For transporters: location-qualified (e.g., "NH4_external", "NH4_internal", "phosphate_periplasm")
-   - Set `input.targets` = first step nodes, `output.sources` = last step nodes
+   - "What substrate does this pathway start with?" → add to `compounds` array, set `input: ["C00092"]`
+   - "What product does it produce?" → add to `compounds` array, set `output: ["C00022"]`
+   - For metabolic pathways: actual metabolites (e.g., "D-glucose-6-phosphate" = C00092, "pyruvate" = C00022)
+   - For transporters: location-qualified (e.g., "NH4_external", "NH4_internal" as separate compound IDs)
+   - **CRITICAL:** Input/output are **REQUIRED** if you plan to use gap-based scoring (`max_gaps`)
+   - Format: `"input": ["C00048"]`, `"output": ["C00631"]` (arrays of compound IDs, not objects)
 5. Ask user: "Which genes are diagnostic markers for this pathway?"
 6. Generate JSON using standard database types: `"databases": {"kofam": ["K00001"]}`
    - **CRITICAL:** Include `"verified": false` in the JSON
@@ -573,11 +645,13 @@ Result: 4 steps, 8 genes total (multiple genes per step = OR branches)
 5. Ask: "Which genes are diagnostic markers?" (suggest pathway-specific genes)
 
 6. **Ask about input/output:**
-   - "What's the starting substrate?" (e.g., "D-glucose", "N2", "NH4_external")
-   - "What's the final product?" (e.g., "pyruvate", "2 NH3", "NH4_internal")
-   - For transporters moving compounds across membranes, use location qualifiers: "_external", "_internal", "_periplasm"
+   - "What's the starting substrate?" (e.g., "D-glucose" = C00031, "glyoxylate" = C00048)
+   - "What's the final product?" (e.g., "pyruvate" = C00022, "2-phosphoglycerate" = C00631)
+   - For transporters moving compounds across membranes, use location qualifiers: "NH4_external", "NH4_internal"
    - Get KEGG compound IDs if available
-   - Determine which step nodes connect to input/output
+   - **CRITICAL:** Add compounds to global `compounds` array with full details
+   - **CRITICAL:** Set input/output as arrays: `"input": ["C00048"]`, `"output": ["C00631"]`
+   - These are **REQUIRED** if using gap-based scoring
 
 7. **Suggest reference sequences for niche genes:**
    - "Gene X doesn't have good KEGG coverage. Do you have reference sequences from model organisms?"
@@ -610,7 +684,8 @@ Result: 4 steps, 8 genes total (multiple genes per step = OR branches)
    - Keep the same detection terms (K##### IDs, sequence IDs, profile names)
    - Preserve all other fields
    - **If missing:** Add `"verified": false` field
-   - **If missing:** Ask about input/output compounds and add those fields
+   - **If missing:** Ask about input/output compounds and add as arrays: `"input": ["C00048"]`, `"output": ["C00631"]`
+   - **If old format:** Convert verbose input/output objects to simple arrays of compound IDs
 5. **Report changes:**
    - "Updated kofam113 → kofam (3 genes affected)"
    - "Updated gator_blast → blast (2 genes affected)"
@@ -1395,49 +1470,68 @@ When building potatoes, **be proactive**:
 
 ### Input/Output Compounds
 
+**CRITICAL: Simplified Format (v0.11.0)**
+
+Input/output are now **arrays of compound IDs** (not verbose objects):
+
+```json
+{
+  "input": ["C00048"],              // Array of starting compound IDs
+  "output": ["C00631"]              // Array of ending compound IDs
+}
+```
+
+**Important notes:**
+- Use KEGG compound IDs directly: `["C00048"]`, `["C00092", "C00001"]`
+- Compound IDs must exist in global `compounds` array
+- For gap-based scoring, `input`/`output` are **REQUIRED** (not optional)
+- Validation automatically checks connectivity from input → output
+
 **For metabolic pathways:**
-- Use actual metabolite names: "D-glucose-6-phosphate", "pyruvate", "acetyl-CoA"
-- Include KEGG compound IDs when available: "C00092", "C00022"
-- `input.targets` = list of first step node IDs (e.g., `["geneA_1"]`)
-- `output.sources` = list of last step node IDs (e.g., `["geneZ_5"]`)
+- Use KEGG compound IDs: `"C00092"` (D-glucose-6-phosphate), `"C00022"` (pyruvate)
+- Single input/output: `"input": ["C00048"]`
+- Multiple inputs: `"input": ["C00048", "C00031"]` (when pathway has alternative entry points)
+- Compound details go in global `compounds` array:
+
+```json
+{
+  "compounds": [
+    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"},
+    {"id": "C00631", "name": "2-Phospho-D-glycerate", "kegg_compound": "C00631"}
+  ],
+  "pathways": {
+    "main": {
+      "input": ["C00048"],
+      "output": ["C00631"]
+    }
+  }
+}
+```
 
 **For transporters:**
-- Use location-qualified compound names:
-  - `"NH4_external"` and `"NH4_internal"` - ammonia transporter
-  - `"phosphate_periplasm"` and `"phosphate_cytoplasm"` - phosphate ABC transporter
-  - `"glucose_external"` and `"glucose_internal"` - sugar uptake
-- Use underscores for location qualifiers: `_external`, `_internal`, `_periplasm`, `_cytoplasm`
-- KEGG compound ID is still the same (e.g., both use "C00014" for ammonia)
+- Still use location-qualified compound IDs in global compounds array
+- Location qualifiers as separate compound entries:
 
-**Examples:**
-
-Metabolic pathway:
 ```json
-"input": {
-  "compound": "D-glucose-6-phosphate",
-  "kegg_compound": "C00092",
-  "targets": ["zwf_1"]
-},
-"output": {
-  "compound": "pyruvate",
-  "kegg_compound": "C00022",
-  "sources": ["eda_4"]
+{
+  "compounds": [
+    {"id": "NH4_external", "name": "Ammonia (external)", "kegg_compound": "C00014"},
+    {"id": "NH4_internal", "name": "Ammonia (internal)", "kegg_compound": "C00014"}
+  ],
+  "pathways": {
+    "transport": {
+      "input": ["NH4_external"],
+      "output": ["NH4_internal"]
+    }
+  }
 }
 ```
 
-Transporter:
-```json
-"input": {
-  "compound": "NH4_external",
-  "kegg_compound": "C00014",
-  "targets": ["amtB_1"]
-},
-"output": {
-  "compound": "NH4_internal",
-  "kegg_compound": "C00014",
-  "sources": ["amtB_1"]
-}
-```
+**Why this format?**
+- Simpler and more consistent with V2 schema
+- Compound metadata (names, KEGG IDs) centralized in `compounds` array
+- No redundant `targets`/`sources` fields (edges define connectivity)
+- Required for gap-based scoring validation
 
 ### Bifunctional Enzymes
 
@@ -1490,17 +1584,251 @@ When uncertain, ask user: "Which genes are diagnostic markers?"
   - Custom HMMs may not have TC → falls back to global e-value (1e-10 default)
 - **BLAST:** Uses global e-value and bitscore thresholds (1e-10, 50 default)
 
+# Gap-Based Scoring: Complete Guide (v0.11.0)
+
+## What is Gap-Based Scoring?
+
+Gap-based scoring is a **connectivity-aware** scoring method that validates complete metabolic routes from input → output compounds.
+
+**Problem with fraction-based scoring:**
+- 80% gene presence with broken middle step = pathway scored as "present" but non-functional
+- Float precision issues (2/3 genes = 0.666... fails 0.67 threshold)
+- Ignores pathway topology (connectivity doesn't matter)
+
+**Gap-based scoring solution:**
+- Performs DAG traversal from `input` compounds to `output` compounds
+- Finds best complete path through the network (considering OR branches)
+- Counts missing genes (gaps) along that path
+- Pathway passes if `gap_count ≤ max_gaps`
+
+## How to Build Potatoes for Gap-Based Scoring
+
+### Step 1: Define Compounds
+
+All compounds in the pathway go in global `compounds` array:
+
+```json
+{
+  "compounds": [
+    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"},
+    {"id": "C01146", "name": "Tartronate semialdehyde", "kegg_compound": "C01146"},
+    {"id": "C00258", "name": "D-Glycerate", "kegg_compound": "C00258"},
+    {"id": "C00631", "name": "2-Phospho-D-glycerate", "kegg_compound": "C00631"}
+  ]
+}
+```
+
+### Step 2: Define Input and Output
+
+Use **arrays of compound IDs** (not verbose objects):
+
+```json
+{
+  "pathways": {
+    "main": {
+      "input": ["C00048"],              // Starting compound(s)
+      "output": ["C00631"],             // Ending compound(s)
+      "edges": [/* ... */],
+      "scoring": {
+        "max_gaps": 0                   // Maximum missing genes allowed
+      }
+    }
+  }
+}
+```
+
+### Step 3: Build Bipartite Graph
+
+Edges connect genes AND compounds:
+
+```json
+{
+  "edges": [
+    {"from": "C00048", "to": "gcl", "required": true, "marker": true, "reaction": "R00013"},
+    {"from": "gcl", "to": "C01146", "required": true, "marker": true, "reaction": "R00013"},
+    {"from": "C01146", "to": "glxR", "required": true, "marker": true, "reaction": "R10052"},
+    {"from": "glxR", "to": "C00258", "required": true, "marker": true, "reaction": "R10052"},
+    {"from": "C00258", "to": "glxK", "required": true, "marker": false, "reaction": "R08572"},
+    {"from": "glxK", "to": "C00631", "required": true, "marker": false, "reaction": "R08572"}
+  ]
+}
+```
+
+**Key: Alternate compound → gene → compound → gene → compound**
+
+### Step 4: Set max_gaps Threshold
+
+```json
+{
+  "scoring": {
+    "max_gaps": 0,                    // 0 = complete path required (no missing genes)
+    "marker_mode": "any"
+  }
+}
+```
+
+**Common thresholds:**
+- `max_gaps: 0` - Strict, complete pathway required (all genes present)
+- `max_gaps: 1` - Allow 1 missing gene (still functional)
+- `max_gaps: 2` - Permissive, allows 2 gaps (borderline functional)
+
+## Complete Example: Glycerate Pathway
+
+```json
+{
+  "id": "glycerate_pathway_v2",
+  "name": "Glycerate Pathway (v2 schema)",
+  "source": "KEGG map00630",
+  "schema_version": "v2",
+  "tags": ["metabolism", "glyoxylate", "carbon"],
+  "notes": "Alternative glyoxylate assimilation. Net: 2 Glyoxylate → 2-Phosphoglycerate",
+  
+  "genes": [
+    {
+      "id": "gcl",
+      "name": "tartronate-semialdehyde synthase",
+      "databases": {"kofam": ["K01608"]},
+      "ec": ["4.1.1.47"],
+      "reactions": ["R00013"],
+      "type": "enzyme"
+    },
+    {
+      "id": "glxR",
+      "name": "tartronate-semialdehyde reductase",
+      "databases": {"kofam": ["K00052"]},
+      "ec": ["1.1.1.60"],
+      "reactions": ["R00994", "R04426", "R10052"],
+      "type": "enzyme"
+    },
+    {
+      "id": "glxK",
+      "name": "glycerate 2-kinase",
+      "databases": {"kofam": ["K00865"]},
+      "ec": ["2.7.1.165"],
+      "reactions": ["R08572"],
+      "type": "enzyme"
+    }
+  ],
+  
+  "compounds": [
+    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"},
+    {"id": "C01146", "name": "Tartronate semialdehyde", "kegg_compound": "C01146"},
+    {"id": "C00258", "name": "D-Glycerate", "kegg_compound": "C00258"},
+    {"id": "C00631", "name": "2-Phospho-D-glycerate", "kegg_compound": "C00631"}
+  ],
+  
+  "pathways": {
+    "main": {
+      "name": "Glycerate Pathway",
+      "type": "independent",
+      "verified": false,
+      "notes": "Three-step pathway: glyoxylate → tartronate semialdehyde → D-glycerate → 2-phosphoglycerate",
+      
+      "input": ["C00048"],
+      "output": ["C00631"],
+      
+      "edges": [
+        {"from": "C00048", "to": "gcl", "required": true, "marker": true, "reaction": "R00013"},
+        {"from": "gcl", "to": "C01146", "required": true, "marker": true, "reaction": "R00013"},
+        {"from": "C01146", "to": "glxR", "required": true, "marker": true, "reaction": "R10052"},
+        {"from": "glxR", "to": "C00258", "required": true, "marker": true, "reaction": "R10052"},
+        {"from": "C00258", "to": "glxK", "required": true, "marker": false, "reaction": "R08572"},
+        {"from": "glxK", "to": "C00631", "required": true, "marker": false, "reaction": "R08572"}
+      ],
+      
+      "scoring": {
+        "min_fraction": 1.0,            // Can use both methods
+        "max_gaps": 0,                  // Gap-based: complete path required
+        "marker_mode": "all"
+      }
+    }
+  }
+}
+```
+
+## How Scoring Works
+
+**Scenario 1: All genes present**
+- DAG traversal finds complete path: C00048 → gcl → C01146 → glxR → C00258 → glxK → C00631
+- Gap count: 0 (no missing genes)
+- Result: `gap_count: 0 ≤ max_gaps: 0` → **PASS**
+
+**Scenario 2: Missing middle gene**
+- Detected: gcl, glxK (glxR missing)
+- DAG traversal cannot reach output (broken at C01146)
+- Gap count: 1
+- Result: `gap_count: 1 > max_gaps: 0` → **FAIL**
+
+**Scenario 3: With OR branch**
+```json
+{
+  "edges": [
+    {"from": "C00048", "to": "geneA"},
+    {"from": "geneA", "to": "C00100"},
+    {"from": "C00100", "to": "geneB"},       // Option 1
+    {"from": "C00100", "to": "geneC"},       // Option 2 (alternative)
+    {"from": "geneB", "to": "C00200"},
+    {"from": "geneC", "to": "C00200"},
+    {"from": "C00200", "to": "geneD"}
+  ]
+}
+```
+
+- If geneB present, geneC absent: Takes path through geneB, gap_count = 0
+- If geneB absent, geneC present: Takes path through geneC, gap_count = 0
+- If both absent: gap_count = 1 (one of the alternatives is missing)
+- **Gap-based scoring finds the BEST path through OR branches**
+
+## When to Use Gap-Based Scoring
+
+**Use gap-based scoring when:**
+- ✓ Pathway connectivity is critical (broken middle = non-functional)
+- ✓ You want strict validation (complete routes)
+- ✓ Pathway has multiple alternative routes
+- ✓ Float precision matters (exact thresholds)
+
+**Use fraction-based scoring when:**
+- ✓ Working with incomplete MAGs (any gene presence = informative)
+- ✓ Pathway is simple/linear without critical connectivity issues
+- ✓ You want permissive scoring (50-70% thresholds)
+
+**Use BOTH when:**
+- ✓ You want comprehensive assessment
+- ✓ Research/exploratory analysis
+- ✓ Uncertain about best approach
+
+## Important Notes
+
+- Gap-based scoring is **topological only** - ignores `required`/`marker` attributes
+- Only traverses edges between `input` and `output` (ignores upstream/downstream context)
+- Validation automatically checks connectivity (warns if input/output disconnected)
+- For cyclic pathways, must define artificial start/end via `input`/`output`
+- Results include both `gap_count` and `present_gaps` boolean
+
+## Migration: Adding Gap-Based Scoring to Existing Potatoes
+
+If you have existing potatoes and want to add gap-based scoring:
+
+1. Add global `compounds` array if missing
+2. Convert input/output to simplified format: `"input": ["C00048"]`
+3. Verify edges form bipartite graph (gene ↔ compound alternation)
+4. Add `max_gaps` to scoring block
+5. Validate connectivity with `load_potato_v2()` and `validate_potato()`
+
 # Validation Checklist
 
 Before saving, verify:
 
 - ✓ **CRITICAL:** `"verified": false` field present in EACH pathway and set to false (NEVER true)
 - ✓ `id` is snake_case, unique
-- ✓ `input` and `output` fields present in each pathway (recommended, especially for KEGG modules)
+- ✓ **CRITICAL:** `input` and `output` fields present in each pathway as **arrays of compound IDs** (e.g., `["C00048"]`)
+  - **REQUIRED** if using gap-based scoring (`max_gaps`)
+  - Recommended for all pathways for biological documentation
+- ✓ Compound IDs in `input`/`output` exist in global `compounds` array
 - ✓ All `nodes` arrays match `step` field (single int → single node, array → multiple nodes)
 - ✓ All edge `from`/`to` reference valid node IDs (with _step suffix)
 - ✓ At least ONE gene has `marker: true`
-- ✓ All required fields present (id, name, source, verified, nodes, edges, scoring)
+- ✓ All required fields present (id, name, source, verified, nodes/genes, edges, scoring)
 - ✓ Step numbers are sequential starting at 1
 - ✓ Each gene has at least one detection method in `databases` field
 - ✓ No duplicate node IDs
@@ -1509,6 +1837,7 @@ Before saving, verify:
 - ✓ BLAST sequence IDs match FASTA headers exactly
 - ✓ No custom database names (kofam118, gator_blast, etc.) - use standard types only
 - ✓ PFAM profiles in `hmm` field (not separate `pfam` field)
+- ✓ If using gap-based scoring, verify connectivity: all nodes between input and output must be reachable
 
 ## IMPORTANT: Always Validate Before Finalizing
 
@@ -1578,6 +1907,12 @@ User: Yes, add them
 
 Agent: Great! Building potato with multiple detection methods.
 
+What are the input and output compounds for this pathway? This is required for gap-based scoring validation.
+
+User: Input is isocitrate (C00311), output is malate (C00149)
+
+Agent: Perfect! I'll use gap-based scoring since this pathway requires complete connectivity.
+
 [Generates JSON with proper structure, OR branches at steps 1, 2, 4, 5]
 
 Here's the potato structure:
@@ -1585,13 +1920,15 @@ Here's the potato structure:
 - 5 sequential steps with OR branches
 - aceA, aceB, glcB marked as diagnostic
 - Detection: kofam + hmm (PFAM) for most genes
-- min_fraction: 0.75 (75% threshold, 4/5 steps required)
+- Input: ["C00311"] (isocitrate)
+- Output: ["C00149"] (malate)
+- Scoring: max_gaps: 0 (complete path required) + min_fraction: 0.75 (dual scoring)
 
 Review? [shows JSON preview]
 
 User: Looks good!
 
-Agent: ✓ Validated with load_potato() - no errors
+Agent: ✓ Validated with load_potato_v2() - no errors, connectivity verified
 ✓ Saved to inst/potatoes/glyoxylate_cycle.json
 ```
 
