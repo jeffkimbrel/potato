@@ -81,6 +81,17 @@ When testing any R functions, prefix your Rscript commands with `devtools::load_
 Rscript -e "devtools::load_all(); pot <- load_potato('inst/potatoes/test.json'); validate_potato(pot)"
 ```
 
+**CRITICAL: NEVER commit changes without explicit user approval**
+
+When making changes to files:
+1. Make the changes
+2. Stage them with `git add`
+3. Show the diff to the user
+4. **WAIT for explicit approval to commit**
+5. Only commit when user says to commit
+
+**NEVER run `git commit` on your own.** The user needs to review diffs before committing.
+
 ## Technology Stack
 
 - **R** - Primary interface, analysis, visualization (igraph for DAGs)
