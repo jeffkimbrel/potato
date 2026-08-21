@@ -56,6 +56,9 @@
       "verified": false,
       "notes": "Three-step pathway: glyoxylate → tartronate semialdehyde → D-glycerate → 2-phosphoglycerate",
 
+      "input": ["C00048"],
+      "output": ["C00631"],
+
       "edges": [
         {"from": "C00048", "to": "gcl", "required": true, "marker": true, "reaction": "R00013"},
         {"from": "gcl", "to": "C01146", "required": true, "marker": true, "reaction": "R00013"},
@@ -67,6 +70,7 @@
 
       "scoring": {
         "min_fraction": 1.0,
+        "max_gaps": 0,
         "marker_mode": "all",
         "notes": "All 3 enzymes required for functional pathway"
       }

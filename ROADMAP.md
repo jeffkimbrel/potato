@@ -6,9 +6,9 @@
 
 **Up Next:**
 
-1. Potato locking - prevent modification when results exist
-2. Incremental annotation - merge results from multiple runs
-3. Threshold sensitivity analysis
+1. Gap-based scoring implementation in `score_pathways()` - DAG traversal logic
+2. Potato locking - prevent modification when results exist
+3. Incremental annotation - merge results from multiple runs
 
 ---
 
@@ -98,26 +98,34 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 
 **Solution:** Add gap-based scoring as alternative to fraction-based
 
-**Phase 1: Schema Update**
-- [ ] Add `scoring.method` field: "fraction" (default), "gaps", or "both"
-- [ ] Add `scoring.max_gaps` field: integer, number of allowed missing genes in best path
-- [ ] Update validation to support both methods
-- [ ] Both methods optional; fall back to run-level defaults if not specified
-- [ ] Document in schema reference
+**Phase 1: Schema Design ✅ COMPLETE (v0.11.0-dev)**
+- ✅ Schema designed: `max_gaps` field in scoring block
+- ✅ No `method` field needed - presence of `max_gaps` + `input`/`output` triggers gap scoring
+- ✅ Both `min_fraction` and `max_gaps` can coexist - pathway passes if EITHER succeeds
+- ✅ Simplified input/output format: arrays of compound IDs (`["C00048"]`) instead of verbose objects
+- ✅ Validation updated: converts JSON arrays, validates compound IDs exist, checks connectivity
+- ✅ Visualization updated: `view_pathway_detail()` displays input/output and max_gaps
+- ✅ Implemented in example potatoes: `glycerate_pathway_v2.json`, `glyoxylate_shunt_v2.json`
+- ✅ Style guide documented in CLAUDE.md "Gap-Based Scoring" section
+- ✅ Schema reference updated with examples
 
-**Phase 2: Scoring Implementation**
-- [ ] Implement DAG traversal to find best path (fewest gaps)
+**Phase 2: Scoring Implementation** **[HIGH PRIORITY - NEXT TASK]**
+- [ ] Update `score_pathways()` to detect gap-based scoring parameters
+- [ ] Implement DAG traversal from `input` → `output` compounds
+- [ ] Find best path (fewest missing genes) considering OR branches
 - [ ] Calculate gap count for each pathway
-- [ ] When `method: "both"`, calculate and return both scores
-- [ ] Update results tibble to include: `gap_count`, `gap_present` (boolean)
-- [ ] Maintain backward compatibility with existing fraction-only potatoes
+- [ ] Update results tibble to include: `gap_count`, `present_gaps` (boolean)
+- [ ] When both methods present, calculate both and report separately
+- [ ] Maintain backward compatibility with fraction-only potatoes
 
-**Example potato scoring block:**
+**Example potato scoring block (implemented):**
 ```json
+"input": ["C00048"],
+"output": ["C00631"],
 "scoring": {
-  "method": "gaps",
-  "max_gaps": 1,
-  "min_fraction": 0.67  // ignored when method = "gaps"
+  "min_fraction": 1.0,  // fraction-based threshold
+  "max_gaps": 0,        // gap-based threshold (both can be present)
+  "marker_mode": "any"
 }
 ```
 
@@ -126,6 +134,19 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 - Handles alternative routes correctly
 - No float precision issues
 - True DAG traversal (checks connectivity)
+- Dual scoring provides flexibility
+
+**Implementation notes:**
+- Ignore `required`/`marker` attributes for gap counting (purely topological)
+- Only traverse edges between `input` and `output` (ignore upstream/downstream context)
+- For cyclic pathways, gap-based scoring requires artificial start/end points via `input`/`output`
+
+**Phase 3: Scoring Coverage Utility** **[LOW PRIORITY]**
+- [ ] Add function to summarize scoring type coverage across potatoes
+- [ ] Report: which pathways use fraction-only, gaps-only, dual, or neither
+- [ ] Identify potatoes missing `input`/`output` (candidates for gap-based scoring)
+- [ ] Could be part of `validate_potato()` output or standalone `summarize_scoring_types()`
+- [ ] Useful for auditing potato collection and tracking migration to gap-based scoring
 
 ---
 

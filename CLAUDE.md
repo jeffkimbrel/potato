@@ -158,17 +158,8 @@ Each potato is a self-contained network with genes, compounds, and pathways:
       "verified": false,  // ALWAYS false unless manually validated
       "notes": "Pathway-specific notes",
       
-      "input": {
-        "compound": "substrate name",
-        "kegg_compound": "C00031",
-        "targets": ["geneA"]
-      },
-      
-      "output": {
-        "compound": "product name",
-        "kegg_compound": "C00002",
-        "sources": ["geneZ"]
-      },
+      "input": ["C00031"],
+      "output": ["C00002"],
       
       "edges": [
         {
@@ -196,6 +187,7 @@ Each potato is a self-contained network with genes, compounds, and pathways:
       
       "scoring": {
         "min_fraction": 0.75,
+        "max_gaps": 1,
         "marker_mode": "any"
       }
     }
@@ -218,10 +210,85 @@ Each potato is a self-contained network with genes, compounds, and pathways:
 - **required/marker on edges** - Not on genes, because same gene can have different roles in different pathways
 - **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names)
 - **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database)
-- **Input/output:** For transporters, use location qualifiers ("NH4_external", "NH4_internal")
+- **Input/output:** Arrays of compound IDs (e.g., `["C00048"]` or `["C00031", "C00024"]`) that define core pathway boundaries for gap-based scoring. IDs must exist in the `compounds` array. For transporters, use location qualifiers in compound IDs ("NH4_external", "NH4_internal")
 - **Pathway types:** 
   - `variant` - Alternative routes to same outcome (Mo-nif vs V-nif)
   - `independent` - Different functions, shared metabolic space (TCA vs glyoxylate shunt)
+- **Scoring methods:**
+  - `min_fraction`: Fraction-based scoring (detected genes / total genes ≥ threshold)
+  - `max_gaps`: Gap-based scoring (# missing genes in best path from input→output ≤ threshold)
+  - Both can be present - pathway passes if EITHER method succeeds
+  - Neither present - defaults to `min_fraction: 0.67`
+
+---
+
+## Gap-Based Scoring (v0.11.0+)
+
+**Motivation:** Fraction-based scoring has limitations:
+- Float precision issues (0.67 threshold fails 2/3 genes at 0.6666...)
+- Ignores pathway topology (80% genes with broken middle step still scores 0.8)
+- Doesn't distinguish complete vs incomplete routes in multi-pathway networks
+
+**Gap-based scoring** addresses this by checking DAG connectivity: "Can you traverse from input→output with ≤N missing genes?"
+
+### How It Works
+
+1. **Define core pathway boundaries** with `input` and `output`:
+```json
+"input": ["C00048"],      // Array of compound IDs from compounds array
+"output": ["C00631"]      // Single or multiple compounds
+```
+
+Input/output are **arrays of compound IDs** (not compound objects). The IDs must match entries in the potato's `compounds` array. Multiple inputs/outputs are supported (e.g., `["C00024", "C00036"]` for TCA cycle).
+
+2. **Set max allowed gaps** in scoring block:
+```json
+"scoring": {
+  "max_gaps": 1,        // Allow 1 missing gene in best path
+  "min_fraction": 0.67  // Optional: also run fraction-based scoring
+}
+```
+
+3. **Scoring logic:**
+   - Find all paths from `input` → `output` in the DAG
+   - For each path, count missing (non-detected) genes
+   - If any path has ≤ `max_gaps` missing genes → pathway PRESENT
+   - Ignores `required`/`marker` attributes (purely topological)
+
+### Upstream Context
+
+Pathways can have edges upstream of `input` or downstream of `output` for biological context:
+
+```json
+"edges": [
+  // Upstream context (not scored)
+  {"from": "C00031", "to": "glk", "required": true, "marker": false},
+  {"from": "glk", "to": "C00668", "required": true, "marker": false},
+  
+  // CORE PATHWAY: C00668 (input) → C00022 (output)
+  {"from": "C00668", "to": "zwf", "required": true, "marker": false},
+  // ... rest of core pathway
+]
+```
+
+Gap scoring only counts genes between `input` and `output`. Upstream/downstream genes are documentation only.
+
+### Dual Scoring
+
+If both `min_fraction` and `max_gaps` are present:
+- Calculate both metrics independently
+- Pathway passes if **EITHER** method succeeds
+- Results include separate columns: `present_fraction`, `present_gaps`
+
+### When to Use
+
+- **Gap-based (`max_gaps`):** Pathways where connectivity matters (linear, branched)
+- **Fraction-based (`min_fraction`):** Pathways where gene count matters more than topology
+- **Both:** Maximum flexibility - pathway passes by either criterion
+
+### Cyclic Pathways
+
+For true metabolic cycles (TCA, BHAC), gap-based scoring requires defining artificial start/end points via `input`/`output`. Alternatively, use fraction-based scoring only for cycles. (Virtual edges for cycle documentation: future enhancement, see ROADMAP.md)
 
 ---
 
@@ -293,15 +360,8 @@ Each potato is a self-contained network with genes, compounds, and pathways:
         {"from": "edd", "to": "eda", "required": true, "marker": true}
       ],
       
-      "input": {
-        "compound": "D-glucose",
-        "kegg_compound": "C00031",
-        "targets": ["glk"]
-      },
-      "output": {
-        "compound": "pyruvate + glyceraldehyde-3P",
-        "sources": ["eda"]
-      },
+      "input": ["C00031"],
+      "output": ["C00022", "C00118"],
       "scoring": {
         "min_fraction": 0.8,
         "marker_mode": "any"

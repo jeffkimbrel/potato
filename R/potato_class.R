@@ -378,23 +378,118 @@ validate_multi_pathway <- function(data, strict) {
         }
       }
 
-      # Validate input/output kegg_compound
-      if (!is.null(pathway$input) && !is.null(pathway$input$kegg_compound)) {
-        kegg_id <- pathway$input$kegg_compound
-        if (!is.character(kegg_id) || length(kegg_id) != 1) {
-          errors <- c(errors, sprintf("%s input: 'kegg_compound' must be a single string (e.g., 'C00024')", path_prefix))
-        } else if (!grepl("^C[0-9]{5}$", kegg_id)) {
-          warnings <- c(warnings, sprintf("%s input: 'kegg_compound' format should be C##### (e.g., 'C00024'), got '%s'", path_prefix, kegg_id))
+      # Validate input (array of compound IDs for gap-based scoring)
+      if (!is.null(pathway$input)) {
+        # Convert list to character vector (jsonlite with simplifyVector=FALSE loads arrays as lists)
+        if (is.list(pathway$input)) {
+          pathway$input <- unlist(pathway$input)
+          data$pathways[[pathway_id]]$input <- pathway$input  # Store back to data
+        }
+
+        if (!is.character(pathway$input)) {
+          errors <- c(errors, sprintf("%s: 'input' must be character vector of compound IDs (e.g., [\"C00048\", \"C00024\"])", path_prefix))
+        } else {
+          # Check all IDs exist in compounds array
+          for (cid in pathway$input) {
+            if (!cid %in% compound_ids) {
+              errors <- c(errors, sprintf("%s: input compound '%s' not found in compounds array", path_prefix, cid))
+            }
+          }
         }
       }
 
-      if (!is.null(pathway$output) && !is.null(pathway$output$kegg_compound)) {
-        kegg_id <- pathway$output$kegg_compound
-        if (!is.character(kegg_id) || length(kegg_id) != 1) {
-          errors <- c(errors, sprintf("%s output: 'kegg_compound' must be a single string (e.g., 'C00024')", path_prefix))
-        } else if (!grepl("^C[0-9]{5}$", kegg_id)) {
-          warnings <- c(warnings, sprintf("%s output: 'kegg_compound' format should be C##### (e.g., 'C00024'), got '%s'", path_prefix, kegg_id))
+      # Validate output (array of compound IDs for gap-based scoring)
+      if (!is.null(pathway$output)) {
+        # Convert list to character vector (jsonlite with simplifyVector=FALSE loads arrays as lists)
+        if (is.list(pathway$output)) {
+          pathway$output <- unlist(pathway$output)
+          data$pathways[[pathway_id]]$output <- pathway$output  # Store back to data
         }
+
+        if (!is.character(pathway$output)) {
+          errors <- c(errors, sprintf("%s: 'output' must be character vector of compound IDs (e.g., [\"C00631\"])", path_prefix))
+        } else {
+          # Check all IDs exist in compounds array
+          for (cid in pathway$output) {
+            if (!cid %in% compound_ids) {
+              errors <- c(errors, sprintf("%s: output compound '%s' not found in compounds array", path_prefix, cid))
+            }
+          }
+        }
+      }
+
+      # Check connectivity for gap-based scoring (warn if inputs/outputs are disconnected)
+      if (!is.null(pathway$input) && !is.null(pathway$output) &&
+          !is.null(pathway$scoring$max_gaps)) {
+
+        tryCatch({
+          # Build adjacency list from edges
+          adj_list <- list()
+          for (edge in pathway$edges) {
+            from <- edge$from
+            to <- edge$to
+            if (!is.null(from) && !is.null(to)) {
+              if (is.null(adj_list[[from]])) adj_list[[from]] <- character()
+              adj_list[[from]] <- c(adj_list[[from]], to)
+            }
+          }
+
+          # Helper: BFS to find reachable nodes from start
+          get_reachable <- function(start, adj_list) {
+            visited <- character()
+            queue <- c(start)
+
+            while (length(queue) > 0) {
+              node <- queue[1]
+              queue <- queue[-1]
+
+              if (node %in% visited) next
+              visited <- c(visited, node)
+
+              if (!is.null(adj_list[[node]])) {
+                for (neighbor in adj_list[[node]]) {
+                  if (!neighbor %in% visited) {
+                    queue <- c(queue, neighbor)
+                  }
+                }
+              }
+            }
+
+            return(visited)
+          }
+
+          # Check each input can reach at least one output
+          for (inp in pathway$input) {
+            reachable <- get_reachable(inp, adj_list)
+            if (!any(pathway$output %in% reachable)) {
+              warnings <- c(warnings, sprintf(
+                "%s: Input '%s' cannot reach any output. Check for disconnected subgraphs.",
+                path_prefix, inp
+              ))
+            }
+          }
+
+          # Check each output can be reached from at least one input
+          for (outp in pathway$output) {
+            reachable_from_any_input <- FALSE
+            for (inp in pathway$input) {
+              reachable <- get_reachable(inp, adj_list)
+              if (outp %in% reachable) {
+                reachable_from_any_input <- TRUE
+                break
+              }
+            }
+            if (!reachable_from_any_input) {
+              warnings <- c(warnings, sprintf(
+                "%s: Output '%s' cannot be reached from any input. Check for disconnected subgraphs.",
+                path_prefix, outp
+              ))
+            }
+          }
+
+        }, error = function(e) {
+          # Connectivity check failed - not critical, skip silently
+        })
       }
 
       # Check pathway scoring

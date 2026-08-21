@@ -116,8 +116,24 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   # Get pathway-specific metadata (V2 schema)
   source_info <- potato@source
   notes_info <- pathway_info$notes %||% ""
-  input_info <- NULL  # V2 doesn't have input/output at pathway level yet
-  output_info <- NULL
+
+  # Extract input/output info (array of compound IDs)
+  input_info <- if (!is.null(pathway_info$input)) {
+    compound_names <- sapply(pathway_info$input, function(cid) {
+      comp <- Filter(function(c) c$id == cid, potato@compounds)
+      if (length(comp) > 0) comp[[1]]$name else cid
+    })
+    list(display = paste(compound_names, collapse = ", "))
+  } else NULL
+
+  output_info <- if (!is.null(pathway_info$output)) {
+    compound_names <- sapply(pathway_info$output, function(cid) {
+      comp <- Filter(function(c) c$id == cid, potato@compounds)
+      if (length(comp) > 0) comp[[1]]$name else cid
+    })
+    list(display = paste(compound_names, collapse = ", "))
+  } else NULL
+
   scoring_info <- pathway_info$scoring
   verified <- !is.null(pathway_info$verified) && pathway_info$verified == TRUE
 
@@ -138,8 +154,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     "<div style='background: #f9f9f9; padding: 15px; margin-bottom: 20px; border-left: 4px solid #4CAF50;'>",
     "<p><strong>Source:</strong> ", source_info, "</p>",
     if (nchar(notes_info) > 0) paste0("<p><strong>Notes:</strong> ", notes_info, "</p>") else "",
-    if (!is.null(input_info)) paste0("<p><strong>Input:</strong> ", input_info$compound, " (", input_info$kegg_compound %||% "", ")</p>") else "",
-    if (!is.null(output_info)) paste0("<p><strong>Output:</strong> ", output_info$compound, " (", output_info$kegg_compound %||% "", ")</p>") else "",
+    if (!is.null(input_info)) paste0("<p><strong>Input:</strong> ", input_info$display, "</p>") else "",
+    if (!is.null(output_info)) paste0("<p><strong>Output:</strong> ", output_info$display, "</p>") else "",
     "</div>"
   )
 
@@ -202,7 +218,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   scoring_html <- paste0(
     "<h3>Scoring Parameters</h3>",
     "<div style='background: #f0f0f0; padding: 10px; margin-bottom: 20px;'>",
-    "<p><strong>Min Fraction:</strong> ", scoring_info$min_fraction %||% 0.75, "</p>",
+    if (!is.null(scoring_info$min_fraction)) paste0("<p><strong>Min Fraction:</strong> ", scoring_info$min_fraction, "</p>") else "",
+    if (!is.null(scoring_info$max_gaps)) paste0("<p><strong>Max Gaps:</strong> ", scoring_info$max_gaps, "</p>") else "",
     "<p><strong>Marker Mode:</strong> ", scoring_info$marker_mode %||% "any", "</p>",
     "</div>"
   )
