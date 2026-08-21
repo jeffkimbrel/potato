@@ -119,12 +119,19 @@ Help users build well-structured potato JSON files through:
   - **blast** - Custom reference sequence IDs
 - **IMPORTANT:** PFAM profiles go in `hmm` field (PFAM is a type of HMM database), NOT a separate `pfam` field
 
+**Schema Format Notes:**
+- **Current format (v0.11.0+):** Uses `genes` array (not `nodes`), simplified input/output as arrays of compound IDs
+- **Legacy V2 format:** Some older potatoes use `nodes` array and verbose input/output objects
+- When converting or updating, use current format for consistency
+- Validation handles both formats but new potatoes should use current
+
 ## Edges (V2 bipartite graph)
 
 **V2 Schema:**
 - Edges connect genes AND compounds
 - `required` and `marker` on edges (not genes)
 - Same gene can be required in one pathway, optional in another
+- **Why edge-level attributes:** Same gene can act on different substrates in different pathways
 
 ```json
 {
@@ -140,6 +147,8 @@ Help users build well-structured potato JSON files through:
 - Edges are defined per pathway in `pathways.pathway_id.edges`
 - Bipartite graph: compounds and genes both nodes
 - `required`/`marker` on edges because same gene has different roles in different pathways
+- **Edge-level attributes rationale:** One gene can have one substrate in one pathway, different substrate in another
+- **Empty edges allowed:** Transport pathways can have `edges: []` if no internal reactions (e.g., substrate relocation)
 - **Compound name normalization:** Multi-part compounds have parts sorted alphabetically
 - **OR Branches:** Create edges from previous step to ALL alternatives
 
@@ -357,9 +366,12 @@ Each pathway defines its own topology and attributes:
    - Step 1 in one pathway, step 3 in another
    - Marker in one pathway, not in another
    - Required in one pathway, optional in another
+   - **Act on different substrates** - same enzyme, different metabolic context
 3. **Edges per pathway** - Each pathway has own topology
 4. **Shared genes** - Gene detected once, counts for all pathways using it
 5. **Independent scoring** - Each pathway scored separately
+6. **Empty edges allowed** - Transport pathways can have `edges: []` (no internal reactions)
+7. **Per-pathway verified** - Each pathway has independent `"verified": false` status
 
 ## Building Multi-Pathway Networks
 
@@ -1827,7 +1839,7 @@ Before saving, verify:
 - ✓ Compound IDs in `input`/`output` exist in global `compounds` array
 - ✓ All `nodes` arrays match `step` field (single int → single node, array → multiple nodes)
 - ✓ All edge `from`/`to` reference valid node IDs (with _step suffix)
-- ✓ At least ONE gene has `marker: true`
+- ✓ At least ONE gene has `marker: true` (unless transport pathway with empty edges)
 - ✓ All required fields present (id, name, source, verified, nodes/genes, edges, scoring)
 - ✓ Step numbers are sequential starting at 1
 - ✓ Each gene has at least one detection method in `databases` field
@@ -1838,6 +1850,7 @@ Before saving, verify:
 - ✓ No custom database names (kofam118, gator_blast, etc.) - use standard types only
 - ✓ PFAM profiles in `hmm` field (not separate `pfam` field)
 - ✓ If using gap-based scoring, verify connectivity: all nodes between input and output must be reachable
+- ✓ Empty edges are valid for transport pathways (no internal reactions, just substrate relocation)
 
 ## IMPORTANT: Always Validate Before Finalizing
 

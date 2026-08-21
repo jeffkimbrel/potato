@@ -218,7 +218,8 @@ Each potato is a self-contained network with genes, compounds, and pathways:
 **Important Notes:**
 - **No step numbers** - Genes are counted directly, no sequential steps
 - **No node IDs** - Edges reference gene/compound IDs directly
-- **required/marker on edges** - Not on genes, because same gene can have different roles in different pathways
+- **required/marker on edges** - Not on genes, because same gene can have different roles in different pathways (different substrates, different pathway context)
+- **Empty edges allowed** - Transport pathways and other special cases can have `edges: []` (valid as of v0.11.1)
 - **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names)
 - **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database)
 - **Input/output:** Arrays of compound IDs (e.g., `["C00048"]` or `["C00031", "C00024"]`) that define core pathway boundaries for gap-based scoring. IDs must exist in the `compounds` array. For transporters, use location qualifiers in compound IDs ("NH4_external", "NH4_internal")
@@ -230,6 +231,11 @@ Each potato is a self-contained network with genes, compounds, and pathways:
   - `max_gaps`: Gap-based scoring (# missing genes in best path from input→output ≤ threshold)
   - Both can be present - pathway passes if EITHER method succeeds
   - Neither present - defaults to `min_fraction: 0.67`
+
+**Schema Format Notes (v0.11.0+):**
+- **Current format (v0.11.0+):** `genes` array, simplified `input`/`output` as arrays of compound IDs
+- **Legacy formats may exist:** Older V2 potatoes used `nodes` array and verbose input/output objects
+- When updating old potatoes, convert to current format for consistency
 
 ---
 
@@ -404,6 +410,9 @@ For true metabolic cycles (TCA, BHAC), gap-based scoring requires defining artif
 - `required`, `marker` on edges (not genes)
 - Edges connect genes and compounds
 - Same gene can be required/marker in one pathway, optional/non-marker in another
+- **Why pathway-specific:** Same gene can act on different substrates in different pathways
+  - Example: bifunctional enzymes have different roles depending on metabolic context
+  - Edge-level attributes allow this flexibility
 
 **4. No Step Numbers**
 - V2 scoring counts genes detected, not sequential steps
@@ -413,6 +422,18 @@ For true metabolic cycles (TCA, BHAC), gap-based scoring requires defining artif
 - Gene `gnaD` appears in 3 ED pathways
 - Detecting `gnaD` once satisfies all 3 pathways
 - Each pathway evaluates completion independently
+
+**6. Transport Pathways with Empty Edges**
+- Transport pathways can have empty `edges: []` arrays
+- Valid pattern: no internal reactions, just substrate relocation
+- Example: gluconate_transport moves compound across membrane without enzymatic steps
+- Validation handles this correctly (fixed in v0.11.1)
+
+**7. Per-Pathway Verified Flag**
+- `verified` is per-pathway field, not per-potato
+- Each pathway in multi-pathway network has independent verification status
+- Default: `"verified": false` for all new pathways
+- Only humans set to true after manual validation
 
 ### Scoring V2 Potatoes
 

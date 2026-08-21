@@ -7,8 +7,9 @@
 **Up Next:**
 
 1. Gap-based scoring implementation in `score_pathways()` - DAG traversal logic
-2. Potato locking - prevent modification when results exist
-3. Incremental annotation - merge results from multiple runs
+2. Potato splitting and merging functions - split multi-pathway networks into separate files, merge separate potatoes into networks
+3. Potato locking - prevent modification when results exist
+4. Incremental annotation - merge results from multiple runs
 
 ---
 
@@ -84,6 +85,93 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 - `edges`: Connect genes/compounds, carry `required`/`marker`
 - `verified`: Always `false` for new pathways (only humans verify)
 - Pathway types: `variant` (alternatives) or `independent` (different functions)
+
+---
+
+## Data Integrity & Workflow
+
+### Potato Splitting and Merging **[HIGH PRIORITY]**
+
+**Problem:** Users need to reorganize potatoes as they learn about pathway relationships:
+- Multi-pathway networks may need to be split into separate files for independent analysis
+- Separate pathway potatoes may need to be merged into networks when relationships discovered
+- Current workflow: manual JSON editing (error-prone, tedious)
+
+**Solution:** Add utility functions for potato reorganization
+
+**Functions needed:**
+
+**1. `write_potato()` - Save potato object to JSON file**
+```r
+write_potato(
+  potato,                                    # Potato S7 object (from sack@potatoes or load_potato_v2())
+  path = "inst/potatoes/my_potato.json",    # Output path
+  indent = 2,                                # JSON indentation (default: 2 spaces)
+  validate = TRUE                            # Validate before writing (default: TRUE)
+)
+```
+
+Writes potato S7 object to JSON file with:
+- Proper field ordering (id, name, source, schema_version, tags, notes, genes, compounds, pathways)
+- Pretty-printed JSON with configurable indentation
+- Optional validation before writing (catches structural errors)
+- Preserves all metadata, coordinates, etc.
+
+**Use cases:**
+- User loaded potato from sack, made edits in R, wants to save: `write_potato(sack@potatoes$ed_network, "updated.json")`
+- User built potato programmatically in R, needs to export to file
+- Batch operations: load all potatoes, modify, write back out
+- Symmetric with `load_potato_v2()` - what you load, you should be able to write
+
+**2. `split_potato()` - Extract pathways from multi-pathway network**
+```r
+split_potato(
+  potato_path = "inst/potatoes/ed_network.json",
+  output_dir = "inst/potatoes/",
+  pathways = c("classic", "non_phosphorylative"),  # Which pathways to extract
+  name_pattern = "{potato_id}_{pathway_id}"        # Output filename pattern
+)
+```
+
+Creates separate potato files, each with:
+- Only genes used in that pathway
+- Single pathway in `pathways` field
+- Original metadata (source, notes) preserved
+- New `notes` field: "Extracted from {original_potato} on {date}"
+
+**2. `merge_potatoes()` - Combine separate potatoes into network**
+```r
+merge_potatoes(
+  potato_paths = c("inst/potatoes/ed_classic.json", 
+                   "inst/potatoes/ed_np.json"),
+  output_path = "inst/potatoes/ed_network.json",
+  network_id = "ed_network",
+  network_name = "Entner-Doudoroff Network",
+  pathway_type = "variant"  # or "independent"
+)
+```
+
+Creates multi-pathway network with:
+- Deduplicated genes (same gene ID → merged into one definition)
+- All pathways in `pathways` field
+- Validates no conflicting gene definitions (same ID, different databases)
+- New `notes` field: "Merged from {potato1}, {potato2} on {date}"
+- Uses `write_potato()` internally to save output
+
+**Implementation details:**
+- All three functions should use common internal helpers for JSON serialization
+- `write_potato()` is the foundation - `split_potato()` and `merge_potatoes()` call it
+- Preserve `verified` status per pathway
+- Handle coordinate systems (x/y fields) - keep if consistent, drop if conflicting
+- Validate schema compatibility before merging
+- Check for duplicate pathway IDs
+- Warn about genes with different detection methods (potential conflicts)
+
+**Use cases:**
+- User built ED network, wants to analyze classic variant separately → split
+- User has Mo-nif and V-nif separate, realizes they're variants → merge
+- Testing: split network, run analysis, compare to network results
+- Distribution: ship separate potatoes for simple cases, networks for advanced users
 
 ---
 

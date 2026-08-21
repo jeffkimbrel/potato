@@ -501,8 +501,8 @@ validate_multi_pathway <- function(data, strict) {
             errors <- c(errors, sprintf("%s: marker_mode must be 'any' or 'all'", path_prefix))
           }
           # Check for marker edges
-          if (!is.null(pathway$edges)) {
-            marker_count <- sum(sapply(pathway$edges, function(e) !is.null(e$marker) && e$marker == TRUE))
+          if (!is.null(pathway$edges) && length(pathway$edges) > 0) {
+            marker_count <- sum(sapply(pathway$edges, function(e) !is.null(e$marker) && e$marker == TRUE), na.rm = TRUE)
             if (marker_count == 0) {
               warnings <- c(warnings, sprintf("%s: marker_mode specified but no marker edges", path_prefix))
             }
