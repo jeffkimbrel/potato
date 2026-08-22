@@ -528,6 +528,60 @@ Shall I build this as a network with 2 TCA variants + 1 independent pathway?
 
 # Workflow Options
 
+## CRITICAL: Organism Specificity Checking for Prokaryotic Tools
+
+**POTATO targets bacteria and archaea.** When converting pathways or building from KEGG modules, you MUST filter for prokaryotic genes.
+
+### Step 1: Identify Eukaryotic Gene Patterns
+
+**Red flags in gene names/products:**
+- **Plant-specific naming:** "TAA1", "ALDH7A1", "ALDH9A1" (numbered family members)
+- **Mammalian naming:** "family X member Y", "human/mouse/plant" in product name
+- **Cytochrome P450s:** Often plant-specific (CYP79B, CYP71A, etc.)
+  - Exception: Some CYP genes found in bacteria - verify before excluding
+- **Organelle-specific:** "chloroplast", "mitochondrial", "peroxisomal"
+
+### Step 2: Verify Organism Distribution via KEGG
+
+For suspicious genes, check KEGG organism distribution:
+
+```bash
+# Check KO organism distribution
+curl -s "https://rest.kegg.jp/get/ko:K16903" | grep -A20 "ORGANISM"
+```
+
+**Evaluation criteria:**
+- **Exclude if:** Only plants, animals, fungi listed
+- **Include if:** Bacteria, archaea present
+- **Ask user if:** Mixed distribution (found in both prokaryotes and eukaryotes)
+
+### Step 3: Proactive User Consultation
+
+When building multi-pathway networks, check BEFORE building genes array:
+
+```
+"I found [N] related pathways:
+- Pathway A: appears bacterial (genes X, Y, Z)
+- Pathway B: appears plant-specific (TAA1, CYP79B genes)
+- Pathway C: mixed distribution (found in both)
+
+Should I build bacterial-only network (exclude pathway B)?"
+```
+
+**Don't wait until after building** - filter at pathway selection stage.
+
+### Step 4: Document Exclusions
+
+When excluding plant/eukaryotic pathways, note in top-level potato notes:
+
+```json
+{
+  "notes": "Two prokaryotic biosynthetic routes... Additional plant-specific pathways exist (tryptamine pathway, nitrile pathways via CYP450 enzymes) but are excluded from this bacterial/archaeal tool."
+}
+```
+
+**This helps users understand scope** - they know other pathways exist but aren't appropriate for their organisms.
+
 ## CRITICAL: Determine Context First
 
 **Before building any potato**, determine WHERE to save it:
@@ -717,12 +771,60 @@ New: {"databases": {"kofam": ["K00001"], "blast": ["ref1"]}}
 
 **GATOR v1 used Excel spreadsheets** with pathway definitions stored as text strings using special syntax. You'll need to parse this format and convert to potato JSON.
 
-### GATOR Excel Structure
+### GATOR Excel Schema (Actual Structure)
 
-The old `gator_db.xlsx` file has multiple sheets:
-- **db sheet** - List of pathways with their string-based topology
-- **gene sheet** - Gene definitions with KO terms, BLAST references, etc.
-- **Other sheets** - Metadata and configuration
+The `gator_db.xlsx` file has these sheets:
+
+#### pathway sheet - Pathway Definitions
+
+Contains the pathway topology and metadata:
+
+| Column | Content | Example |
+|--------|---------|---------|
+| PATHWAY_NAME | Descriptive name | "Tryptophan to IAA I" |
+| DEFINITION | String-based topology | "iaaM -> amiE \| iaaH" |
+| COMPOUNDS | Metabolite flow description | "tryptophan -> indole-3-acetamide -> indoleacetate" |
+| PATHWAY_NOTES | Optional biological context | "Bacterial pathway..." |
+
+**Parsing DEFINITION field:**
+- `->` or space = sequential steps
+- `|` = OR alternatives
+- `+` = AND (both required at same step)
+- `()` = grouping
+
+#### gene sheet - Gene Detection Methods
+
+Contains gene definitions and database identifiers:
+
+| Column | Content | Example |
+|--------|---------|---------|
+| ID | Numeric ID | 1, 2, 3... |
+| GENE_NAME | Gene symbol | "iaaM", "nifH" |
+| GENE_PRODUCT | Enzyme name | "tryptophan 2-monooxygenase" |
+| kofam113 | KEGG KO IDs (comma-separated) | "K00466" or "K00466,K00467" |
+| EC | EC numbers | "1.13.12.3" |
+| PFAM | PFAM domain IDs | "PF00001" (may be empty) |
+| BLASTP | Reference sequence IDs | "iaaM_ref1" (may be empty) |
+| GENE_NOTE | Biological context | "IAA" or pathway tags |
+| REACTION | KEGG reaction IDs | "R00001" (optional) |
+
+**Important notes:**
+- Multiple KO IDs may be comma-separated in single cell
+- PFAM and BLASTP fields often empty (older database)
+- Database column names include version: `kofam113`, `kofam118`, etc.
+
+#### db sheet - Database Configuration
+
+Contains tool paths and configuration (NOT pathway data):
+
+| Column | Content | Example |
+|--------|---------|---------|
+| DB_NAME | Database identifier | "kofam113", "BLASTP", "PFAM" |
+| DB_PATH | File system path | "/path/to/kofam/" |
+| METHOD | Tool type | "kofam", "blastp", "hmm" |
+| NOTE | Configuration notes | "HAL file format" |
+
+**This sheet is for tool configuration only** - don't parse for pathway data.
 
 ### GATOR Pathway Syntax (v1)
 
@@ -742,6 +844,34 @@ geneA -> (geneB | geneC)          # Step 2 has alternatives
 (geneA + geneB) -> geneC          # Step 1 requires both genes
 geneA -> (geneB | geneC) -> geneD # Mixed: alternative at step 2
 ```
+
+### Pre-Conversion Research (REQUIRED)
+
+**Before parsing Excel or building genes array**, research the pathway biology:
+
+#### Research Workflow:
+
+1. **Identify pathway scope:** Search for "[Pathway name] bacteria vs plants" or "[Pathway name] organism distribution"
+2. **Check KEGG modules:** Compare organism lists across related modules
+3. **Consult user BEFORE building:** Present findings and ask which pathways to include
+
+**Example consultation:**
+
+```
+"Research findings for [pathway category]:
+
+- Pathway A: Found in bacteria (Pseudomonas, Agrobacterium)
+- Pathway B: Plant-specific (Arabidopsis, rice) - uses CYP450 enzymes
+- Pathway C: Eukaryotic (mammals, fungi) - mitochondrial
+
+For bacterial/archaeal tool, should I:
+1. Build bacterial-only network (exclude B, C)?
+2. Build all pathways with organism warnings?
+
+Your choice?"
+```
+
+**This prevents building then pruning** - saves time and produces cleaner result.
 
 ### Conversion Strategy
 
@@ -1395,41 +1525,55 @@ print_potato(pot)
 **Always tell user:**
 "I've extracted information from your vault and validated against KEGG. This potato is marked as unverified and needs your review before use."
 
-## Multiple Detection Methods
+## Multiple Detection Methods - MANDATORY ENRICHMENT
 
-**IMPORTANT:** Always try to include multiple detection methods for robustness. Different tools work better for different organisms.
+**CRITICAL:** Never build potatoes with only one detection method. Always search for and suggest additional methods.
 
-### When to use each method:
+### For Every Gene, Check All Three Methods:
 
-**KOfam (`"kofam"`):**
-- ✓ Well-characterized enzymes with KEGG annotations
-- ✓ Central metabolism genes (glycolysis, TCA, amino acid synthesis)
-- ✓ First choice for most pathways
-- ✓ Has per-gene thresholds from KEGG (automatically used in scoring)
-- Use KEGG API: `https://rest.kegg.jp/get/ko:{KO_ID}`
+**1. KOfam (kofam)**
+- First choice for most genes
+- Use KEGG API: `https://rest.kegg.jp/get/ko:K#####`
 - Format: K##### (e.g., "K00001", "K01647")
+- Has per-gene thresholds from KEGG (automatically used in scoring)
+- Always include if available
 
-**HMM profiles (`"hmm"`) - includes PFAM and custom HMMs:**
-- ✓ Protein families with conserved domains (PFAM)
-- ✓ User-built profiles for specialized pathways (custom HMMs)
-- ✓ Good for phylogenetically diverse genes
-- ✓ Some profiles have trusted cutoffs (TC) automatically used in scoring
-- **PFAM:** Public database, format PF##### (e.g., "PF00171", "PF00106")
-  - Search: `https://www.ebi.ac.uk/interpro/api/entry/pfam/{PFAM_ID}`
-  - Example: PF00171 (Aldehyde dehydrogenase), PF00106 (short-chain dehydrogenase)
-  - **SUGGEST PFAM** even if user doesn't have database yet - they can add later
-- **Custom HMMs:** User-curated profiles (e.g., mlrA, nifH variants)
-  - **IMPORTANT:** Use profile NAME from HMM file header (`NAME  mlrA`), NOT filename
-  - Ask user: "Do you have a custom HMM profile for this gene? What's the profile NAME?"
-  - User may have single or concatenated multi-profile HMM files
+**2. PFAM domains (hmm)**
+- **MANDATORY: Search for every gene**, even if GATOR didn't have PFAM
+- Search InterPro: `https://www.ebi.ac.uk/interpro/api/entry/pfam/protein/UniProt/GENE_NAME`
+- Or search manually: `https://www.ebi.ac.uk/interpro/search/text/[gene name]`
+- Format: PF##### (e.g., "PF00171", "PF00106")
+- **Add findings proactively:** "Found PFAM PF00001 for geneX - adding to detection methods"
+- **If none found:** Note in gene: "No PFAM domain available"
+- Some profiles have trusted cutoffs (TC) automatically used in scoring
 
-**BLAST (`"blast"`):**
-- ✓ Pathway-specific genes without good KO/HMM coverage
-- ✓ Novel or niche metabolic genes (microcystin degradation, rare secondary metabolism)
-- ✓ When user provides reference sequences
-- **SUGGEST** reference sequences even if user doesn't have database yet
+**3. BLAST references (blast)**
+- For pathway-specific genes without good KO/PFAM
+- Novel or niche metabolic genes (microcystin degradation, rare secondary metabolism)
 - Format: Use exact sequence IDs from FASTA headers (e.g., "mlrA_AF411068_partial", "QVQ24103.1_mlrA")
-- Ask user: "Do you have reference protein sequences for this gene? What are the sequence IDs?"
+- Ask user: "Do you have reference sequences for this pathway?"
+- If not: "I recommend adding BLAST refs later - placeholder added with empty array"
+
+### Enrichment Workflow (REQUIRED for all conversions):
+
+1. Parse genes from GATOR/KEGG
+2. **FOR EACH GENE:**
+   a. Include KO terms from source
+   b. **Search PFAM** - add findings or note absence
+   c. **Ask about BLAST** - add if user provides, else empty array with note
+3. Build potato with enriched detection methods
+4. Report enrichment results:
+   "Added PFAM domains for 8/10 genes. Genes X, Y lack PFAM (searched, none found)."
+
+**Don't ask permission to search PFAM** - do it automatically and report findings.
+
+### Custom HMMs (in addition to PFAM)
+
+**Custom HMMs:** User-curated profiles (e.g., mlrA, nifH variants)
+- **IMPORTANT:** Use profile NAME from HMM file header (`NAME  mlrA`), NOT filename
+- Ask user: "Do you have a custom HMM profile for this gene? What's the profile NAME?"
+- User may have single or concatenated multi-profile HMM files
+- Include in same `"hmm"` array as PFAM: `"hmm": ["PF00561", "mlrA_aligned"]`
 
 ### Example: Multi-method gene definition (modern format)
 
@@ -1544,6 +1688,36 @@ Input/output are now **arrays of compound IDs** (not verbose objects):
 - Compound metadata (names, KEGG IDs) centralized in `compounds` array
 - No redundant `targets`/`sources` fields (edges define connectivity)
 - Required for gap-based scoring validation
+
+### Compound ID Validation Safeguard
+
+After defining compounds array, validate KEGG IDs before building edges:
+
+#### Validation Check:
+
+```bash
+# Check compound IDs
+for cid in C00078 C00954 C00331; do
+  echo "=== $cid ==="
+  curl -s "https://rest.kegg.jp/get/$cid" | head -5
+  echo ""
+done
+```
+
+#### What to Check:
+
+1. **Correct compound name:** Does NAME match what you expect?
+2. **No duplicates:** Each KEGG ID used only once in compounds array
+3. **Valid format:** C##### (5 digits)
+
+#### Common Mistakes:
+
+- **Duplicate IDs:** Same compound ID used for different metabolites
+  - Example: C00954 for both "tryptamine" and "IAA" (wrong!)
+- **Incorrect lookup:** Searched for wrong compound name
+- **Typos:** C0078 instead of C00078
+
+**FIX IMMEDIATELY if validation fails** - don't proceed to edge building with wrong compound IDs.
 
 ### Bifunctional Enzymes
 
@@ -1851,6 +2025,34 @@ Before saving, verify:
 - ✓ PFAM profiles in `hmm` field (not separate `pfam` field)
 - ✓ If using gap-based scoring, verify connectivity: all nodes between input and output must be reachable
 - ✓ Empty edges are valid for transport pathways (no internal reactions, just substrate relocation)
+- ✓ **Organism specificity verified** for prokaryotic tools (no plant/eukaryotic genes)
+- ✓ **PFAM domains searched** for all genes (not just copied from source)
+- ✓ **Compound IDs validated** via KEGG API (no duplicates, correct metabolite names)
+- ✓ **Pre-conversion research documented** (organism distribution checked)
+- ✓ **Excluded pathways documented** in notes (if applicable)
+
+### Monitoring Verified Status Changes
+
+**CRITICAL:** Watch for user changes to `verified` field during edits.
+
+After any edit session, check if user manually changed `verified: false` → `verified: true`:
+
+```bash
+grep -n '"verified": true' potato.json
+```
+
+**If detected, alert user:**
+
+```
+⚠️ **Verified Status Change Detected**
+
+I notice you've set pathway "[pathway_name]" to verified: true. 
+
+This tells POTATO this pathway has been manually validated by an expert. 
+Future edits to verified pathways require your explicit approval.
+
+Was this intentional? If yes, I'll treat this pathway as locked for editing.
+```
 
 ## IMPORTANT: Always Validate Before Finalizing
 

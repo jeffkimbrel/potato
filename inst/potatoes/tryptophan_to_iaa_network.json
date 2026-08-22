@@ -1,0 +1,160 @@
+{
+  "schema_version": "v2",
+  "id": "tryptophan_to_iaa_network",
+  "name": "Tryptophan to Indole-3-Acetic Acid (IAA) Network",
+  "source": "GATOR v1 potato_db.xlsx",
+  "tags": ["secondary_metabolism", "phytohormone", "auxin"],
+  "notes": "Two prokaryotic biosynthetic routes from tryptophan to indole-3-acetic acid (IAA/auxin). IAA production is widespread in bacteria and affects plant-microbe interactions. Additional plant-specific pathways exist (tryptamine pathway, nitrile pathways via CYP450 enzymes) but are excluded from this potato. Converted from GATOR v1 'Tryptophan to IAA' pathways I and III.",
+
+  "genes": [
+    {
+      "id": "iaaM",
+      "name": "tryptophan 2-monooxygenase",
+      "databases": {"kofam": ["K00466"]},
+      "ec": ["1.13.12.3"],
+      "type": "enzyme",
+      "notes": "Converts tryptophan → indole-3-acetamide. Key gene in IAM pathway (bacteria)."
+    },
+    {
+      "id": "amiE",
+      "name": "amidase",
+      "databases": {"kofam": ["K01426"]},
+      "ec": ["3.5.1.4"],
+      "type": "enzyme",
+      "notes": "Converts indole-3-acetamide → IAA. Found in paths I and V."
+    },
+    {
+      "id": "iaaH",
+      "name": "indoleacetamide hydrolase",
+      "databases": {"kofam": ["K21801"]},
+      "type": "enzyme",
+      "notes": "Alternative to amiE for indole-3-acetamide → IAA conversion."
+    },
+    {
+      "id": "ALDH",
+      "name": "aldehyde dehydrogenase (NAD+)",
+      "databases": {"kofam": ["K00128"]},
+      "ec": ["1.2.1.3"],
+      "type": "enzyme",
+      "notes": "Converts indole-3-acetaldehyde → IAA. Broad substrate specificity, found in bacteria."
+    },
+    {
+      "id": "IL4I1",
+      "name": "L-amino-acid oxidase",
+      "databases": {"kofam": ["K03334"]},
+      "ec": ["1.4.3.2"],
+      "type": "enzyme",
+      "notes": "Converts tryptophan → indolepyruvate. Broad substrate specificity."
+    },
+    {
+      "id": "Tam1",
+      "name": "tryptophan aminotransferase",
+      "databases": {"kofam": ["K14265"]},
+      "ec": ["2.6.1.27"],
+      "type": "enzyme",
+      "notes": "Alternative for tryptophan → indolepyruvate."
+    },
+    {
+      "id": "ARO8",
+      "name": "aromatic amino acid aminotransferase I / 2-aminoadipate transaminase",
+      "databases": {"kofam": ["K00838"]},
+      "ec": ["2.6.1.27"],
+      "type": "enzyme",
+      "notes": "Broad specificity aminotransferase, can convert tryptophan → indolepyruvate."
+    },
+    {
+      "id": "ipdC",
+      "name": "indolepyruvate decarboxylase",
+      "databases": {"kofam": ["K04103"]},
+      "ec": ["4.1.1.74"],
+      "type": "enzyme",
+      "notes": "Converts indolepyruvate → indole-3-acetaldehyde. Key marker for IPA pathway."
+    }
+  ],
+
+  "compounds": [
+    {
+      "id": "C00078",
+      "name": "L-tryptophan",
+      "kegg_compound": "C00078"
+    },
+    {
+      "id": "C02693",
+      "name": "indole-3-acetamide",
+      "kegg_compound": "C02693"
+    },
+    {
+      "id": "C05659",
+      "name": "indole-3-acetaldehyde",
+      "kegg_compound": "C05659"
+    },
+    {
+      "id": "C00331",
+      "name": "indolepyruvate",
+      "kegg_compound": "C00331"
+    },
+    {
+      "id": "C00954",
+      "name": "indole-3-acetic acid",
+      "kegg_compound": "C00954"
+    }
+  ],
+
+  "pathways": {
+    "iaam_pathway": {
+      "name": "IAM Pathway (iaaM pathway)",
+      "type": "variant",
+      "verified": true,
+      "notes": "Bacterial pathway. Two-step: tryptophan → indole-3-acetamide → IAA. Common in Agrobacterium, Pseudomonas.",
+
+      "input": ["C00078"],
+      "output": ["C00954"],
+
+      "edges": [
+        {"from": "C00078", "to": "iaaM", "required": true, "marker": true},
+        {"from": "iaaM", "to": "C02693", "required": true, "marker": true},
+        {"from": "C02693", "to": "amiE", "required": true, "marker": false},
+        {"from": "C02693", "to": "iaaH", "required": true, "marker": false},
+        {"from": "amiE", "to": "C00954", "required": true, "marker": false},
+        {"from": "iaaH", "to": "C00954", "required": true, "marker": false}
+      ],
+
+      "scoring": {
+        "min_fraction": 0.67,
+        "max_gaps": 0,
+        "marker_mode": "any",
+        "notes": "iaaM is diagnostic marker. Either amiE or iaaH required for second step."
+      }
+    },
+
+    "indolepyruvate_pathway": {
+      "name": "Indolepyruvate Pathway (IPA pathway)",
+      "type": "variant",
+      "verified": false,
+      "notes": "Bacterial three-step pathway via indolepyruvate. ipdC is diagnostic marker. Common in plant-associated bacteria.",
+
+      "input": ["C00078"],
+      "output": ["C00954"],
+
+      "edges": [
+        {"from": "C00078", "to": "IL4I1", "required": true, "marker": false},
+        {"from": "C00078", "to": "Tam1", "required": true, "marker": false},
+        {"from": "C00078", "to": "ARO8", "required": true, "marker": false},
+        {"from": "IL4I1", "to": "C00331", "required": true, "marker": false},
+        {"from": "Tam1", "to": "C00331", "required": true, "marker": false},
+        {"from": "ARO8", "to": "C00331", "required": true, "marker": false},
+        {"from": "C00331", "to": "ipdC", "required": true, "marker": true},
+        {"from": "ipdC", "to": "C05659", "required": true, "marker": true},
+        {"from": "C05659", "to": "ALDH", "required": true, "marker": false},
+        {"from": "ALDH", "to": "C00954", "required": true, "marker": false}
+      ],
+
+      "scoring": {
+        "min_fraction": 0.67,
+        "max_gaps": 0,
+        "marker_mode": "any",
+        "notes": "ipdC is diagnostic marker for bacterial IPA pathway. Requires at least one aminotransferase (IL4I1, Tam1, or ARO8) plus ipdC and ALDH."
+      }
+    }
+  }
+}

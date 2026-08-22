@@ -48,7 +48,33 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   pathway_info <- potato@pathways[[pathway]]
   title <- paste0(potato@name, " - ", pathway_info$name %||% pathway)
 
-  rows <- lapply(potato@genes, function(gene) {
+  # Get genes used in this pathway (from edges)
+  pathway_gene_ids <- unique(unlist(lapply(pathway_info$edges, function(e) {
+    c(e$from, e$to)
+  })))
+  # Filter to only genes (exclude compound IDs)
+  pathway_gene_ids <- pathway_gene_ids[pathway_gene_ids %in% sapply(potato@genes, function(g) g$id)]
+
+  # Filter genes to only those in this pathway
+  pathway_genes <- Filter(function(g) g$id %in% pathway_gene_ids, potato@genes)
+
+  # Helper to find which pathways contain a gene
+  get_pathways_for_gene <- function(gene_id) {
+    pathway_names <- c()
+    for (pw_id in names(potato@pathways)) {
+      pw <- potato@pathways[[pw_id]]
+      # Check if gene appears in any edge
+      gene_in_pathway <- any(sapply(pw$edges, function(e) {
+        e$from == gene_id || e$to == gene_id
+      }))
+      if (gene_in_pathway) {
+        pathway_names <- c(pathway_names, pw_id)
+      }
+    }
+    pathway_names
+  }
+
+  rows <- lapply(pathway_genes, function(gene) {
     # Format databases
     dbs <- sapply(names(gene$databases), function(db) {
       terms <- paste(gene$databases[[db]], collapse = ", ")
@@ -90,15 +116,26 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       character(0)
     }
 
+    # Get all pathways this gene appears in
+    gene_pathways <- get_pathways_for_gene(gene$id)
+    # Highlight current pathway in bold
+    pathway_display <- sapply(gene_pathways, function(pw) {
+      if (pw == pathway) {
+        paste0("<strong>", pw, "</strong>")
+      } else {
+        pw
+      }
+    })
+
     list(
       id = gene$id,
-      step = NA,  # V2 doesn't have step numbers
       required = is_required,
       marker = is_marker,
       name = gene$name,
       ec = paste(gene$ec, collapse = ", "),
       reactions = paste(reactions_formatted, collapse = ", "),
       databases = db_str,
+      pathways = paste(pathway_display, collapse = ", "),
       notes = gene$notes %||% ""
     )
   })
@@ -107,7 +144,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   plot_widget <- NULL
   tryCatch({
     # Create interactive plot with fixed height for embedding
-    g <- build_graph_v2(potato)
+    g <- build_graph_v2(potato, pathway_id = pathway)
     plot_widget <- plot_v2_interactive(g, layout = layout, height = "600px")
   }, error = function(e) {
     cli::cli_warn("Could not generate plot: {e$message}")
@@ -115,7 +152,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
   # Get pathway-specific metadata (V2 schema)
   source_info <- potato@source
-  notes_info <- pathway_info$notes %||% ""
+  potato_notes <- potato@notes %||% ""
+  pathway_notes <- pathway_info$notes %||% ""
 
   # Extract input/output info (array of compound IDs)
   input_info <- if (!is.null(pathway_info$input)) {
@@ -153,7 +191,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     verification_html,
     "<div style='background: #f9f9f9; padding: 15px; margin-bottom: 20px; border-left: 4px solid #4CAF50;'>",
     "<p><strong>Source:</strong> ", source_info, "</p>",
-    if (nchar(notes_info) > 0) paste0("<p><strong>Notes:</strong> ", notes_info, "</p>") else "",
+    if (nchar(potato_notes) > 0) paste0("<p><strong>Potato Description:</strong> ", potato_notes, "</p>") else "",
+    if (nchar(pathway_notes) > 0) paste0("<p><strong>Pathway Notes:</strong> ", pathway_notes, "</p>") else "",
     if (!is.null(input_info)) paste0("<p><strong>Input:</strong> ", input_info$display, "</p>") else "",
     if (!is.null(output_info)) paste0("<p><strong>Output:</strong> ", output_info$display, "</p>") else "",
     "</div>"
@@ -164,13 +203,13 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     paste0(
       "<tr>",
       "<td>", row$id, "</td>",
-      "<td>", row$step, "</td>",
       "<td>", ifelse(row$required, "✓", ""), "</td>",
       "<td>", ifelse(row$marker, "✓", ""), "</td>",
       "<td>", row$name, "</td>",
       "<td>", row$ec, "</td>",
       "<td>", row$reactions, "</td>",
       "<td>", row$databases, "</td>",
+      "<td>", row$pathways, "</td>",
       "<td style='max-width: 400px;'>", row$notes, "</td>",
       "</tr>"
     )
@@ -179,32 +218,68 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   # Build edges section (V2 schema)
   edges_data <- pathway_info$edges
 
-  # Helper to look up compound name from ID
-  get_compound_name <- function(node_id) {
+  # Helper to look up compound name from ID, or format gene with blue color
+  get_node_label <- function(node_id) {
     # V2: search compounds list
     compound <- Find(function(c) c$id == node_id, potato@compounds)
     if (!is.null(compound)) {
+      # It's a compound - return formatted name (no color)
       return(paste0(compound$name, " [", node_id, "]"))
     }
-    # Return ID if not found or not a compound
-    return(node_id)
+    # It's a gene - return with blue color
+    return(paste0("<span style='color: #216ADE;'>", node_id, "</span>"))
   }
 
-  edges_rows <- if (length(edges_data) > 0) {
-    sapply(edges_data, function(edge) {
-      # Convert IDs to names for compounds
-      from_label <- get_compound_name(edge$from)
-      to_label <- get_compound_name(edge$to)
+  # Build consolidated rows: compound → gene → compound
+  edges_rows <- if (length(edges_data) > 0 && length(pathway_gene_ids) > 0) {
+    # For each gene, find its input and output compounds
+    unlist(lapply(pathway_gene_ids, function(gene_id) {
+      # Find edges going into this gene (compound → gene)
+      input_edges <- Filter(function(e) e$to == gene_id, edges_data)
+      # Find edges going out of this gene (gene → compound)
+      output_edges <- Filter(function(e) e$from == gene_id, edges_data)
 
-      # Add reaction if present
-      reaction_str <- if (!is.null(edge$reaction)) {
-        paste0(" <strong>[", edge$reaction, "]</strong>")
-      } else ""
+      # Create a row for each input-gene-output combination
+      if (length(input_edges) > 0 && length(output_edges) > 0) {
+        unlist(lapply(input_edges, function(in_edge) {
+          lapply(output_edges, function(out_edge) {
+            input_label <- get_node_label(in_edge$from)
+            gene_label <- get_node_label(gene_id)
+            output_label <- get_node_label(out_edge$to)
 
-      paste0("<li>", from_label, " → ", to_label, reaction_str, "</li>")
-    })
+            # Add reaction if present (use output edge reaction)
+            reaction_str <- if (!is.null(out_edge$reaction)) {
+              paste0(" <strong>[", out_edge$reaction, "]</strong>")
+            } else ""
+
+            paste0("<li>", input_label, " → ", gene_label, " → ", output_label, reaction_str, "</li>")
+          })
+        }))
+      } else if (length(input_edges) > 0) {
+        # Gene has inputs but no outputs (terminal gene)
+        lapply(input_edges, function(in_edge) {
+          input_label <- get_node_label(in_edge$from)
+          gene_label <- get_node_label(gene_id)
+          paste0("<li>", input_label, " → ", gene_label, "</li>")
+        })
+      } else if (length(output_edges) > 0) {
+        # Gene has outputs but no inputs (initial gene)
+        lapply(output_edges, function(out_edge) {
+          gene_label <- get_node_label(gene_id)
+          output_label <- get_node_label(out_edge$to)
+          paste0("<li>", gene_label, " → ", output_label, "</li>")
+        })
+      } else {
+        NULL
+      }
+    }))
   } else {
     "<li><em>No edges defined</em></li>"
+  }
+
+  # Handle case where no rows were generated
+  if (is.null(edges_rows) || length(edges_rows) == 0) {
+    edges_rows <- "<li><em>No edges defined</em></li>"
   }
 
   edges_html <- paste0(
@@ -250,8 +325,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
         htmltools::tags$h3("Genes"),
         htmltools::HTML(paste0(
           "<table><tr>",
-          "<th>Gene ID</th><th>Step</th><th>Required</th><th>Marker</th>",
-          "<th>Name</th><th>EC</th><th>Reactions</th><th>Databases</th><th>Notes</th>",
+          "<th>Gene ID</th><th>Required</th><th>Marker</th>",
+          "<th>Name</th><th>EC</th><th>Reactions</th><th>Databases</th><th>Pathways</th><th>Notes</th>",
           "</tr>",
           paste(table_rows, collapse = "\n"),
           "</table>"
@@ -288,13 +363,13 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       "<table>",
       "<tr>",
       "<th>Gene ID</th>",
-      "<th>Step</th>",
       "<th>Required</th>",
       "<th>Marker</th>",
       "<th>Name</th>",
       "<th>EC</th>",
       "<th>Reactions</th>",
       "<th>Databases</th>",
+      "<th>Pathways</th>",
       "<th>Notes</th>",
       "</tr>",
       paste(table_rows, collapse = "\n"),
