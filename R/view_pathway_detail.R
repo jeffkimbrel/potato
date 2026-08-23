@@ -48,14 +48,28 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   pathway_info <- potato@pathways[[pathway]]
   title <- paste0(potato@name, " - ", pathway_info$name %||% pathway)
 
-  # Get genes used in this pathway (from edges)
-  pathway_gene_ids <- unique(unlist(lapply(pathway_info$edges, function(e) {
+  # Get genes used in this pathway
+  # Option 1: Explicit genes array in pathway (includes non-catalytic genes)
+  # Option 2: Extract from edges (catalytic genes only)
+  # Get all gene IDs from genes array AND edges (to capture complexes)
+  pathway_gene_ids <- character()
+
+  if (!is.null(pathway_info$genes) && length(pathway_info$genes) > 0) {
+    pathway_gene_ids <- pathway_info$genes
+  }
+
+  # Also extract from edges (may include complex IDs not in genes array)
+  edge_ids <- unique(unlist(lapply(pathway_info$edges, function(e) {
     c(e$from, e$to)
   })))
   # Filter to only genes (exclude compound IDs)
-  pathway_gene_ids <- pathway_gene_ids[pathway_gene_ids %in% sapply(potato@genes, function(g) g$id)]
+  all_gene_ids <- sapply(potato@genes, function(g) g$id)
+  edge_gene_ids <- edge_ids[edge_ids %in% all_gene_ids]
 
-  # Filter genes to only those in this pathway
+  # Combine: components from genes array + complexes from edges
+  pathway_gene_ids <- unique(c(pathway_gene_ids, edge_gene_ids))
+
+  # Filter genes to only those in this pathway (includes components AND complexes)
   pathway_genes <- Filter(function(g) g$id %in% pathway_gene_ids, potato@genes)
 
   # Helper to find which pathways contain a gene
@@ -75,69 +89,110 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   }
 
   rows <- lapply(pathway_genes, function(gene) {
-    # Format databases
-    dbs <- sapply(names(gene$databases), function(db) {
-      terms <- paste(gene$databases[[db]], collapse = ", ")
-      paste0(db, ": ", terms)
-    })
-    db_str <- paste(dbs, collapse = "<br>")
+    # Check if this is a complex
+    is_complex <- !is.null(gene$type) && gene$type == "complex"
 
-    # Get pathway-specific attributes from edges
-    pathway_edges <- pathway_info$edges
-    is_required <- any(sapply(pathway_edges, function(e) {
-      (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
-    }))
-    is_marker <- any(sapply(pathway_edges, function(e) {
-      (e$from == gene$id || e$to == gene$id) && !is.null(e$marker) && e$marker
-    }))
+    if (is_complex) {
+      # Complex entry - show components instead of databases
+      component_str <- paste(gene$components, collapse = ", ")
+      db_str <- paste0("<em>Complex components: ", component_str, "</em>")
 
-    # Get reactions used in pathway for this gene
-    pathway_reactions <- unique(sapply(pathway_edges, function(e) {
-      if ((e$from == gene$id || e$to == gene$id) && !is.null(e$reaction)) {
-        e$reaction
-      } else {
-        NA
-      }
-    }))
-    pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
+      # Get pathway-specific attributes from edges
+      pathway_edges <- pathway_info$edges
+      is_required <- any(sapply(pathway_edges, function(e) {
+        (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
+      }))
+      is_marker <- any(sapply(pathway_edges, function(e) {
+        (e$from == gene$id || e$to == gene$id) && !is.null(e$marker) && e$marker
+      }))
 
-    # Format reactions with color coding
-    reactions_formatted <- if (length(gene$reactions) > 0) {
-      sapply(gene$reactions, function(rxn) {
-        if (rxn %in% pathway_reactions) {
-          # Pathway reaction - normal color
-          rxn
+      # Get all pathways this complex appears in
+      gene_pathways <- get_pathways_for_gene(gene$id)
+      pathway_display <- sapply(gene_pathways, function(pw) {
+        if (pw == pathway) {
+          paste0("<strong>", pw, "</strong>")
         } else {
-          # Not in pathway - gray
-          paste0("<span style='color: #999;'>", rxn, "</span>")
+          pw
         }
       })
+
+      list(
+        id = gene$id,
+        required = is_required,
+        marker = is_marker,
+        name = gene$name,
+        ec = "",
+        reactions = "",
+        databases = db_str,
+        pathways = paste(pathway_display, collapse = ", "),
+        notes = gene$notes %||% ""
+      )
     } else {
-      character(0)
-    }
+      # Regular gene entry
+      # Format databases
+      dbs <- sapply(names(gene$databases), function(db) {
+        terms <- paste(gene$databases[[db]], collapse = ", ")
+        paste0(db, ": ", terms)
+      })
+      db_str <- paste(dbs, collapse = "<br>")
 
-    # Get all pathways this gene appears in
-    gene_pathways <- get_pathways_for_gene(gene$id)
-    # Highlight current pathway in bold
-    pathway_display <- sapply(gene_pathways, function(pw) {
-      if (pw == pathway) {
-        paste0("<strong>", pw, "</strong>")
+      # Get pathway-specific attributes from edges
+      pathway_edges <- pathway_info$edges
+      is_required <- any(sapply(pathway_edges, function(e) {
+        (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
+      }))
+      is_marker <- any(sapply(pathway_edges, function(e) {
+        (e$from == gene$id || e$to == gene$id) && !is.null(e$marker) && e$marker
+      }))
+
+      # Get reactions used in pathway for this gene
+      pathway_reactions <- unique(sapply(pathway_edges, function(e) {
+        if ((e$from == gene$id || e$to == gene$id) && !is.null(e$reaction)) {
+          e$reaction
+        } else {
+          NA
+        }
+      }))
+      pathway_reactions <- pathway_reactions[!is.na(pathway_reactions)]
+
+      # Format reactions with color coding
+      reactions_formatted <- if (length(gene$reactions) > 0) {
+        sapply(gene$reactions, function(rxn) {
+          if (rxn %in% pathway_reactions) {
+            # Pathway reaction - normal color
+            rxn
+          } else {
+            # Not in pathway - gray
+            paste0("<span style='color: #999;'>", rxn, "</span>")
+          }
+        })
       } else {
-        pw
+        character(0)
       }
-    })
 
-    list(
-      id = gene$id,
-      required = is_required,
-      marker = is_marker,
-      name = gene$name,
-      ec = paste(gene$ec, collapse = ", "),
-      reactions = paste(reactions_formatted, collapse = ", "),
-      databases = db_str,
-      pathways = paste(pathway_display, collapse = ", "),
-      notes = gene$notes %||% ""
-    )
+      # Get all pathways this gene appears in
+      gene_pathways <- get_pathways_for_gene(gene$id)
+      # Highlight current pathway in bold
+      pathway_display <- sapply(gene_pathways, function(pw) {
+        if (pw == pathway) {
+          paste0("<strong>", pw, "</strong>")
+        } else {
+          pw
+        }
+      })
+
+      list(
+        id = gene$id,
+        required = is_required,
+        marker = is_marker,
+        name = gene$name,
+        ec = paste(gene$ec, collapse = ", "),
+        reactions = paste(reactions_formatted, collapse = ", "),
+        databases = db_str,
+        pathways = paste(pathway_display, collapse = ", "),
+        notes = gene$notes %||% ""
+      )
+    }
   })
 
   # Generate plot

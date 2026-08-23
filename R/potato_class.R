@@ -250,23 +250,43 @@ validate_multi_pathway <- function(data, strict) {
         errors <- c(errors, sprintf("%s: 'marker' belongs on edges, not genes", gene_prefix))
       }
 
-      # Validate databases field
-      if (!is.null(gene$type) && gene$type == "enzyme") {
-        if (is.null(gene$databases) || length(gene$databases) == 0) {
-          warnings <- c(warnings, sprintf("%s: enzyme missing 'databases' field (no detection methods)", gene_prefix))
-        } else {
-          valid_db_types <- c("kofam", "blast", "hmm")
-          for (db_name in names(gene$databases)) {
-            if (!db_name %in% valid_db_types) {
-              errors <- c(errors, sprintf("%s: invalid database type '%s' (must be kofam, blast, or hmm)", gene_prefix, db_name))
+      # Validate based on gene type
+      if (!is.null(gene$type)) {
+        if (gene$type == "complex") {
+          # Complex must have components array
+          if (is.null(gene$components) || length(gene$components) == 0) {
+            errors <- c(errors, sprintf("%s: complex type requires 'components' array", gene_prefix))
+          } else {
+            # Validate all components exist as genes
+            for (component_id in gene$components) {
+              if (!component_id %in% gene_ids) {
+                errors <- c(errors, sprintf("%s: component '%s' not found in genes array", gene_prefix, component_id))
+              }
             }
+          }
 
-            # Validate KO format
-            if (db_name == "kofam") {
-              ko_ids <- unlist(gene$databases[[db_name]])
-              invalid_ko <- ko_ids[!grepl("^K[0-9]{5}$", ko_ids)]
-              if (length(invalid_ko) > 0) {
-                warnings <- c(warnings, sprintf("%s: invalid KO format: %s", gene_prefix, paste(invalid_ko, collapse = ", ")))
+          # Complex should NOT have databases field
+          if (!is.null(gene$databases)) {
+            warnings <- c(warnings, sprintf("%s: complex should not have 'databases' field (detection via components)", gene_prefix))
+          }
+        } else if (gene$type == "enzyme" || gene$type == "transport" || gene$type == "chaperone") {
+          # Regular genes need databases
+          if (is.null(gene$databases) || length(gene$databases) == 0) {
+            warnings <- c(warnings, sprintf("%s: %s missing 'databases' field (no detection methods)", gene_prefix, gene$type))
+          } else {
+            valid_db_types <- c("kofam", "blast", "hmm")
+            for (db_name in names(gene$databases)) {
+              if (!db_name %in% valid_db_types) {
+                errors <- c(errors, sprintf("%s: invalid database type '%s' (must be kofam, blast, or hmm)", gene_prefix, db_name))
+              }
+
+              # Validate KO format
+              if (db_name == "kofam") {
+                ko_ids <- unlist(gene$databases[[db_name]])
+                invalid_ko <- ko_ids[!grepl("^K[0-9]{5}$", ko_ids)]
+                if (length(invalid_ko) > 0) {
+                  warnings <- c(warnings, sprintf("%s: invalid KO format: %s", gene_prefix, paste(invalid_ko, collapse = ", ")))
+                }
               }
             }
           }
@@ -554,6 +574,64 @@ validate_multi_pathway <- function(data, strict) {
     if (is.null(data$tags) || length(data$tags) == 0) {
       warnings <- c(warnings, "No tags specified")
     }
+  }
+
+  # Check for orphaned genes/compounds (defined but not used in any pathway)
+  used_genes <- character()
+  used_compounds <- character()
+
+  if (!is.null(data$pathways)) {
+    for (pathway_id in names(data$pathways)) {
+      pathway <- data$pathways[[pathway_id]]
+
+      # Collect genes from explicit genes array OR from edges
+      if (!is.null(pathway$genes) && length(pathway$genes) > 0) {
+        used_genes <- c(used_genes, pathway$genes)
+      } else if (!is.null(pathway$edges)) {
+        # Extract from edges
+        for (edge in pathway$edges) {
+          if (!is.null(edge$from) && edge$from %in% gene_ids) {
+            used_genes <- c(used_genes, edge$from)
+          }
+          if (!is.null(edge$to) && edge$to %in% gene_ids) {
+            used_genes <- c(used_genes, edge$to)
+          }
+        }
+      }
+
+      # Collect compounds from edges, input, output
+      if (!is.null(pathway$edges)) {
+        for (edge in pathway$edges) {
+          if (!is.null(edge$from) && edge$from %in% compound_ids) {
+            used_compounds <- c(used_compounds, edge$from)
+          }
+          if (!is.null(edge$to) && edge$to %in% compound_ids) {
+            used_compounds <- c(used_compounds, edge$to)
+          }
+        }
+      }
+      if (!is.null(pathway$input)) {
+        used_compounds <- c(used_compounds, pathway$input)
+      }
+      if (!is.null(pathway$output)) {
+        used_compounds <- c(used_compounds, pathway$output)
+      }
+    }
+  }
+
+  used_genes <- unique(used_genes)
+  used_compounds <- unique(used_compounds)
+
+  orphaned_genes <- setdiff(gene_ids, used_genes)
+  orphaned_compounds <- setdiff(compound_ids, used_compounds)
+
+  if (length(orphaned_genes) > 0) {
+    warnings <- c(warnings, sprintf("Orphaned genes (defined but not used in any pathway): %s",
+                                    paste(orphaned_genes, collapse = ", ")))
+  }
+  if (length(orphaned_compounds) > 0) {
+    warnings <- c(warnings, sprintf("Orphaned compounds (defined but not used in any pathway): %s",
+                                    paste(orphaned_compounds, collapse = ", ")))
   }
 
   list(valid = length(errors) == 0, errors = errors, warnings = warnings)

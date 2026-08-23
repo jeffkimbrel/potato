@@ -39,6 +39,13 @@
       "reactions": ["R00197"],
       "type": "enzyme",
       "notes": "FAD-binding subunit"
+    },
+    {
+      "id": "glcDEF",
+      "name": "glycolate oxidase complex",
+      "type": "complex",
+      "components": ["glcD", "glcE", "glcF"],
+      "notes": "Three-subunit glycolate oxidase complex. At least 2 of 3 subunits typically required for functional complex."
     }
   ],
 
@@ -54,19 +61,16 @@
       "verified": false,
       "notes": "Multi-subunit enzyme complex oxidizes glycolate to glyoxylate. Main reaction is R00475.",
 
+      "genes": ["glcD", "glcE", "glcF"],
       "edges": [
-        {"from": "C00160", "to": "glcD", "required": true, "marker": true, "reaction": "R00475"},
-        {"from": "glcD", "to": "C00048", "required": true, "marker": true, "reaction": "R00475"},
-        {"from": "C00160", "to": "glcE", "required": true, "marker": false, "reaction": "R03184"},
-        {"from": "glcE", "to": "C00048", "required": true, "marker": false, "reaction": "R03184"},
-        {"from": "C00160", "to": "glcF", "required": true, "marker": false, "reaction": "R00475"},
-        {"from": "glcF", "to": "C00048", "required": true, "marker": false, "reaction": "R00475"}
+        {"from": "C00160", "to": "glcDEF", "required": true, "marker": true, "reaction": "R00475"},
+        {"from": "glcDEF", "to": "C00048", "required": true, "marker": true, "reaction": "R00475"}
       ],
 
       "scoring": {
-        "min_fraction": 0.67,
+        "min_fraction": 1.0,
         "marker_mode": "any",
-        "notes": "At least 2 of 3 subunits for functional complex"
+        "notes": "Complex requires all 3 subunits (glcD, glcE, glcF) for function. glcD is the marker gene."
       }
     }
   }

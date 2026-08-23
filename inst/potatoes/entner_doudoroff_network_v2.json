@@ -229,20 +229,44 @@
       "y_compounds": 55
     },
     {
-      "id": "cutABC",
-      "name": "glyceraldehyde dehydrogenase complex (cutABC)",
+      "id": "cutA",
+      "name": "glyceraldehyde dehydrogenase subunit A",
       "databases": {
-        "kofam": [
-          "K18020",
-          "K18021",
-          "K18022"
-        ]
+        "kofam": ["K18020"]
       },
-      "ec": [
-        "1.2.99.8"
-      ],
-      "notes": "Three-subunit FAD-containing glyceraldehyde dehydrogenase complex (cutA/K18020 + cutB/K18021 + cutC/K18022) that oxidizes D-glyceraldehyde to glycerate (R10324). Physiological electron acceptor unknown. One of three alternatives for this step in npED (M00309).",
-      "type": "enzyme",
+      "ec": ["1.2.99.8"],
+      "reactions": ["R10324"],
+      "notes": "Subunit A of three-component FAD-containing glyceraldehyde dehydrogenase complex",
+      "type": "enzyme"
+    },
+    {
+      "id": "cutB",
+      "name": "glyceraldehyde dehydrogenase subunit B",
+      "databases": {
+        "kofam": ["K18021"]
+      },
+      "ec": ["1.2.99.8"],
+      "reactions": ["R10324"],
+      "notes": "Subunit B of three-component FAD-containing glyceraldehyde dehydrogenase complex",
+      "type": "enzyme"
+    },
+    {
+      "id": "cutC",
+      "name": "glyceraldehyde dehydrogenase subunit C",
+      "databases": {
+        "kofam": ["K18022"]
+      },
+      "ec": ["1.2.99.8"],
+      "reactions": ["R10324"],
+      "notes": "Subunit C of three-component FAD-containing glyceraldehyde dehydrogenase complex",
+      "type": "enzyme"
+    },
+    {
+      "id": "cutABC",
+      "name": "glyceraldehyde dehydrogenase complex",
+      "type": "complex",
+      "components": ["cutA", "cutB", "cutC"],
+      "notes": "Three-subunit FAD-containing glyceraldehyde dehydrogenase complex that oxidizes D-glyceraldehyde to glycerate (R10324). Physiological electron acceptor unknown. All three subunits required for function. One of three alternatives for this step in npED (M00309).",
       "x": -4,
       "y": 126,
       "x_compounds": 73,
@@ -604,6 +628,7 @@
       "type": "variant",
       "kegg_module": "M00309",
       "notes": "Gluconate entry without phosphorylation. Extended pathway with optional upstream glucose oxidation: glucose \u2192 gluconolactone \u2192 gluconate \u2192 pyruvate + 2-phosphoglycerate. Three alternative glyceraldehyde dehydrogenases (gadh/cutABC/aor) produce glycerate, which is phosphorylated by glycerate kinase to enter lower glycolysis.",
+      "genes": ["gdh", "gnl", "gnaD", "kdgA", "kdpgA", "gadh", "cutA", "cutB", "cutC", "aor", "gck"],
       "nodes": {
         "gdh": {
           "step": 1,

@@ -68,7 +68,7 @@
     "main": {
       "name": "BHAC Cycle",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "Complete cycle: 2 glyoxylate → oxaloacetate. Glycine is regenerated.",
 
       "edges": [

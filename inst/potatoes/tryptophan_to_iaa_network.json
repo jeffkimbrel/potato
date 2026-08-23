@@ -104,7 +104,7 @@
     "iaam_pathway": {
       "name": "IAM Pathway (iaaM pathway)",
       "type": "variant",
-      "verified": true,
+      "verified": false,
       "notes": "Bacterial pathway. Two-step: tryptophan → indole-3-acetamide → IAA. Common in Agrobacterium, Pseudomonas.",
 
       "input": ["C00078"],

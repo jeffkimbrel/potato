@@ -128,6 +128,13 @@ Each potato is a self-contained network with genes, compounds, and pathways:
       "ec": ["1.1.1.1"],
       "reactions": ["R00001"],
       "notes": "Biological context"
+    },
+    {
+      "id": "complexABC",
+      "name": "multi-subunit protein complex",
+      "type": "complex",
+      "components": ["geneA", "geneB", "geneC"],
+      "notes": "All components required for function"
     }
   ],
   
@@ -147,6 +154,7 @@ Each potato is a self-contained network with genes, compounds, and pathways:
       "verified": false,  // ALWAYS false unless manually validated
       "notes": "Pathway-specific notes",
       
+      "genes": ["geneA", "geneB", "chaperone1"],  // OPTIONAL: explicit gene list (includes non-catalytic genes)
       "input": ["C00031"],
       "output": ["C00002"],
       
@@ -185,28 +193,36 @@ Each potato is a self-contained network with genes, compounds, and pathways:
 ```
 
 **Key V2 Schema Features:**
-- `schema_version`: **Required** - Must be "v2"
-- `genes`: Global gene definitions with detection methods only
+- `schema_version`: **Required** - Must be "v2" (schema is now frozen - no breaking changes)
+- `genes`: Global gene definitions with detection methods OR complex definitions
+- `type`: Gene types: "enzyme", "transport", "chaperone", or "complex"
+- **Protein complexes:** Multi-component units where all components required
+  - Complex entries use `"type": "complex"` and `"components": ["geneA", "geneB", "geneC"]`
+  - Components must exist as separate genes with detection methods
+  - Complex appears as single node in network plot
+  - Scoring checks ALL components detected (not yet implemented)
+  - Example: `ureA + ureB + ureC` from GATOR becomes ureABC complex
 - `compounds`: Global compound definitions
 - `pathways`: One or more pathways, each with its own topology
-- `edges`: Connect genes and compounds, carry `required`/`marker` attributes
+- `edges`: Connect genes/compounds (or complexes), carry `required`/`marker` attributes
 - `verified`: **CRITICAL** - Per-pathway field, always `false` for new pathways. **NEVER set to true**. Only humans verify.
   - **NEVER EDIT VERIFIED PATHWAYS**: If `"verified": true`, DO NOT make edits without explicit user approval.
 
 **Important Notes:**
 - **No step numbers** - Genes are counted directly, no sequential steps
-- **No node IDs** - Edges reference gene/compound IDs directly
+- **No node IDs** - Edges reference gene/compound IDs directly (or complex IDs for multi-component units)
 - **required/marker on edges** - Not on genes, because same gene can have different roles in different pathways (different substrates, different pathway context)
 - **Empty edges allowed** - Transport pathways and other special cases can have `edges: []` (valid as of v0.11.1)
+- **Optional genes array** - Pathways can explicitly list genes (including non-catalytic genes like chaperones, regulators) via `"genes": ["geneA", "geneB"]`. If omitted, genes are inferred from edges. For complexes, list components (not complex ID).
 - **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names)
 - **PFAM profiles:** Go in `hmm` field (PFAM is a type of HMM database)
-- **Input/output:** Arrays of compound IDs (e.g., `["C00048"]` or `["C00031", "C00024"]`) that define core pathway boundaries for gap-based scoring. IDs must exist in the `compounds` array. For transporters, use location qualifiers in compound IDs ("NH4_external", "NH4_internal")
+- **Input/output:** Arrays of compound IDs (e.g., `["C00048"]` or `["C00031", "C00024"]`) that define core pathway boundaries for gap-based scoring. IDs must exist in the `compounds` array. For transporters, use location qualifiers in compound IDs ("NH4_external", "NH4_internal"). **Mandatory for gap-based scoring, optional for fraction-based.**
 - **Pathway types:** 
   - `variant` - Alternative routes to same outcome (Mo-nif vs V-nif)
   - `independent` - Different functions, shared metabolic space (TCA vs glyoxylate shunt)
 - **Scoring methods:**
   - `min_fraction`: Fraction-based scoring (detected genes / total genes ≥ threshold)
-  - `max_gaps`: Gap-based scoring (# missing genes in best path from input→output ≤ threshold)
+  - `max_gaps`: Gap-based scoring (# missing genes in best path from input→output ≤ threshold, requires input/output)
   - Both can be present - pathway passes if EITHER method succeeds
   - Neither present - defaults to `min_fraction: 0.67`
 
@@ -345,6 +361,41 @@ For true metabolic cycles (TCA, BHAC), gap-based scoring requires defining artif
 - Each pathway in multi-pathway network has independent verification status
 - Default: `"verified": false` for all new pathways
 - Only humans set to true after manual validation
+
+**8. Protein Complexes**
+- Multi-component complexes where all subunits required for function
+- Complex defined in `genes` array with `"type": "complex"` and `"components": ["subA", "subB", "subC"]`
+- Each component is a separate gene entry with detection methods
+- **Edges reference complex ID** (appears as single node in network plot)
+- Pathway's `genes` array lists components (not complex ID) for scoring
+- **GATOR translation:** `geneA + geneB + geneC` becomes a complex; `geneA | geneB` remains alternatives (separate edges)
+- **Alternative complexes:** Multiple complexes can be alternatives (e.g., `ureABC` OR `ureAB_ureC` complex)
+- Validation checks all components exist as genes
+
+**Why complexes in edges (not individual components)?**
+
+With alternative complexes like `ureA + ureB + ureC | ureAB + ureC`, individual gene "required" flags are ambiguous:
+- ureA required? Only if taking ureABC route
+- ureB required? Only if taking ureABC route
+- ureC required? Always (shared between alternatives)
+- ureAB required? Only if taking ureAB_ureC route
+
+By putting complexes in edges:
+```json
+"edges": [
+  {"from": "C00086", "to": "ureABC", "required": true, "marker": true},
+  {"from": "C00086", "to": "ureAB_ureC", "required": true, "marker": true}
+]
+```
+
+The logic is unambiguous: "Either ureABC required OR ureAB_ureC required (alternatives)."
+
+**Scoring resolves complexes:**
+1. Check if ALL components of ureABC detected → ureABC "present"
+2. Check if ALL components of ureAB_ureC detected → ureAB_ureC "present"
+3. Pathway passes if any required alternative is complete
+
+This avoids conditional requirements at gene level and matches biological reality (complex acts as functional unit).
 
 ### Scoring V2 Potatoes
 

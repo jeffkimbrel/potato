@@ -40,5 +40,7 @@ export(update_potato_coordinates)
 export(validate_potato)
 export(view_pathway_detail)
 importFrom(magrittr,"%>%")
-importFrom(stats,median)
-importFrom(stats,quantile)
+importFrom(stats,
+  median,
+  quantile
+)

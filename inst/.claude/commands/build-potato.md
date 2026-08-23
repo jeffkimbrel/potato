@@ -79,23 +79,44 @@ Help users build well-structured potato JSON files through:
 - Global `genes` array defines **detection methods only** (databases, EC, name, type)
 - **NO step, required, marker on genes** - these go on edges
 - Same gene can have different roles in different pathways
+- **Protein complexes** - Multi-component units where all subunits required
 
-**Global gene example:**
+**Regular gene example:**
 ```json
 {
   "id": "gnaD",
   "name": "gluconate dehydratase",
+  "type": "enzyme",
   "databases": {
     "kofam": ["K05308"]
   },
   "ec": ["4.2.1.140"],
   "reactions": ["R01541"],
-  "type": "enzyme",
   "notes": "Bifunctional: acts on gluconate and galactonate",
   "x": 100,        // Optional: visualization coordinates
   "y": 200
 }
 ```
+
+**Protein complex example:**
+```json
+{
+  "id": "ureABC",
+  "name": "urease enzyme complex",
+  "type": "complex",
+  "components": ["ureA", "ureB", "ureC"],
+  "notes": "Three-subunit urease complex. All components required for activity."
+}
+```
+
+**Complex guidelines:**
+- Use `"type": "complex"` for multi-component units
+- `components` array lists component gene IDs (all must exist as separate genes with detection methods)
+- NO `databases` field on complexes (detection via components)
+- Edges reference complex ID (appears as single node in visualization)
+- Pathway's `genes` array lists components (not complex ID) for scoring
+- **GATOR translation:** `geneA + geneB + geneC` → create complex; `geneA | geneB` → alternatives (separate edges)
+- **Alternative complexes:** Multiple complexes = alternatives (e.g., ureABC OR ureAB_ureC)
 
 ## Compound Definition (V2)
 
@@ -833,7 +854,7 @@ The old format used string syntax to represent pathway structure:
 **Operators:**
 - `->` or ` ` (space) = Sequential steps (A then B)
 - `|` = OR branch (A or B alternatives)
-- `+` = AND within same step (both required together)
+- `+` = AND within same step (both required together) → **COMPLEX in V2**
 - `()` = Grouping
 
 **Examples:**
@@ -841,9 +862,36 @@ The old format used string syntax to represent pathway structure:
 geneA -> geneB -> geneC           # Linear 3-step pathway
 geneA geneB geneC                 # Same as above (space = sequential)
 geneA -> (geneB | geneC)          # Step 2 has alternatives
-(geneA + geneB) -> geneC          # Step 1 requires both genes
+(geneA + geneB) -> geneC          # Step 1 requires both genes → CREATE COMPLEX
+ureA + ureB + ureC                # All required → CREATE ureABC complex
+ureA + ureB + ureC | ureAB + ureC # Two alternative complexes
 geneA -> (geneB | geneC) -> geneD # Mixed: alternative at step 2
 ```
+
+**CRITICAL - Converting `+` (AND) to Complexes:**
+
+When you encounter `+` in GATOR syntax, you must determine whether to create a protein complex:
+
+**Create complex when:**
+- Multiple subunits work together as functional unit (ABC transporters, multi-subunit enzymes)
+- All components physically interact
+- Example: `ureA + ureB + ureC` → create `ureABC` complex
+
+**Don't create complex when:**
+- Genes act independently in same step
+- No physical interaction (e.g., two separate enzymes acting on different parts of molecule)
+- In doubt, ask user: "Does [geneA + geneB] form a physical complex or act independently?"
+
+**Complex conversion algorithm:**
+1. Identify `+` groups: `(ureA + ureB + ureC)`
+2. Create complex gene entry with components: `{"id": "ureABC", "type": "complex", "components": ["ureA", "ureB", "ureC"]}`
+3. Create individual gene entries for each component with detection methods
+4. In edges, reference complex ID: `{"from": "C00086", "to": "ureABC"}`
+5. In pathway's `genes` array, list components: `["ureA", "ureB", "ureC"]`
+
+**Alternative complexes:**
+- `ureA + ureB + ureC | ureAB + ureC` → Create TWO complexes: `ureABC` and `ureAB_ureC`
+- Both appear as alternative edges in pathway
 
 ### Pre-Conversion Research (REQUIRED)
 
@@ -1642,6 +1690,7 @@ Input/output are now **arrays of compound IDs** (not verbose objects):
 - Compound IDs must exist in global `compounds` array
 - For gap-based scoring, `input`/`output` are **REQUIRED** (not optional)
 - Validation automatically checks connectivity from input → output
+- **CRITICAL:** If pathway has no metabolic transformation (e.g., accessory/chaperone pathways), **OMIT** `input`/`output` fields entirely - do NOT use empty arrays `[]`
 
 **For metabolic pathways:**
 - Use KEGG compound IDs: `"C00092"` (D-glucose-6-phosphate), `"C00022"` (pyruvate)
@@ -1680,6 +1729,57 @@ Input/output are now **arrays of compound IDs** (not verbose objects):
       "output": ["NH4_internal"]
     }
   }
+}
+```
+
+**For pathways with non-catalytic genes (chaperones, regulators, accessory proteins):**
+- Use optional `genes` array to explicitly list all genes in pathway (including non-catalytic)
+- Non-catalytic genes won't appear in edges (no compound flow) but are still part of the pathway
+- Example: urease pathway includes catalytic genes (ureABC) AND accessory proteins (ureDEFG)
+
+```json
+{
+  "pathways": {
+    "urease": {
+      "name": "Urea Degradation - Urease",
+      "genes": ["ureA", "ureB", "ureC", "ureAB", "ureD", "ureE", "ureF", "ureG"],
+      "input": ["C00086"],
+      "output": ["C00014", "C00011"],
+      "edges": [
+        // Only catalytic genes (ureABC) appear in edges
+        // Accessory genes (ureDEFG) are in genes array but not in edges
+      ]
+    }
+  }
+}
+```
+
+**For accessory/chaperone pathways with no edges:**
+- **OMIT** `input` and `output` fields entirely (do NOT use empty arrays)
+- Example: if you wanted a separate pathway just for accessory proteins (not recommended - use genes array instead)
+
+```json
+{
+  "pathways": {
+    "urease_accessory": {
+      "name": "Urease Accessory Proteins",
+      "type": "independent",
+      "verified": false,
+      "notes": "Urease maturation factors - not catalytic",
+      "edges": [],
+      "scoring": {
+        "min_fraction": 0.75
+      }
+    }
+  }
+}
+```
+
+**WRONG - Don't do this:**
+```json
+{
+  "input": [],   // ❌ Empty array will cause validation error
+  "output": []   // ❌ Empty array will cause validation error
 }
 ```
 
@@ -2007,10 +2107,11 @@ Before saving, verify:
 
 - ✓ **CRITICAL:** `"verified": false` field present in EACH pathway and set to false (NEVER true)
 - ✓ `id` is snake_case, unique
-- ✓ **CRITICAL:** `input` and `output` fields present in each pathway as **arrays of compound IDs** (e.g., `["C00048"]`)
+- ✓ **CRITICAL:** `input` and `output` fields as **arrays of compound IDs** (e.g., `["C00048"]`) OR omitted entirely
   - **REQUIRED** if using gap-based scoring (`max_gaps`)
-  - Recommended for all pathways for biological documentation
-- ✓ Compound IDs in `input`/`output` exist in global `compounds` array
+  - Recommended for metabolic pathways for biological documentation
+  - **OMIT entirely** (do NOT use empty arrays `[]`) for accessory/chaperone pathways with no metabolic transformation
+- ✓ Compound IDs in `input`/`output` (if present) exist in global `compounds` array
 - ✓ All `nodes` arrays match `step` field (single int → single node, array → multiple nodes)
 - ✓ All edge `from`/`to` reference valid node IDs (with _step suffix)
 - ✓ At least ONE gene has `marker: true` (unless transport pathway with empty edges)

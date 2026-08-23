@@ -29,6 +29,8 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 
 ## V2 Schema Reference
 
+**Schema Status:** V2 is frozen (stable). Package versions (v0.11.x, v0.12.x) track implementation milestones, not schema changes. Future breaking changes would require V3.
+
 ```json
 {
   "schema_version": "v2",
@@ -42,6 +44,7 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
     {
       "id": "geneSymbol",
       "name": "enzyme name",
+      "type": "enzyme",
       "databases": {
         "kofam": ["K00001"],
         "blast": ["ref_seq_id"],
@@ -49,6 +52,13 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
       },
       "ec": ["1.1.1.1"],
       "reactions": ["R00001"]
+    },
+    {
+      "id": "complexABC",
+      "name": "multi-subunit complex",
+      "type": "complex",
+      "components": ["geneA", "geneB", "geneC"],
+      "notes": "All components required for function"
     }
   ],
   
@@ -61,17 +71,21 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
       "name": "Pathway Display Name",
       "type": "variant",  // or "independent"
       "verified": false,
+      "genes": ["geneA", "geneB", "geneC"],  // Components for scoring
+      "input": ["C00031"],   // Required for gap-based scoring
+      "output": ["C00022"],  // Required for gap-based scoring
       "edges": [
         {
           "from": "C00031",
-          "to": "geneA",
+          "to": "complexABC",
           "required": true,
           "marker": true,
           "reaction": "R00001"
         }
       ],
       "scoring": {
-        "min_fraction": 0.75,
+        "min_fraction": 0.75,    // Fraction-based scoring
+        "max_gaps": 1,           // Gap-based scoring (optional)
         "marker_mode": "any"
       }
     }
@@ -80,11 +94,14 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 ```
 
 **Key features:**
-- `genes`: Global definitions (detection methods only)
+- `genes`: Global definitions with detection methods OR complex definitions
+- `type`: "enzyme", "transport", "chaperone", or "complex"
+- Complexes: use `components` array (not `databases`), all components must exist as genes
 - `pathways`: One or more pathways with topology
-- `edges`: Connect genes/compounds, carry `required`/`marker`
+- `edges`: Connect genes/compounds (or complexes), carry `required`/`marker`
 - `verified`: Always `false` for new pathways (only humans verify)
 - Pathway types: `variant` (alternatives) or `independent` (different functions)
+- `input`/`output`: Mandatory for gap-based scoring, optional for fraction-based
 
 ---
 
@@ -172,6 +189,109 @@ Creates multi-pathway network with:
 - User has Mo-nif and V-nif separate, realizes they're variants → merge
 - Testing: split network, run analysis, compare to network results
 - Distribution: ship separate potatoes for simple cases, networks for advanced users
+
+---
+
+### Potato Extension & Overlay System **[MEDIUM PRIORITY]**
+
+**Problem:** Users need to customize bundled potatoes without modifying original files:
+- Adjust scoring thresholds for their specific use case
+- Add custom pathway variants to existing networks
+- Maintain separation between bundled (package) and custom (user) potatoes
+- Update package without losing customizations
+
+**Solution:** Extension/overlay system with `extends` field
+
+**Use cases:**
+
+**1. Load from multiple directories:**
+```r
+sack <- create_sack()
+sack <- add_potatoes(sack, "inst/potatoes")      # Bundled with package
+sack <- add_potatoes(sack, "~/custom_potatoes")  # User custom potatoes
+```
+
+**2. Extend existing potato** (add pathways to bundled network):
+```json
+{
+  "schema_version": "v2",
+  "extends": "nitrogen_fixation",
+  "pathways": {
+    "my_custom_nif": {
+      "name": "My Custom Nif Variant",
+      "type": "variant",
+      "notes": "Custom variant for my specific organism group",
+      "edges": [...],
+      "scoring": {...}
+    }
+  }
+}
+```
+Result: Loaded potato has all original pathways PLUS `my_custom_nif`
+
+**3. Override settings** (adjust thresholds without copying whole file):
+```json
+{
+  "schema_version": "v2",
+  "extends": "nitrogen_fixation",
+  "pathways": {
+    "mo_nif": {
+      "scoring": {
+        "min_fraction": 0.9  // Override bundled 0.75
+      }
+    }
+  }
+}
+```
+Result: `mo_nif` pathway uses 0.9 threshold, all other pathways unchanged
+
+**4. Add custom genes to existing network:**
+```json
+{
+  "schema_version": "v2",
+  "extends": "urea_metabolism",
+  "genes": [
+    {
+      "id": "my_custom_urease",
+      "name": "novel urease variant",
+      "databases": {"blast": ["my_ref_seq"]},
+      "type": "enzyme"
+    }
+  ],
+  "pathways": {
+    "urease": {
+      "genes": ["ureA", "ureB", "ureC", "my_custom_urease"]
+    }
+  }
+}
+```
+
+**Implementation details:**
+
+- [ ] Add `extends` field to schema (optional, references potato `id`)
+- [ ] Merge logic in `load_potato_v2()`:
+  - Load base potato first
+  - Deep merge: genes/compounds/pathways are additive
+  - Pathway-level overrides: if pathway ID exists, merge/override fields
+  - Gene-level overrides: if gene ID exists, merge databases/notes
+- [ ] Config option for potato search paths (package, user, project-local)
+- [ ] Load order / priority: project-local > user > package
+- [ ] Validation: check extended potato exists and is compatible
+- [ ] `print()` method shows extension chain: "nitrogen_fixation (extended by custom_nif.json)"
+
+**Design decisions:**
+- Extensions don't modify original files (non-destructive)
+- Multiple extension levels allowed: A extends B extends C
+- Circular extends detection (error if detected)
+- Extensions are **additive** - can't delete pathways/genes from base
+- Field-level overrides for scoring, notes, edges
+- Version compatibility: extension must match base `schema_version`
+
+**Benefits:**
+- Package updates don't overwrite user customizations
+- Share custom variants without duplicating entire potato
+- Test parameter sensitivity (create extensions with different thresholds)
+- Domain-specific tuning (marine microbes, gut microbes, etc.)
 
 ---
 
@@ -289,6 +409,72 @@ sack <- run_kofam(sack, potato_names = "pathway_B")  # Should merge
 
 ## Scoring & Analysis
 
+### Protein Complex Scoring **[HIGH PRIORITY - IN PROGRESS]**
+
+**Goal:** Handle multi-component protein complexes where all components are required for function
+
+**Current status:** 
+- ✅ Schema defined and frozen as part of V2
+- ✅ Visualization complete (complex appears as single node)
+- ✅ Validation complete (checks components exist as genes)
+- [ ] Scoring logic not yet implemented
+
+**Schema structure:**
+```json
+{
+  "genes": [
+    // Component genes with detection methods
+    {"id": "urtA", "type": "enzyme", "databases": {"kofam": ["K11959"]}},
+    {"id": "urtB", "type": "enzyme", "databases": {"kofam": ["K11960"]}},
+    {"id": "urtC", "type": "enzyme", "databases": {"kofam": ["K11961"]}},
+    {"id": "urtD", "type": "enzyme", "databases": {"kofam": ["K11962"]}},
+    {"id": "urtE", "type": "enzyme", "databases": {"kofam": ["K11963"]}},
+    
+    // Complex definition
+    {
+      "id": "urtABCDE",
+      "name": "urea ABC transporter complex",
+      "type": "complex",
+      "components": ["urtA", "urtB", "urtC", "urtD", "urtE"],
+      "notes": "All components required for function"
+    }
+  ],
+  "pathways": {
+    "pathway_id": {
+      "genes": ["urtA", "urtB", "urtC", "urtD", "urtE"],  // List components for scoring
+      "edges": [
+        {"from": "substrate", "to": "urtABCDE", "required": true, "marker": true}  // Complex in edges
+      ]
+    }
+  }
+}
+```
+
+**Key design decisions:**
+- Components are regular genes with detection methods (kofam/blast/hmm)
+- Complex is additional entry with `type: "complex"` and `components` array
+- Complex uses `components` (not `databases`) - detected via component annotation
+- Multiple complexes = alternatives (e.g., `ureABC` OR `ureAB_ureC` like GATOR `|` operator)
+- Pathway's `genes` array lists components (not complex IDs) for scoring
+- Edges reference complex IDs for clean network visualization
+
+**Implementation needed:**
+
+- [ ] Scoring logic: detect `type: "complex"` entries in genes array
+- [ ] Check if ALL `components` have annotation hits passing thresholds
+- [ ] Mark complex as detected only if all components present
+- [ ] Handle complexes with alternative subunits (e.g., ureABC vs ureAB+ureC)
+
+**Use cases:**
+- ABC transporters (urtABCDE - 5 components all required)
+- Multi-subunit enzymes (ureABC, glcDEF - all subunits required)
+- Alternative complex stoichiometries (ureABC vs ureAB+ureC)
+
+**Validation:**
+- ✅ Checks all components exist as genes with their own IDs
+- ✅ Warns if complex has `databases` field (should only have `components`)
+- ✅ Warns if pathway uses complex in edges but doesn't list components in `genes` array
+
 ### Specificity Weighting **[MEDIUM PRIORITY]**
 
 **Goal:** Weight genes by specificity - finding `nifH` (pathway-specific) is more informative than `gapA` (ubiquitous)
@@ -314,16 +500,16 @@ sack <- run_kofam(sack, potato_names = "pathway_B")  # Should merge
 
 **Goal:** Pathways aren't "complete" just by gene count - must transform **available inputs → desired outputs**
 
-**Current:** Input/output optional metadata  
-**New:** Input/output mandatory, validated for reachability
+**Current:** Input/output required for gap-based scoring, optional for fraction-based  
+**Future:** Validate reachability and biological completeness
 
 **Implementation:**
 
-- [ ] Schema: require input/output for all pathways
-- [ ] Validate biological completeness
+- [ ] Validate biological completeness for gap-scored pathways
 - [ ] Compound matching via KEGG IDs
 - [ ] Check input reachability (transport? synthesis? environmental?)
-- [ ] DAG traversal: can you reach output from input with detected genes?
+- [ ] Warning: pathway with input/output defined but no path between them
+- [ ] Cross-pathway validation: can other pathways provide missing inputs?
 
 **Example:**
 
@@ -331,6 +517,8 @@ sack <- run_kofam(sack, potato_names = "pathway_B")  # Should merge
 npED alone: 5/6 genes (83%) → but no gluconate source → NON-FUNCTIONAL
 ED network: transport + npED → gluconate available → FUNCTIONAL
 ```
+
+**Note:** Input/output will remain **optional** for fraction-based scoring (not all pathways need them).
 
 ---
 

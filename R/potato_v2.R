@@ -49,7 +49,7 @@ load_potato_v2 <- function(path) {
     cli::cli_abort(c(
       "Potato validation failed: {basename(path)}",
       "x" = "Errors found:",
-      set_names(validation$errors, rep("*", length(validation$errors)))
+      stats::setNames(validation$errors, rep("*", length(validation$errors)))
     ))
   }
 
@@ -96,6 +96,12 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
   # Get all edges
   edges <- pathway$edges
 
+  # Helper to check if node is a compound (not a gene)
+  compound_ids <- sapply(potato_v2@compounds, function(c) c$id)
+  is_compound <- function(node_id) {
+    node_id %in% compound_ids
+  }
+
   # Collect edges by gene, then partition into distinct reactions
   gene_edges <- list()
 
@@ -105,7 +111,7 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
     to_node <- edge$to
 
     # Edges where gene is the target (compound -> gene)
-    if (grepl("^C\\d+", from_node) && !grepl("^C\\d+", to_node)) {
+    if (is_compound(from_node) && !is_compound(to_node)) {
       gene_id <- to_node
       if (is.null(gene_edges[[gene_id]])) {
         gene_edges[[gene_id]] <- list(input_edges = list(), output_edges = list())
@@ -117,7 +123,7 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
     }
 
     # Edges where gene is the source (gene -> compound)
-    if (!grepl("^C\\d+", from_node) && grepl("^C\\d+", to_node)) {
+    if (!is_compound(from_node) && is_compound(to_node)) {
       gene_id <- from_node
       if (is.null(gene_edges[[gene_id]])) {
         gene_edges[[gene_id]] <- list(input_edges = list(), output_edges = list())
@@ -199,10 +205,10 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
 
     # Map to gene instance if this edge involves a gene
     idx_str <- as.character(i)
-    if (!grepl("^C\\d+", from_node) && !is.null(edge_to_instance[[idx_str]])) {
+    if (!is_compound(from_node) && !is.null(edge_to_instance[[idx_str]])) {
       from_node <- edge_to_instance[[idx_str]]
     }
-    if (!grepl("^C\\d+", to_node) && !is.null(edge_to_instance[[idx_str]])) {
+    if (!is_compound(to_node) && !is.null(edge_to_instance[[idx_str]])) {
       to_node <- edge_to_instance[[idx_str]]
     }
 
@@ -219,7 +225,7 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
   # Add node attributes
   for (v in igraph::V(g)$name) {
     # Check if compound or gene
-    if (grepl("^C\\d+", v)) {
+    if (is_compound(v)) {
       igraph::V(g)[v]$type <- "compound"
       # Find compound info
       compound <- purrr::keep(potato_v2@compounds, ~ .x$id == v)
