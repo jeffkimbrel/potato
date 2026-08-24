@@ -103,6 +103,7 @@ get_verification_status <- function(potato_or_sack,
         results[[potato_id]] <- list(
           verified = n_verified,
           total = n_total,
+          verified_names = if (length(verified_names) > 0) verified_names else NA,
           unverified = if (length(unverified_names) > 0) unverified_names else NA
         )
       }
@@ -129,8 +130,20 @@ get_verification_status <- function(potato_or_sack,
       if (res$verified == res$total) {
         # All verified
         cli::cli_alert_success("{.strong {potato_id}}: {res$verified}/{res$total} verified")
+        if (!is.na(res$verified_names[1])) {
+          cli::cli_text("  {.emph Verified}: {paste(res$verified_names, collapse=', ')}")
+        }
+      } else if (res$verified > 0) {
+        # Some verified, some not
+        cli::cli_alert_warning("{.strong {potato_id}}: {res$verified}/{res$total} verified")
+        if (!is.na(res$verified_names[1])) {
+          cli::cli_text("  {.emph Verified}: {paste(res$verified_names, collapse=', ')}")
+        }
+        if (!is.na(res$unverified[1])) {
+          cli::cli_text("  {.emph Unverified}: {paste(res$unverified, collapse=', ')}")
+        }
       } else {
-        # Some unverified
+        # All unverified
         cli::cli_alert_warning("{.strong {potato_id}}: {res$verified}/{res$total} verified")
         if (!is.na(res$unverified[1])) {
           cli::cli_text("  {.emph Unverified}: {paste(res$unverified, collapse=', ')}")
@@ -148,6 +161,7 @@ get_verification_status <- function(potato_or_sack,
       potato = id,
       verified = res$verified,
       total = res$total,
+      verified_pathways = if (!is.na(res$verified_names[1])) paste(res$verified_names, collapse = ", ") else NA_character_,
       unverified = if (!is.na(res$unverified[1])) paste(res$unverified, collapse = ", ") else NA_character_,
       stringsAsFactors = FALSE
     )

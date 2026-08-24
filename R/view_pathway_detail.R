@@ -287,8 +287,59 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
   # Build consolidated rows: compound → gene → compound
   edges_rows <- if (length(edges_data) > 0 && length(pathway_gene_ids) > 0) {
+
+    # Get compound IDs for checking
+    compound_ids <- sapply(potato@compounds, function(c) c$id)
+
+    # Order genes by when their input compound first appears in the pathway
+    # Walk through edges and assign order based on first appearance
+    gene_order <- setNames(rep(Inf, length(pathway_gene_ids)), pathway_gene_ids)
+    current_order <- 1
+
+    # Track which compounds have been produced
+    compounds_seen <- character(0)
+
+    # Add input compounds as already seen
+    if (!is.null(pathway_info$input)) {
+      compounds_seen <- c(compounds_seen, pathway_info$input)
+    }
+
+    # Iterate until all genes are ordered
+    max_iterations <- length(pathway_gene_ids) * 2
+    iteration <- 0
+
+    while (any(is.infinite(gene_order)) && iteration < max_iterations) {
+      iteration <- iteration + 1
+
+      for (gene_id in pathway_gene_ids) {
+        if (!is.infinite(gene_order[gene_id])) next  # Already ordered
+
+        # Find input compounds for this gene
+        input_compounds <- sapply(edges_data, function(e) {
+          if (e$to == gene_id && e$from %in% compound_ids) e$from else NA
+        })
+        input_compounds <- input_compounds[!is.na(input_compounds)]
+
+        # If any input compound is available, order this gene
+        if (length(input_compounds) > 0 && any(input_compounds %in% compounds_seen)) {
+          gene_order[gene_id] <- current_order
+          current_order <- current_order + 1
+
+          # Mark this gene's output compounds as seen
+          output_compounds <- sapply(edges_data, function(e) {
+            if (e$from == gene_id && e$to %in% compound_ids) e$to else NA
+          })
+          output_compounds <- output_compounds[!is.na(output_compounds)]
+          compounds_seen <- c(compounds_seen, output_compounds)
+        }
+      }
+    }
+
+    # Sort genes by order
+    sorted_gene_ids <- names(sort(gene_order))
+
     # For each gene, find its input and output compounds
-    unlist(lapply(pathway_gene_ids, function(gene_id) {
+    unlist(lapply(sorted_gene_ids, function(gene_id) {
       # Find edges going into this gene (compound → gene)
       input_edges <- Filter(function(e) e$to == gene_id, edges_data)
       # Find edges going out of this gene (gene → compound)
@@ -336,6 +387,9 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   if (is.null(edges_rows) || length(edges_rows) == 0) {
     edges_rows <- "<li><em>No edges defined</em></li>"
   }
+
+  # Remove duplicates
+  edges_rows <- unique(edges_rows)
 
   edges_html <- paste0(
     "<h3>Pathway Topology</h3>",

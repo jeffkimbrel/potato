@@ -248,10 +248,13 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
   }
 
   # V2: no steps, just count genes detected
-  # Check detection for each gene
+  # Check detection for each gene (handles complexes internally)
   genes_detected <- sapply(merged_genes, function(gene) {
-    is_node_detected_network(gene, potato_id, genome_hits)
+    is_node_detected_network(gene, potato_id, genome_hits, global_nodes)
   })
+
+  # Track which genes are detected for gap-based scoring
+  detected_gene_ids <- sapply(merged_genes[genes_detected], function(g) g$id)
 
   # Calculate completion (all genes)
   total_steps_detected <- sum(genes_detected)
@@ -262,7 +265,38 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
   min_fraction <- pathway$scoring$min_fraction
   if (is.null(min_fraction)) min_fraction <- 0.75
 
-  present <- fraction >= min_fraction
+  present_fraction <- fraction >= min_fraction
+
+  # Gap-based scoring (if max_gaps and input/output defined)
+  max_gaps <- pathway$scoring$max_gaps
+  has_gap_scoring <- !is.null(max_gaps) &&
+                     !is.null(pathway$input) && length(pathway$input) > 0 &&
+                     !is.null(pathway$output) && length(pathway$output) > 0
+
+  if (has_gap_scoring) {
+    gap_result <- score_gaps(
+      pathway_edges = pathway_edges,
+      input_compounds = pathway$input,
+      output_compounds = pathway$output,
+      detected_gene_ids = detected_gene_ids,
+      max_gaps = max_gaps,
+      global_nodes = global_nodes
+    )
+    present_gaps <- gap_result$present
+    gap_count <- gap_result$gap_count
+    best_path <- gap_result$path
+  } else {
+    present_gaps <- NA
+    gap_count <- NA_integer_
+    best_path <- NA_character_
+  }
+
+  # Overall presence: pass if EITHER fraction OR gaps method succeeds
+  if (has_gap_scoring) {
+    present <- present_fraction | present_gaps
+  } else {
+    present <- present_fraction
+  }
 
   # Calculate completion for required genes only
   required_genes_mask <- sapply(merged_genes, function(g) g$required %||% FALSE)
@@ -293,6 +327,10 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
     fraction = fraction,
     min_fraction = min_fraction,
     present = present,
+    present_fraction = present_fraction,
+    present_gaps = present_gaps,
+    gap_count = gap_count,
+    max_gaps = max_gaps,
     essential_total_steps_detected = essential_total_steps_detected,
     essential_steps = essential_steps,
     essential_fraction = essential_fraction,
@@ -302,11 +340,33 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
 
 
 #' Check if a gene is detected in genome hits for network pathways (internal)
+#' Handles both regular genes and complexes
 #' @noRd
 
-is_node_detected_network <- function(gene, potato_id, genome_hits) {
+is_node_detected_network <- function(gene, potato_id, genome_hits, global_nodes = NULL) {
 
-  # Check each database type
+  # Handle complexes: check if ALL components are detected
+  if (!is.null(gene$type) && gene$type == "complex") {
+    if (is.null(gene$components) || is.null(global_nodes)) {
+      return(FALSE)
+    }
+
+    # Check each component
+    for (component_id in gene$components) {
+      component_gene <- Find(function(g) g$id == component_id, global_nodes)
+      if (is.null(component_gene)) {
+        return(FALSE)
+      }
+      # Recursively check component detection
+      if (!is_node_detected_network(component_gene, potato_id, genome_hits, global_nodes)) {
+        return(FALSE)
+      }
+    }
+    # All components detected
+    return(TRUE)
+  }
+
+  # Regular gene: check each database type
   databases <- gene$databases
 
   if (is.null(databases)) return(FALSE)
@@ -343,4 +403,122 @@ is_node_detected_network <- function(gene, potato_id, genome_hits) {
   }
 
   return(FALSE)
+}
+
+
+#' Score pathway using gap-based method (internal)
+#' Binary yes/no: can ANY path exist from input→output with ≤ max_gaps missing genes?
+#' @noRd
+score_gaps <- function(pathway_edges, input_compounds, output_compounds,
+                       detected_gene_ids, max_gaps, global_nodes) {
+
+  # Build adjacency list for DAG traversal
+  adj_list <- list()
+
+  for (edge in pathway_edges) {
+    from <- edge$from
+    to <- edge$to
+
+    if (is.null(adj_list[[from]])) {
+      adj_list[[from]] <- character(0)
+    }
+    adj_list[[from]] <- c(adj_list[[from]], to)
+  }
+
+  # Helper: check if node is a compound
+  is_compound <- function(node_id) {
+    grepl("^C\\d+|^[a-z_]+_(external|internal)$", node_id)
+  }
+
+  # Helper: check if gene/complex is detected
+  is_gene_detected <- function(gene_id) {
+    # First check if it's directly detected
+    if (gene_id %in% detected_gene_ids) {
+      return(TRUE)
+    }
+
+    # Check if it's a complex - need to resolve components
+    gene <- Find(function(g) g$id == gene_id, global_nodes)
+    if (is.null(gene)) {
+      return(FALSE)
+    }
+
+    # If it's a complex, check components
+    if (!is.null(gene$type) && gene$type == "complex") {
+      if (is.null(gene$components)) {
+        return(FALSE)
+      }
+      # All components must be detected
+      return(all(gene$components %in% detected_gene_ids))
+    }
+
+    # Regular gene - already checked above
+    return(FALSE)
+  }
+
+  # Find all paths from input to output using DFS
+  best_gap_count <- Inf
+  best_path <- NULL
+
+  for (start in input_compounds) {
+    for (end in output_compounds) {
+
+      # DFS to find all paths
+      find_paths_dfs <- function(current, target, visited, path, genes_in_path) {
+        if (current == target) {
+          # Reached target - count gaps
+          missing_genes <- genes_in_path[!sapply(genes_in_path, is_gene_detected)]
+          gap_count <- length(missing_genes)
+
+          if (gap_count < best_gap_count) {
+            best_gap_count <<- gap_count
+            best_path <<- paste(path, collapse = " -> ")
+          }
+          return()
+        }
+
+        if (current %in% visited) {
+          return()  # Cycle detection
+        }
+
+        visited <- c(visited, current)
+        path <- c(path, current)
+
+        # Get neighbors
+        neighbors <- adj_list[[current]]
+        if (is.null(neighbors)) {
+          return()
+        }
+
+        for (neighbor in neighbors) {
+          # If neighbor is a gene, add to genes_in_path
+          new_genes <- genes_in_path
+          if (!is_compound(neighbor)) {
+            new_genes <- c(new_genes, neighbor)
+          }
+
+          find_paths_dfs(neighbor, target, visited, path, new_genes)
+        }
+      }
+
+      # Start DFS from this input compound
+      find_paths_dfs(start, end, character(0), character(0), character(0))
+    }
+  }
+
+  # Return result
+  if (is.finite(best_gap_count)) {
+    list(
+      present = best_gap_count <= max_gaps,
+      gap_count = best_gap_count,
+      path = best_path
+    )
+  } else {
+    # No path found
+    list(
+      present = FALSE,
+      gap_count = NA_integer_,
+      path = NA_character_
+    )
+  }
 }
