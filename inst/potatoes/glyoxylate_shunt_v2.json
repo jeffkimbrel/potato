@@ -3,18 +3,29 @@
   "name": "Glyoxylate Shunt (v2 schema)",
   "source": "KEGG map00630",
   "schema_version": "v2",
-  "tags": ["metabolism", "carbon", "glyoxylate", "TCA"],
+  "tags": [
+    "metabolism",
+    "carbon",
+    "glyoxylate",
+    "TCA"
+  ],
   "notes": "Classic glyoxylate shunt that bypasses CO2-releasing steps of TCA cycle. Enables growth on C2 compounds (acetate, fatty acids) by conserving carbon.",
-
   "genes": [
     {
       "id": "aceA",
       "name": "isocitrate lyase",
       "databases": {
-        "kofam": ["K01637"]
+        "kofam": [
+          "K01637"
+        ]
       },
-      "ec": ["4.1.3.1"],
-      "reactions": ["R00409", "R00479"],
+      "ec": [
+        "4.1.3.1"
+      ],
+      "reactions": [
+        "R00409",
+        "R00479"
+      ],
       "type": "enzyme",
       "notes": "Cleaves isocitrate to succinate + glyoxylate"
     },
@@ -22,42 +33,103 @@
       "id": "aceB",
       "name": "malate synthase",
       "databases": {
-        "kofam": ["K01638"]
+        "kofam": [
+          "K01638"
+        ]
       },
-      "ec": ["2.3.3.9"],
-      "reactions": ["R00472"],
+      "ec": [
+        "2.3.3.9"
+      ],
+      "reactions": [
+        "R00472"
+      ],
       "type": "enzyme",
       "notes": "Condenses glyoxylate + acetyl-CoA to malate"
     }
   ],
-
   "compounds": [
-    {"id": "C00311", "name": "Isocitrate", "kegg_compound": "C00311"},
-    {"id": "C00042", "name": "Succinate", "kegg_compound": "C00042"},
-    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"},
-    {"id": "C00024", "name": "Acetyl-CoA", "kegg_compound": "C00024"},
-    {"id": "C00149", "name": "(S)-Malate", "kegg_compound": "C00149"}
+    {
+      "id": "C00311",
+      "name": "Isocitrate",
+      "kegg_compound": "C00311"
+    },
+    {
+      "id": "C00042",
+      "name": "Succinate",
+      "kegg_compound": "C00042"
+    },
+    {
+      "id": "C00048",
+      "name": "Glyoxylate",
+      "kegg_compound": "C00048"
+    },
+    {
+      "id": "C00024",
+      "name": "Acetyl-CoA",
+      "kegg_compound": "C00024"
+    },
+    {
+      "id": "C00149",
+      "name": "(S)-Malate",
+      "kegg_compound": "C00149"
+    }
   ],
-
   "pathways": {
     "main": {
       "name": "Glyoxylate Shunt",
       "type": "independent",
       "verified": false,
       "notes": "Two-enzyme bypass of CO2-releasing steps in TCA cycle. aceA: isocitrate → succinate + glyoxylate. aceB: acetyl-CoA + glyoxylate → malate.",
-
-      "input": ["C00311"],
-      "output": ["C00149"],
-
-      "edges": [
-        {"from": "C00311", "to": "aceA", "required": true, "marker": true, "reaction": "R00479"},
-        {"from": "aceA", "to": "C00042", "required": true, "marker": true, "reaction": "R00479"},
-        {"from": "aceA", "to": "C00048", "required": true, "marker": true, "reaction": "R00479"},
-        {"from": "C00024", "to": "aceB", "required": true, "marker": true, "reaction": "R00472"},
-        {"from": "C00048", "to": "aceB", "required": true, "marker": true, "reaction": "R00472"},
-        {"from": "aceB", "to": "C00149", "required": true, "marker": true, "reaction": "R00472"}
+      "input": [
+        "C00311"
       ],
-
+      "output": [
+        "C00149"
+      ],
+      "edges": [
+        {
+          "from": "C00311",
+          "to": "aceA",
+          "required": true,
+          "marker": true,
+          "reaction": "R00479"
+        },
+        {
+          "from": "aceA",
+          "to": "C00042",
+          "required": true,
+          "marker": true,
+          "reaction": "R00479"
+        },
+        {
+          "from": "aceA",
+          "to": "C00048",
+          "required": true,
+          "marker": true,
+          "reaction": "R00479"
+        },
+        {
+          "from": "C00024",
+          "to": "aceB",
+          "required": true,
+          "marker": true,
+          "reaction": "R00472"
+        },
+        {
+          "from": "C00048",
+          "to": "aceB",
+          "required": true,
+          "marker": true,
+          "reaction": "R00472"
+        },
+        {
+          "from": "aceB",
+          "to": "C00149",
+          "required": true,
+          "marker": true,
+          "reaction": "R00472"
+        }
+      ],
       "scoring": {
         "min_fraction": 1.0,
         "max_gaps": 0,

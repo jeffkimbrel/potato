@@ -3,19 +3,31 @@
   "name": "BHAC Cycle (v2 schema)",
   "source": "custom",
   "schema_version": "v2",
-  "tags": ["metabolism", "carbon", "glyoxylate", "cycle"],
+  "tags": [
+    "metabolism",
+    "carbon",
+    "glyoxylate",
+    "cycle"
+  ],
   "notes": "V2 schema test: true metabolic cycle with glycine regeneration",
-
   "genes": [
     {
       "id": "bhcC",
       "name": "β-hydroxyaspartate aldolase",
       "databases": {
-        "kofam": ["K18425"],
-        "blast": ["bhcC_BLT64_RS06500"]
+        "kofam": [
+          "K18425"
+        ],
+        "blast": [
+          "bhcC_BLT64_RS06500"
+        ]
       },
-      "ec": ["4.1.3.41"],
-      "reactions": ["R09718"],
+      "ec": [
+        "4.1.3.41"
+      ],
+      "reactions": [
+        "R09718"
+      ],
       "type": "enzyme",
       "notes": "Condenses glycine + glyoxylate → β-hydroxyaspartate"
     },
@@ -23,68 +35,172 @@
       "id": "bhcB",
       "name": "β-hydroxyaspartate dehydratase",
       "databases": {
-        "kofam": ["K28180"],
-        "blast": ["bhcB_BLT64_RS06505"]
+        "kofam": [
+          "K28180"
+        ],
+        "blast": [
+          "bhcB_BLT64_RS06505"
+        ]
       },
-      "ec": ["4.2.1.184"],
-      "reactions": ["R13464"],
+      "ec": [
+        "4.2.1.184"
+      ],
+      "reactions": [
+        "R13464"
+      ],
       "type": "enzyme"
     },
     {
       "id": "bhcD",
       "name": "iminosuccinate reductase",
       "databases": {
-        "kofam": ["K28178"],
-        "blast": ["bhcD_BLT64_RS06495"]
+        "kofam": [
+          "K28178"
+        ],
+        "blast": [
+          "bhcD_BLT64_RS06495"
+        ]
       },
-      "ec": ["1.4.1.29"],
-      "reactions": ["R07410"],
+      "ec": [
+        "1.4.1.29"
+      ],
+      "reactions": [
+        "R07410"
+      ],
       "type": "enzyme"
     },
     {
       "id": "bhcA",
       "name": "aspartate-glyoxylate aminotransferase",
       "databases": {
-        "kofam": ["K28179"],
-        "blast": ["bhaA_BLT64_RS06510"]
+        "kofam": [
+          "K28179"
+        ],
+        "blast": [
+          "bhaA_BLT64_RS06510"
+        ]
       },
-      "ec": ["2.6.1.35"],
-      "reactions": ["R00373"],
+      "ec": [
+        "2.6.1.35"
+      ],
+      "reactions": [
+        "R00373"
+      ],
       "type": "enzyme",
       "notes": "Converts aspartate to oxaloacetate while regenerating glycine from glyoxylate"
     }
   ],
-
   "compounds": [
-    {"id": "C00037", "name": "Glycine", "kegg_compound": "C00037"},
-    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"},
-    {"id": "C04105", "name": "(2R,3S)-β-Hydroxyaspartate", "kegg_compound": "C04105"},
-    {"id": "C20905", "name": "Iminosuccinate", "kegg_compound": "C20905"},
-    {"id": "C00049", "name": "L-Aspartate", "kegg_compound": "C00049"},
-    {"id": "C00036", "name": "Oxaloacetate", "kegg_compound": "C00036"}
+    {
+      "id": "C00037",
+      "name": "Glycine",
+      "kegg_compound": "C00037"
+    },
+    {
+      "id": "C00048",
+      "name": "Glyoxylate",
+      "kegg_compound": "C00048"
+    },
+    {
+      "id": "C04105",
+      "name": "(2R,3S)-β-Hydroxyaspartate",
+      "kegg_compound": "C04105"
+    },
+    {
+      "id": "C20905",
+      "name": "Iminosuccinate",
+      "kegg_compound": "C20905"
+    },
+    {
+      "id": "C00049",
+      "name": "L-Aspartate",
+      "kegg_compound": "C00049"
+    },
+    {
+      "id": "C00036",
+      "name": "Oxaloacetate",
+      "kegg_compound": "C00036"
+    }
   ],
-
   "pathways": {
     "main": {
       "name": "BHAC Cycle",
       "type": "independent",
       "verified": false,
       "notes": "Complete cycle: 2 glyoxylate → oxaloacetate. Glycine is regenerated.",
-
       "edges": [
-        {"from": "C00037", "to": "bhcC", "required": true, "marker": false, "notes": "Glycine substrate"},
-        {"from": "C00048", "to": "bhcC", "required": true, "marker": false, "notes": "First glyoxylate incorporation"},
-        {"from": "bhcC", "to": "C04105", "required": true, "marker": false},
-        {"from": "C04105", "to": "bhcB", "required": true, "marker": false},
-        {"from": "bhcB", "to": "C20905", "required": true, "marker": false},
-        {"from": "C20905", "to": "bhcD", "required": true, "marker": false},
-        {"from": "bhcD", "to": "C00049", "required": true, "marker": false},
-        {"from": "C00049", "to": "bhcA", "required": true, "marker": true},
-        {"from": "C00048", "to": "bhcA", "required": true, "marker": true, "notes": "Second glyoxylate incorporation"},
-        {"from": "bhcA", "to": "C00036", "required": true, "marker": true, "notes": "Product: oxaloacetate"},
-        {"from": "bhcA", "to": "C00037", "required": true, "marker": true, "notes": "Glycine regenerated - completes cycle"}
+        {
+          "from": "C00037",
+          "to": "bhcC",
+          "required": true,
+          "marker": false,
+          "notes": "Glycine substrate"
+        },
+        {
+          "from": "C00048",
+          "to": "bhcC",
+          "required": true,
+          "marker": false,
+          "notes": "First glyoxylate incorporation"
+        },
+        {
+          "from": "bhcC",
+          "to": "C04105",
+          "required": true,
+          "marker": false
+        },
+        {
+          "from": "C04105",
+          "to": "bhcB",
+          "required": true,
+          "marker": false
+        },
+        {
+          "from": "bhcB",
+          "to": "C20905",
+          "required": true,
+          "marker": false
+        },
+        {
+          "from": "C20905",
+          "to": "bhcD",
+          "required": true,
+          "marker": false
+        },
+        {
+          "from": "bhcD",
+          "to": "C00049",
+          "required": true,
+          "marker": false
+        },
+        {
+          "from": "C00049",
+          "to": "bhcA",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "C00048",
+          "to": "bhcA",
+          "required": true,
+          "marker": true,
+          "notes": "Second glyoxylate incorporation"
+        },
+        {
+          "from": "bhcA",
+          "to": "C00036",
+          "required": true,
+          "marker": true,
+          "notes": "Product: oxaloacetate"
+        },
+        {
+          "from": "bhcA",
+          "to": "C00037",
+          "required": true,
+          "marker": true,
+          "notes": "Glycine regenerated - completes cycle"
+        }
       ],
-
       "scoring": {
         "min_fraction": 1.0,
         "marker_mode": "all",

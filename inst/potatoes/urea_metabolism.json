@@ -3,18 +3,27 @@
   "id": "urea_metabolism",
   "name": "Urea Metabolism Network",
   "source": "GATOR potato_db.xlsx",
-  "tags": ["nitrogen", "metabolism", "transport"],
+  "tags": [
+    "nitrogen",
+    "metabolism",
+    "transport"
+  ],
   "notes": "Bacterial/archaeal urea metabolism including degradation and transport pathways. Urea synthesis (urea cycle/ornithine cycle) is a eukaryotic pathway for nitrogen excretion and is excluded from this prokaryotic tool, though homologous genes (CPS, argF, argG, argH, ARG) exist in bacteria for arginine biosynthesis.",
-
   "genes": [
     {
       "id": "ureC",
       "name": "urease subunit alpha",
       "databases": {
-        "kofam": ["K01428"],
-        "hmm": ["PF00449"]
+        "kofam": [
+          "K01428"
+        ],
+        "hmm": [
+          "PF00449"
+        ]
       },
-      "ec": ["3.5.1.5"],
+      "ec": [
+        "3.5.1.5"
+      ],
       "type": "enzyme",
       "notes": "Alpha subunit of urease enzyme complex"
     },
@@ -22,10 +31,16 @@
       "id": "ureB",
       "name": "urease subunit beta",
       "databases": {
-        "kofam": ["K01429"],
-        "hmm": ["PF00699"]
+        "kofam": [
+          "K01429"
+        ],
+        "hmm": [
+          "PF00699"
+        ]
       },
-      "ec": ["3.5.1.5"],
+      "ec": [
+        "3.5.1.5"
+      ],
       "type": "enzyme",
       "notes": "Beta subunit of urease enzyme complex"
     },
@@ -33,10 +48,16 @@
       "id": "ureA",
       "name": "urease subunit gamma",
       "databases": {
-        "kofam": ["K01430"],
-        "hmm": ["PF00547"]
+        "kofam": [
+          "K01430"
+        ],
+        "hmm": [
+          "PF00547"
+        ]
       },
-      "ec": ["3.5.1.5"],
+      "ec": [
+        "3.5.1.5"
+      ],
       "type": "enzyme",
       "notes": "Gamma subunit of urease enzyme complex"
     },
@@ -44,9 +65,13 @@
       "id": "ureAB",
       "name": "urease subunit gamma/beta",
       "databases": {
-        "kofam": ["K14048"]
+        "kofam": [
+          "K14048"
+        ]
       },
-      "ec": ["3.5.1.5"],
+      "ec": [
+        "3.5.1.5"
+      ],
       "type": "enzyme",
       "notes": "Fused gamma/beta subunit - alternative to separate ureA + ureB"
     },
@@ -54,22 +79,33 @@
       "id": "ureABC",
       "name": "urease enzyme complex",
       "type": "complex",
-      "components": ["ureA", "ureB", "ureC"],
+      "components": [
+        "ureA",
+        "ureB",
+        "ureC"
+      ],
       "notes": "Three-subunit urease complex (ureABC) catalyzes urea hydrolysis. Alternative configuration: fused ureAB + ureC. All catalytic subunits required for activity."
     },
     {
       "id": "ureAB_ureC",
       "name": "urease enzyme complex (fusion variant)",
       "type": "complex",
-      "components": ["ureAB", "ureC"],
+      "components": [
+        "ureAB",
+        "ureC"
+      ],
       "notes": "Alternative urease complex with fused gamma/beta subunit (ureAB) + alpha subunit (ureC). Functionally equivalent to ureABC."
     },
     {
       "id": "ureD",
       "name": "urease accessory protein D",
       "databases": {
-        "kofam": ["K03190"],
-        "hmm": ["PF01774"]
+        "kofam": [
+          "K03190"
+        ],
+        "hmm": [
+          "PF01774"
+        ]
       },
       "type": "chaperone",
       "notes": "Urease maturation factor - assists in metal center assembly"
@@ -78,8 +114,13 @@
       "id": "ureE",
       "name": "urease accessory protein E",
       "databases": {
-        "kofam": ["K03187"],
-        "hmm": ["PF02814", "PF05194"]
+        "kofam": [
+          "K03187"
+        ],
+        "hmm": [
+          "PF02814",
+          "PF05194"
+        ]
       },
       "type": "chaperone",
       "notes": "Urease maturation factor - nickel metallochaperone"
@@ -88,8 +129,12 @@
       "id": "ureF",
       "name": "urease accessory protein F",
       "databases": {
-        "kofam": ["K03188"],
-        "hmm": ["PF01155"]
+        "kofam": [
+          "K03188"
+        ],
+        "hmm": [
+          "PF01155"
+        ]
       },
       "type": "chaperone",
       "notes": "Urease maturation factor - GTPase involved in nickel insertion"
@@ -98,7 +143,9 @@
       "id": "ureG",
       "name": "urease accessory protein G",
       "databases": {
-        "kofam": ["K03189"]
+        "kofam": [
+          "K03189"
+        ]
       },
       "type": "chaperone",
       "notes": "Urease maturation factor - GTPase involved in nickel insertion"
@@ -107,9 +154,13 @@
       "id": "UC",
       "name": "urea carboxylase",
       "databases": {
-        "kofam": ["K01941"]
+        "kofam": [
+          "K01941"
+        ]
       },
-      "ec": ["6.3.4.6"],
+      "ec": [
+        "6.3.4.6"
+      ],
       "type": "enzyme",
       "notes": "Converts urea + HCO3- + ATP → allophanate + ADP + Pi"
     },
@@ -117,10 +168,16 @@
       "id": "AH",
       "name": "allophanate hydrolase",
       "databases": {
-        "kofam": ["K01457"],
-        "hmm": ["PF21986"]
+        "kofam": [
+          "K01457"
+        ],
+        "hmm": [
+          "PF21986"
+        ]
       },
-      "ec": ["3.5.1.54"],
+      "ec": [
+        "3.5.1.54"
+      ],
       "type": "enzyme",
       "notes": "Converts allophanate → 2 NH3 + 2 CO2"
     },
@@ -128,9 +185,14 @@
       "id": "UC_AH",
       "name": "urea carboxylase/allophanate hydrolase",
       "databases": {
-        "kofam": ["K14541"]
+        "kofam": [
+          "K14541"
+        ]
       },
-      "ec": ["6.3.4.6", "3.5.1.54"],
+      "ec": [
+        "6.3.4.6",
+        "3.5.1.54"
+      ],
       "type": "enzyme",
       "notes": "Fused bifunctional enzyme - alternative to separate UC + AH"
     },
@@ -138,7 +200,9 @@
       "id": "urtA",
       "name": "urea transport system substrate-binding protein",
       "databases": {
-        "kofam": ["K11959"]
+        "kofam": [
+          "K11959"
+        ]
       },
       "type": "transport",
       "notes": "Periplasmic binding protein of ABC transporter"
@@ -147,7 +211,9 @@
       "id": "urtB",
       "name": "urea transport system permease protein",
       "databases": {
-        "kofam": ["K11960"]
+        "kofam": [
+          "K11960"
+        ]
       },
       "type": "transport",
       "notes": "Permease component 1 of ABC transporter"
@@ -156,7 +222,9 @@
       "id": "urtC",
       "name": "urea transport system permease protein",
       "databases": {
-        "kofam": ["K11961"]
+        "kofam": [
+          "K11961"
+        ]
       },
       "type": "transport",
       "notes": "Permease component 2 of ABC transporter"
@@ -165,7 +233,9 @@
       "id": "urtD",
       "name": "urea transport system ATP-binding protein",
       "databases": {
-        "kofam": ["K11962"]
+        "kofam": [
+          "K11962"
+        ]
       },
       "type": "transport",
       "notes": "ATPase component 1 of ABC transporter"
@@ -174,7 +244,9 @@
       "id": "urtE",
       "name": "urea transport system ATP-binding protein",
       "databases": {
-        "kofam": ["K11963"]
+        "kofam": [
+          "K11963"
+        ]
       },
       "type": "transport",
       "notes": "ATPase component 2 of ABC transporter"
@@ -183,7 +255,9 @@
       "id": "ureI",
       "name": "acid-activated urea channel",
       "databases": {
-        "kofam": ["K03191"]
+        "kofam": [
+          "K03191"
+        ]
       },
       "type": "transport",
       "notes": "Proton-gated urea channel - may also transport hydroxyurea"
@@ -192,7 +266,9 @@
       "id": "yut",
       "name": "urea transporter",
       "databases": {
-        "kofam": ["K08717"]
+        "kofam": [
+          "K08717"
+        ]
       },
       "type": "transport",
       "notes": "Urea/H+ symporter (yut/utp family)"
@@ -201,11 +277,16 @@
       "id": "urtABCDE",
       "name": "urea ABC transporter complex",
       "type": "complex",
-      "components": ["urtA", "urtB", "urtC", "urtD", "urtE"],
+      "components": [
+        "urtA",
+        "urtB",
+        "urtC",
+        "urtD",
+        "urtE"
+      ],
       "notes": "Five-component ABC transporter complex for urea import. All components required for function."
     }
   ],
-
   "compounds": [
     {
       "id": "C00086",
@@ -243,54 +324,140 @@
       "kegg_compound": "C00086"
     }
   ],
-
   "pathways": {
     "urease": {
       "name": "Urea Degradation - Urease",
       "type": "independent",
       "verified": false,
       "notes": "Urease enzyme system for urea hydrolysis. Core catalytic subunits (ureABC or fused ureAB+ureC) perform the hydrolysis reaction. Accessory genes (ureDEFG) are maturation factors that assist with nickel insertion and enzyme activation - typically present and important for function, but some genomes (e.g., Bacillus) show urease activity without all accessory genes present. Accessory genes are annotated/tracked but not included in pathway scoring since they don't participate in compound flow and are not universally essential.",
-
-      "genes": ["ureA", "ureB", "ureC", "ureAB", "ureD", "ureE", "ureF", "ureG"],
-      "input": ["C00086"],
-      "output": ["C00014", "C00011"],
-
-      "edges": [
-        {"from": "C00086", "to": "ureABC", "required": true, "marker": true},
-        {"from": "ureABC", "to": "C00014", "required": true, "marker": true},
-        {"from": "ureABC", "to": "C00011", "required": true, "marker": true},
-        {"from": "C00086", "to": "ureAB_ureC", "required": true, "marker": true},
-        {"from": "ureAB_ureC", "to": "C00014", "required": true, "marker": true},
-        {"from": "ureAB_ureC", "to": "C00011", "required": true, "marker": true}
+      "genes": [
+        "ureA",
+        "ureB",
+        "ureC",
+        "ureAB",
+        "ureD",
+        "ureE",
+        "ureF",
+        "ureG"
       ],
-
+      "input": [
+        "C00086"
+      ],
+      "output": [
+        "C00014",
+        "C00011"
+      ],
+      "edges": [
+        {
+          "from": "C00086",
+          "to": "ureABC",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "ureABC",
+          "to": "C00014",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "ureABC",
+          "to": "C00011",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "C00086",
+          "to": "ureAB_ureC",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "ureAB_ureC",
+          "to": "C00014",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "ureAB_ureC",
+          "to": "C00011",
+          "required": true,
+          "marker": true
+        }
+      ],
       "scoring": {
         "min_fraction": 0.67,
         "marker_mode": "any",
         "notes": "Requires catalytic core: (ureA + ureB + ureC) OR (ureAB + ureC). Accessory genes (ureDEFG) are not included in scoring - they are annotated/tracked but don't participate in compound flow."
       }
     },
-
     "urea_amidolyase": {
       "name": "Urea Degradation - Urea Amidolyase",
       "type": "variant",
       "verified": false,
       "notes": "Alternative urea degradation pathway. Two-step process: (1) Urea + HCO3- + ATP → allophanate, (2) Allophanate → 2 NH3 + 2 CO2. Can use separate UC/AH or fused UC_AH enzyme.",
-
-      "input": ["C00086"],
-      "output": ["C00014", "C00011"],
-
-      "edges": [
-        {"from": "C00086", "to": "UC", "required": true, "marker": true, "reaction": "R01399"},
-        {"from": "UC", "to": "C01010", "required": true, "marker": true, "reaction": "R01399"},
-        {"from": "C01010", "to": "AH", "required": true, "marker": true, "reaction": "R00653"},
-        {"from": "AH", "to": "C00014", "required": true, "marker": true, "reaction": "R00653"},
-        {"from": "AH", "to": "C00011", "required": true, "marker": true, "reaction": "R00653"},
-        {"from": "C00086", "to": "UC_AH", "required": true, "marker": true},
-        {"from": "UC_AH", "to": "C00014", "required": true, "marker": true},
-        {"from": "UC_AH", "to": "C00011", "required": true, "marker": true}
+      "input": [
+        "C00086"
       ],
-
+      "output": [
+        "C00014",
+        "C00011"
+      ],
+      "edges": [
+        {
+          "from": "C00086",
+          "to": "UC",
+          "required": true,
+          "marker": true,
+          "reaction": "R01399"
+        },
+        {
+          "from": "UC",
+          "to": "C01010",
+          "required": true,
+          "marker": true,
+          "reaction": "R01399"
+        },
+        {
+          "from": "C01010",
+          "to": "AH",
+          "required": true,
+          "marker": true,
+          "reaction": "R00653"
+        },
+        {
+          "from": "AH",
+          "to": "C00014",
+          "required": true,
+          "marker": true,
+          "reaction": "R00653"
+        },
+        {
+          "from": "AH",
+          "to": "C00011",
+          "required": true,
+          "marker": true,
+          "reaction": "R00653"
+        },
+        {
+          "from": "C00086",
+          "to": "UC_AH",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "UC_AH",
+          "to": "C00014",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "UC_AH",
+          "to": "C00011",
+          "required": true,
+          "marker": true
+        }
+      ],
       "scoring": {
         "max_gaps": 1,
         "min_fraction": 0.67,
@@ -298,64 +465,100 @@
         "notes": "Requires either (UC + AH) OR (UC_AH fusion). Gap-based scoring allows 1 missing gene (either UC or AH if fusion present)."
       }
     },
-
     "urea_transport_abc": {
       "name": "Urea Transport - ABC Transporter",
       "type": "variant",
       "verified": false,
       "notes": "Five-component ABC transporter system (urtABCDE) for urea import. Substrate-binding protein (urtA) binds urea in periplasm, two permease proteins (urtBC) form transmembrane channel, two ATPase proteins (urtDE) provide energy. May also transport thiourea and hydroxyurea depending on binding specificity.",
-
-      "genes": ["urtA", "urtB", "urtC", "urtD", "urtE"],
-      "input": ["urea_external"],
-      "output": ["urea_internal"],
-
-      "edges": [
-        {"from": "urea_external", "to": "urtABCDE", "required": true, "marker": true},
-        {"from": "urtABCDE", "to": "urea_internal", "required": true, "marker": true}
+      "genes": [
+        "urtA",
+        "urtB",
+        "urtC",
+        "urtD",
+        "urtE"
       ],
-
+      "input": [
+        "urea_external"
+      ],
+      "output": [
+        "urea_internal"
+      ],
+      "edges": [
+        {
+          "from": "urea_external",
+          "to": "urtABCDE",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "urtABCDE",
+          "to": "urea_internal",
+          "required": true,
+          "marker": true
+        }
+      ],
       "scoring": {
         "min_fraction": 1.0,
         "marker_mode": "any",
         "notes": "Complex requires all 5 components (urtABCDE) working together. Substrate-binding protein (urtA) is the marker gene."
       }
     },
-
     "urea_transport_channel": {
       "name": "Urea Transport - Acid-Activated Channel",
       "type": "variant",
       "verified": false,
       "notes": "Proton-gated urea channel (ureI) provides passive urea transport. Channel opens at acidic pH, allowing urea influx down concentration gradient. May also transport hydroxyurea. Common in gastric bacteria (Helicobacter) where it functions in acid tolerance.",
-
-      "input": ["urea_external"],
-      "output": ["urea_internal"],
-
-      "edges": [
-        {"from": "urea_external", "to": "ureI", "required": true, "marker": true},
-        {"from": "ureI", "to": "urea_internal", "required": true, "marker": true}
+      "input": [
+        "urea_external"
       ],
-
+      "output": [
+        "urea_internal"
+      ],
+      "edges": [
+        {
+          "from": "urea_external",
+          "to": "ureI",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "ureI",
+          "to": "urea_internal",
+          "required": true,
+          "marker": true
+        }
+      ],
       "scoring": {
         "min_fraction": 1.0,
         "marker_mode": "any",
         "notes": "Single-gene pathway - requires ureI detection."
       }
     },
-
     "urea_transport_symporter": {
       "name": "Urea Transport - H+ Symporter",
       "type": "variant",
       "verified": false,
       "notes": "Urea/H+ symporter (yut/utp family) couples urea import to proton gradient. Single-component transporter provides energy-dependent urea uptake. Alternative to ABC transporter and channel systems.",
-
-      "input": ["urea_external"],
-      "output": ["urea_internal"],
-
-      "edges": [
-        {"from": "urea_external", "to": "yut", "required": true, "marker": true},
-        {"from": "yut", "to": "urea_internal", "required": true, "marker": true}
+      "input": [
+        "urea_external"
       ],
-
+      "output": [
+        "urea_internal"
+      ],
+      "edges": [
+        {
+          "from": "urea_external",
+          "to": "yut",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "yut",
+          "to": "urea_internal",
+          "required": true,
+          "marker": true
+        }
+      ],
       "scoring": {
         "min_fraction": 1.0,
         "marker_mode": "any",

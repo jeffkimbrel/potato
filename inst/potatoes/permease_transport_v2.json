@@ -3,39 +3,57 @@
   "name": "Glycolate Transport (v2 schema)",
   "source": "custom",
   "schema_version": "v2",
-  "tags": ["transport", "glyoxylate"],
+  "tags": [
+    "transport",
+    "glyoxylate"
+  ],
   "notes": "Glycolate permease imports glycolate from external environment. L-lactate permease (lldP) has glycolate transport activity.",
-
   "genes": [
     {
       "id": "lldP",
       "name": "L-lactate permease",
       "databases": {
-        "kofam": ["K03303"]
+        "kofam": [
+          "K03303"
+        ]
       },
       "reactions": [],
       "type": "permease",
       "notes": "Transports L-lactate and glycolate across membrane"
     }
   ],
-
   "compounds": [
-    {"id": "C00160_external", "name": "Glycolate (external)", "kegg_compound": "C00160"},
-    {"id": "C00160_internal", "name": "Glycolate (internal)", "kegg_compound": "C00160"}
+    {
+      "id": "C00160_external",
+      "name": "Glycolate (external)",
+      "kegg_compound": "C00160"
+    },
+    {
+      "id": "C00160_internal",
+      "name": "Glycolate (internal)",
+      "kegg_compound": "C00160"
+    }
   ],
-
   "pathways": {
     "main": {
       "name": "Glycolate Transport",
       "type": "independent",
       "verified": false,
       "notes": "Single permease transports glycolate from external to internal compartment.",
-
       "edges": [
-        {"from": "C00160_external", "to": "lldP", "required": true, "marker": true},
-        {"from": "lldP", "to": "C00160_internal", "required": true, "marker": true}
+        {
+          "from": "C00160_external",
+          "to": "lldP",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "lldP",
+          "to": "C00160_internal",
+          "required": true,
+          "marker": true
+        }
       ],
-
       "scoring": {
         "min_fraction": 1.0,
         "marker_mode": "all",

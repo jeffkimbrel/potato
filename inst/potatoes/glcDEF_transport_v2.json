@@ -3,18 +3,28 @@
   "name": "Glycolate Oxidase Pathway (v2 schema)",
   "source": "KEGG",
   "schema_version": "v2",
-  "tags": ["metabolism", "glyoxylate", "transport"],
+  "tags": [
+    "metabolism",
+    "glyoxylate",
+    "transport"
+  ],
   "notes": "Glycolate oxidation to glyoxylate via glcDEF complex. Provides glyoxylate substrate for other pathways.",
-
   "genes": [
     {
       "id": "glcD",
       "name": "glycolate oxidase FAD-binding subunit",
       "databases": {
-        "kofam": ["K00104"]
+        "kofam": [
+          "K00104"
+        ]
       },
-      "ec": ["1.1.3.15"],
-      "reactions": ["R00475", "R00476"],
+      "ec": [
+        "1.1.3.15"
+      ],
+      "reactions": [
+        "R00475",
+        "R00476"
+      ],
       "type": "enzyme",
       "notes": "Part of glycolate oxidase complex"
     },
@@ -22,10 +32,17 @@
       "id": "glcE",
       "name": "glycolate oxidase Fe-S subunit",
       "databases": {
-        "kofam": ["K00103"]
+        "kofam": [
+          "K00103"
+        ]
       },
-      "ec": ["1.1.3.15"],
-      "reactions": ["R03184", "R10053"],
+      "ec": [
+        "1.1.3.15"
+      ],
+      "reactions": [
+        "R03184",
+        "R10053"
+      ],
       "type": "enzyme",
       "notes": "Iron-sulfur cluster subunit"
     },
@@ -33,10 +50,16 @@
       "id": "glcF",
       "name": "glycolate oxidase FAD-binding subunit",
       "databases": {
-        "kofam": ["K00102"]
+        "kofam": [
+          "K00102"
+        ]
       },
-      "ec": ["1.1.3.15"],
-      "reactions": ["R00197"],
+      "ec": [
+        "1.1.3.15"
+      ],
+      "reactions": [
+        "R00197"
+      ],
       "type": "enzyme",
       "notes": "FAD-binding subunit"
     },
@@ -44,29 +67,53 @@
       "id": "glcDEF",
       "name": "glycolate oxidase complex",
       "type": "complex",
-      "components": ["glcD", "glcE", "glcF"],
+      "components": [
+        "glcD",
+        "glcE",
+        "glcF"
+      ],
       "notes": "Three-subunit glycolate oxidase complex. At least 2 of 3 subunits typically required for functional complex."
     }
   ],
-
   "compounds": [
-    {"id": "C00160", "name": "Glycolate", "kegg_compound": "C00160"},
-    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"}
+    {
+      "id": "C00160",
+      "name": "Glycolate",
+      "kegg_compound": "C00160"
+    },
+    {
+      "id": "C00048",
+      "name": "Glyoxylate",
+      "kegg_compound": "C00048"
+    }
   ],
-
   "pathways": {
     "main": {
       "name": "Glycolate Oxidase",
       "type": "independent",
       "verified": false,
       "notes": "Multi-subunit enzyme complex oxidizes glycolate to glyoxylate. Main reaction is R00475.",
-
-      "genes": ["glcD", "glcE", "glcF"],
-      "edges": [
-        {"from": "C00160", "to": "glcDEF", "required": true, "marker": true, "reaction": "R00475"},
-        {"from": "glcDEF", "to": "C00048", "required": true, "marker": true, "reaction": "R00475"}
+      "genes": [
+        "glcD",
+        "glcE",
+        "glcF"
       ],
-
+      "edges": [
+        {
+          "from": "C00160",
+          "to": "glcDEF",
+          "required": true,
+          "marker": true,
+          "reaction": "R00475"
+        },
+        {
+          "from": "glcDEF",
+          "to": "C00048",
+          "required": true,
+          "marker": true,
+          "reaction": "R00475"
+        }
+      ],
       "scoring": {
         "min_fraction": 1.0,
         "marker_mode": "any",

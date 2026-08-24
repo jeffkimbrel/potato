@@ -3,18 +3,27 @@
   "name": "Phosphoglycolate to Glyoxylate Pathway (v2 schema)",
   "source": "KEGG map00630",
   "schema_version": "v2",
-  "tags": ["metabolism", "glyoxylate", "photorespiration"],
+  "tags": [
+    "metabolism",
+    "glyoxylate",
+    "photorespiration"
+  ],
   "notes": "Converts phosphoglycolate (photorespiration byproduct) to glyoxylate. PGP dephosphorylates, then ghrA/ghrB oxidize glycolate to glyoxylate.",
-
   "genes": [
     {
       "id": "PGP",
       "name": "phosphoglycolate phosphatase",
       "databases": {
-        "kofam": ["K01091"]
+        "kofam": [
+          "K01091"
+        ]
       },
-      "ec": ["3.1.3.18"],
-      "reactions": ["R01334"],
+      "ec": [
+        "3.1.3.18"
+      ],
+      "reactions": [
+        "R01334"
+      ],
       "type": "enzyme",
       "notes": "Dephosphorylates 2-phosphoglycolate to glycolate"
     },
@@ -22,10 +31,19 @@
       "id": "ghrA",
       "name": "glyoxylate reductase",
       "databases": {
-        "kofam": ["K12972"]
+        "kofam": [
+          "K12972"
+        ]
       },
-      "ec": ["1.1.1.79"],
-      "reactions": ["R00465", "R01388", "R01392", "R02527"],
+      "ec": [
+        "1.1.1.79"
+      ],
+      "reactions": [
+        "R00465",
+        "R01388",
+        "R01392",
+        "R02527"
+      ],
       "type": "enzyme",
       "notes": "Oxidizes glycolate to glyoxylate"
     },
@@ -33,37 +51,90 @@
       "id": "ghrB",
       "name": "glyoxylate/hydroxypyruvate reductase",
       "databases": {
-        "kofam": ["K00090"]
+        "kofam": [
+          "K00090"
+        ]
       },
-      "ec": ["1.1.1.79"],
-      "reactions": ["R00465", "R01388", "R01392", "R01739"],
+      "ec": [
+        "1.1.1.79"
+      ],
+      "reactions": [
+        "R00465",
+        "R01388",
+        "R01392",
+        "R01739"
+      ],
       "type": "enzyme",
       "notes": "Alternative enzyme for glycolate to glyoxylate"
     }
   ],
-
   "compounds": [
-    {"id": "C00988", "name": "2-Phosphoglycolate", "kegg_compound": "C00988"},
-    {"id": "C00160", "name": "Glycolate", "kegg_compound": "C00160"},
-    {"id": "C00048", "name": "Glyoxylate", "kegg_compound": "C00048"}
+    {
+      "id": "C00988",
+      "name": "2-Phosphoglycolate",
+      "kegg_compound": "C00988"
+    },
+    {
+      "id": "C00160",
+      "name": "Glycolate",
+      "kegg_compound": "C00160"
+    },
+    {
+      "id": "C00048",
+      "name": "Glyoxylate",
+      "kegg_compound": "C00048"
+    }
   ],
-
   "pathways": {
     "main": {
       "name": "Phosphoglycolate to Glyoxylate",
       "type": "independent",
       "verified": false,
       "notes": "Two-step pathway with alternative oxidases. PGP is required, then either ghrA or ghrB.",
-
       "edges": [
-        {"from": "C00988", "to": "PGP", "required": true, "marker": true, "reaction": "R01334"},
-        {"from": "PGP", "to": "C00160", "required": true, "marker": true, "reaction": "R01334"},
-        {"from": "C00160", "to": "ghrA", "required": false, "marker": true, "reaction": "R00465"},
-        {"from": "ghrA", "to": "C00048", "required": false, "marker": true, "reaction": "R00465"},
-        {"from": "C00160", "to": "ghrB", "required": false, "marker": true, "reaction": "R00465"},
-        {"from": "ghrB", "to": "C00048", "required": false, "marker": true, "reaction": "R00465"}
+        {
+          "from": "C00988",
+          "to": "PGP",
+          "required": true,
+          "marker": true,
+          "reaction": "R01334"
+        },
+        {
+          "from": "PGP",
+          "to": "C00160",
+          "required": true,
+          "marker": true,
+          "reaction": "R01334"
+        },
+        {
+          "from": "C00160",
+          "to": "ghrA",
+          "required": false,
+          "marker": true,
+          "reaction": "R00465"
+        },
+        {
+          "from": "ghrA",
+          "to": "C00048",
+          "required": false,
+          "marker": true,
+          "reaction": "R00465"
+        },
+        {
+          "from": "C00160",
+          "to": "ghrB",
+          "required": false,
+          "marker": true,
+          "reaction": "R00465"
+        },
+        {
+          "from": "ghrB",
+          "to": "C00048",
+          "required": false,
+          "marker": true,
+          "reaction": "R00465"
+        }
       ],
-
       "scoring": {
         "min_fraction": 0.67,
         "marker_mode": "any",
