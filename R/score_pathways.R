@@ -101,6 +101,7 @@ score_pathways <- function(sack,
           pathway_id = pathway_id,
           pathway = pathway,
           global_nodes = potato@genes,
+          global_compounds = potato@compounds,
           genome_name = genome_name,
           genome_hits = genome_hits
         )
@@ -144,8 +145,8 @@ score_pathways <- function(sack,
 #' Score a single pathway in a multi-pathway network (internal)
 #' @noRd
 score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
-                                         pathway, global_nodes, genome_name,
-                                         genome_hits) {
+                                         pathway, global_nodes, global_compounds,
+                                         genome_name, genome_hits) {
 
   # V2 schema: extract genes from edges
   pathway_edges <- pathway$edges
@@ -170,14 +171,17 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
     ))
   }
 
+  # Get compound IDs for checking
+  compound_ids <- sapply(global_compounds, function(c) c$id)
+
   # Extract unique gene IDs from edges and their attributes
   gene_info <- list()
   for (edge in pathway_edges) {
     from_id <- edge$from
     to_id <- edge$to
 
-    # Check if from/to are genes (not compounds starting with C)
-    if (!is.null(from_id) && !grepl("^C\\d+", from_id)) {
+    # Check if from/to are genes (not compounds)
+    if (!is.null(from_id) && !from_id %in% compound_ids) {
       if (is.null(gene_info[[from_id]])) {
         gene_info[[from_id]] <- list(
           required = FALSE,
@@ -192,7 +196,7 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
       }
     }
 
-    if (!is.null(to_id) && !grepl("^C\\d+", to_id)) {
+    if (!is.null(to_id) && !to_id %in% compound_ids) {
       if (is.null(gene_info[[to_id]])) {
         gene_info[[to_id]] <- list(
           required = FALSE,
@@ -280,7 +284,8 @@ score_single_pathway_network <- function(potato_id, potato_name, pathway_id,
       output_compounds = pathway$output,
       detected_gene_ids = detected_gene_ids,
       max_gaps = max_gaps,
-      global_nodes = global_nodes
+      global_nodes = global_nodes,
+      global_compounds = global_compounds
     )
     present_gaps <- gap_result$present
     gap_count <- gap_result$gap_count
@@ -410,7 +415,7 @@ is_node_detected_network <- function(gene, potato_id, genome_hits, global_nodes 
 #' Binary yes/no: can ANY path exist from input→output with ≤ max_gaps missing genes?
 #' @noRd
 score_gaps <- function(pathway_edges, input_compounds, output_compounds,
-                       detected_gene_ids, max_gaps, global_nodes) {
+                       detected_gene_ids, max_gaps, global_nodes, global_compounds) {
 
   # Build adjacency list for DAG traversal
   adj_list <- list()
@@ -426,8 +431,9 @@ score_gaps <- function(pathway_edges, input_compounds, output_compounds,
   }
 
   # Helper: check if node is a compound
+  compound_ids <- sapply(global_compounds, function(c) c$id)
   is_compound <- function(node_id) {
-    grepl("^C\\d+|^[a-z_]+_(external|internal)$", node_id)
+    node_id %in% compound_ids
   }
 
   # Helper: check if gene/complex is detected

@@ -7,14 +7,26 @@
     "transport",
     "glyoxylate"
   ],
-  "notes": "Glycolate permease imports glycolate from external environment. L-lactate permease (lldP) has glycolate transport activity.",
+  "notes": "Glycolate permease imports glycolate from external environment. L-lactate permease (lctP or lldP) has glycolate transport activity.",
   "genes": [
+    {
+      "id": "lctP",
+      "name": "L-lactate permease",
+      "databases": {
+        "kofam": [
+          "K03303"
+        ]
+      },
+      "reactions": [],
+      "type": "permease",
+      "notes": "Transports L-lactate and glycolate across membrane"
+    },
     {
       "id": "lldP",
       "name": "L-lactate permease",
       "databases": {
         "kofam": [
-          "K03303"
+          "K00427"
         ]
       },
       "reactions": [],
@@ -38,9 +50,21 @@
     "main": {
       "name": "Glycolate Transport",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "notes": "Single permease transports glycolate from external to internal compartment.",
       "edges": [
+        {
+          "from": "C00160_external",
+          "to": "lctP",
+          "required": true,
+          "marker": true
+        },
+        {
+          "from": "lctP",
+          "to": "C00160_internal",
+          "required": true,
+          "marker": true
+        },
         {
           "from": "C00160_external",
           "to": "lldP",
@@ -55,7 +79,7 @@
         }
       ],
       "scoring": {
-        "min_fraction": 1.0,
+        "min_fraction": 0.5,
         "marker_mode": "all",
         "notes": "Single gene required"
       }

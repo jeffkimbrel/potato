@@ -89,7 +89,7 @@
     "main": {
       "name": "Phosphoglycolate to Glyoxylate",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "notes": "Two-step pathway with alternative oxidases. PGP is required, then either ghrA or ghrB.",
       "edges": [
         {

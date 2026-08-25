@@ -78,7 +78,7 @@
     "main": {
       "name": "Glyoxylate Shunt",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "notes": "Two-enzyme bypass of CO2-releasing steps in TCA cycle. aceA: isocitrate → succinate + glyoxylate. aceB: acetyl-CoA + glyoxylate → malate.",
       "input": [
         "C00311"
