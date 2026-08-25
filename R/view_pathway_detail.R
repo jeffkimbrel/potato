@@ -355,7 +355,12 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
             # Add reaction if present (use output edge reaction)
             reaction_str <- if (!is.null(out_edge$reaction)) {
-              paste0(" <strong>[", out_edge$reaction, "]</strong>")
+              rxn_str <- if (length(out_edge$reaction) > 1) {
+                paste(out_edge$reaction, collapse = ", ")
+              } else {
+                out_edge$reaction
+              }
+              paste0(" <strong>[", rxn_str, "]</strong>")
             } else ""
 
             paste0("<li>", input_label, " → ", gene_label, " → ", output_label, reaction_str, "</li>")

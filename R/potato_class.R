@@ -371,10 +371,15 @@ validate_multi_pathway <- function(data, strict) {
             errors <- c(errors, sprintf("%s: 'marker' must be TRUE/FALSE", edge_prefix))
           }
 
-          # Validate reaction if present
+          # Validate reaction if present (can be string or array)
           if (!is.null(edge$reaction)) {
-            if (!is.character(edge$reaction) || length(edge$reaction) != 1) {
-              errors <- c(errors, sprintf("%s: 'reaction' must be a single string (e.g., 'R00001')", edge_prefix))
+            # Convert list to character vector (jsonlite may load as list)
+            if (is.list(edge$reaction)) {
+              edge$reaction <- unlist(edge$reaction)
+            }
+
+            if (!is.character(edge$reaction) || length(edge$reaction) < 1) {
+              errors <- c(errors, sprintf("%s: 'reaction' must be a string or array of strings (e.g., 'R00001' or ['R00001', 'R00002'])", edge_prefix))
             }
           }
         }

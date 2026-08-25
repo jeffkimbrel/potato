@@ -99,7 +99,10 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_dat
           } else {
             edge$to
           }
-          rxn_str <- if (!is.null(edge$reaction)) paste0(" [", edge$reaction, "]") else ""
+          rxn_str <- if (!is.null(edge$reaction)) {
+            rxn_display <- if (length(edge$reaction) > 1) paste(edge$reaction, collapse = ", ") else edge$reaction
+            paste0(" [", rxn_display, "]")
+          } else ""
           cli::cli_text("    {from_label} → {to_label}{rxn_str}")
         }
         if (length(pathway$edges) > 3) {

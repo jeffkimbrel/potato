@@ -557,6 +557,7 @@ plot_v2_interactive <- function(g, layout = "fr", height = "100vh") {
           for (edge in pathway_edges) {
             # Check if this edge involves the current gene node
             if ((edge$from == node_name || edge$to == node_name) && !is.null(edge$reaction)) {
+              # Handle both single strings and arrays
               relevant_rxns <- c(relevant_rxns, edge$reaction)
             }
           }

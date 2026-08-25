@@ -1,6 +1,6 @@
 {
   "id": "glycerate_pathway_v2",
-  "name": "Glycerate Pathway (v2 schema)",
+  "name": "Glycerate Pathway",
   "source": "KEGG map00630",
   "schema_version": "v2",
   "tags": [
@@ -106,7 +106,7 @@
     "main": {
       "name": "Glycerate Pathway",
       "type": "independent",
-      "verified": false,
+      "verified": true,
       "notes": "Three-step pathway: glyoxylate \u2192 tartronate semialdehyde \u2192 D-glycerate \u2192 2-phosphoglycerate. Final kinase step can use glxK (K00865) or gck (K11529) as alternatives.",
       "input": [
         "C00048"
@@ -134,14 +134,14 @@
           "to": "glxR",
           "required": true,
           "marker": true,
-          "reaction": "R10052"
+          "reaction": ["R01745", "R01747"]
         },
         {
           "from": "glxR",
           "to": "C00258",
           "required": true,
           "marker": true,
-          "reaction": "R10052"
+          "reaction": ["R01745", "R01747"]
         },
         {
           "from": "C00258",
