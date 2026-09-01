@@ -25,9 +25,13 @@
 <url><loc>https://jeffkimbrel.github.io/potato/reference/create_sack.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/find_near_miss_pathways.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/find_potato_sack.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/get_blast_details.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/get_enzyme_nodes.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/get_gene_results.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/get_genome_details.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/get_hmm_details.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/get_kegg_url.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/get_kofam_details.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/get_pathway_scores.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/get_pathway_verification.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/get_potato_hashes.html</loc></url>
@@ -56,6 +60,10 @@
 <url><loc>https://jeffkimbrel.github.io/potato/reference/run_hmm.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/run_kofam.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/score_pathways.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/summarize_add_genomes.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/summarize_blast.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/summarize_hmm.html</loc></url>
+<url><loc>https://jeffkimbrel.github.io/potato/reference/summarize_kofam.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/summarize_missing_genes.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/summary-potato-Potato-method.html</loc></url>
 <url><loc>https://jeffkimbrel.github.io/potato/reference/summary-potato-PotatoSack-method.html</loc></url>

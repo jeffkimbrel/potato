@@ -37,5 +37,4 @@ get_verification_status(
 
 ## Value
 
-Prints verification summary and invisibly returns a tibble (or TRUE in
-guard mode)
+Tibble with verification status (or TRUE in guard mode)

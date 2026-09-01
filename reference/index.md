@@ -47,6 +47,27 @@ Score pathway presence/absence
 - [`get_gene_results()`](https://jeffkimbrel.github.io/potato/reference/get_gene_results.md)
   : Get gene-level annotation results
 
+## Reporting
+
+Display provenance and results for qmd/RMarkdown
+
+- [`summarize_add_genomes()`](https://jeffkimbrel.github.io/potato/reference/summarize_add_genomes.md)
+  : Summarize genome addition history
+- [`get_genome_details()`](https://jeffkimbrel.github.io/potato/reference/get_genome_details.md)
+  : Get detailed genome information
+- [`summarize_kofam()`](https://jeffkimbrel.github.io/potato/reference/summarize_kofam.md)
+  : Summarize kofam annotation
+- [`get_kofam_details()`](https://jeffkimbrel.github.io/potato/reference/get_kofam_details.md)
+  : Get detailed kofam annotation results
+- [`summarize_blast()`](https://jeffkimbrel.github.io/potato/reference/summarize_blast.md)
+  : Summarize blast annotation
+- [`get_blast_details()`](https://jeffkimbrel.github.io/potato/reference/get_blast_details.md)
+  : Get detailed blast annotation results
+- [`summarize_hmm()`](https://jeffkimbrel.github.io/potato/reference/summarize_hmm.md)
+  : Summarize hmm annotation
+- [`get_hmm_details()`](https://jeffkimbrel.github.io/potato/reference/get_hmm_details.md)
+  : Get detailed hmm annotation results
+
 ## Analysis
 
 Analyze results
