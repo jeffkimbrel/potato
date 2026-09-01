@@ -81,6 +81,7 @@ reference:
 
 - title: "Graph utilities"
   desc: "Internal graph building"
+  contents:
   - build_graph
   - get_enzyme_nodes
 
