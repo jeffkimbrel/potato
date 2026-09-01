@@ -815,7 +815,7 @@ All features above have been implemented and basic testing done on:
 
 **Key workflow:** Use `devtools::load_all()` when testing (not `library(potato)`) to load latest code. All functions are documented with roxygen2 - see R package documentation for details.
 
-**Main workflow functions:** `initialize_potato_sack()`, `create_sack()`, `add_genomes()`, `run_kofam()`, `run_blast()`, `run_hmm()`, `score_pathways()`, visualization functions (`plot_v2()`, `view_pathway_detail()`, `plot_pathway_heatmap()`), analysis functions (`get_gene_results()`, `get_pathway_scores()`).
+**Main workflow functions:** `initialize_potato_sack()`, `create_sack()`, `add_genomes()`, `run_kofam()`, `run_blast()`, `run_hmm()`, `score_pathways()`, visualization functions (`plot_potato()`, `view_pathway_detail()`, `plot_pathway_heatmap()`), analysis functions (`get_gene_results()`, `get_pathway_scores()`).
 
 ---
 

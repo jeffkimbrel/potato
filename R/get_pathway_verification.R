@@ -39,7 +39,7 @@ get_pathway_verification <- function(input) {
     }
 
     for (file in files) {
-      potato <- load_potato_v2(file)
+      potato <- load_potato(file)
 
       for (pathway_id in names(potato@pathways)) {
         pathway <- potato@pathways[[pathway_id]]

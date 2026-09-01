@@ -79,7 +79,7 @@ load_potatoes <- function(dir, tags = NULL, include_inactive = FALSE) {
         return(NULL)
       }
 
-      return(load_potato_v2(filepath))
+      return(load_potato(filepath))
     }, error = function(e) {
       warning("Failed to load ", basename(filepath), ": ", e$message, call. = FALSE)
       NULL

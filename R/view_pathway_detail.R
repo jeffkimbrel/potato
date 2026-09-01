@@ -12,7 +12,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
   # Load if path provided (V2 only)
   if (is.character(potato)) {
-    potato <- load_potato_v2(potato)  # Validates automatically
+    potato <- load_potato(potato)  # Validates automatically
   }
 
   # Check if multi-pathway network (> 1 pathway)
@@ -199,8 +199,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   plot_widget <- NULL
   tryCatch({
     # Create interactive plot with fixed height for embedding
-    g <- build_graph_v2(potato, pathway_id = pathway)
-    plot_widget <- plot_v2_interactive(g, layout = layout, height = "600px")
+    g <- build_graph(potato, pathway_id = pathway)
+    plot_widget <- plot_potato_interactive(g, layout = layout, height = "600px")
   }, error = function(e) {
     cli::cli_warn("Could not generate plot: {e$message}")
   })

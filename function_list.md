@@ -8,7 +8,7 @@
 	- load_potato_config
 		- validate_database_configs
 	- load_potatoes
-		- load_potato_v2
+		- load_potato
 			- PotatoV2 (S7 class)
 - add_genomes
 	- jakomics_to_genome_file
@@ -35,10 +35,10 @@
 - validate_potato
 	- validate_multi_pathway
 - get_verification_status
-- plot_v2
+- plot_potato
 - view_pathway_detail
-	- build_graph_v2
-	- plot_v2_interactive
+	- build_graph
+	- plot_potato_interactive
 	- get_compound_name (embedded in view_pathway_detail)
 - potato_theme
 - get_gene_results

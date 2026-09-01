@@ -37,7 +37,7 @@ get_verification_status <- function(potato_or_sack,
       if (!file.exists(potato_or_sack)) {
         cli::cli_abort("Potato file not found: {potato_or_sack}")
       }
-      potato <- load_potato_v2(potato_or_sack)
+      potato <- load_potato(potato_or_sack)
     } else {
       potato <- potato_or_sack
     }

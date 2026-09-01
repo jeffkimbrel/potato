@@ -2099,7 +2099,7 @@ If you have existing potatoes and want to add gap-based scoring:
 2. Convert input/output to simplified format: `"input": ["C00048"]`
 3. Verify edges form bipartite graph (gene ↔ compound alternation)
 4. Add `max_gaps` to scoring block
-5. Validate connectivity with `load_potato_v2()` and `validate_potato()`
+5. Validate connectivity with `load_potato()` and `validate_potato()`
 
 # Validation Checklist
 
@@ -2244,7 +2244,7 @@ Review? [shows JSON preview]
 
 User: Looks good!
 
-Agent: ✓ Validated with load_potato_v2() - no errors, connectivity verified
+Agent: ✓ Validated with load_potato() - no errors, connectivity verified
 ✓ Saved to inst/potatoes/glyoxylate_cycle.json
 ```
 

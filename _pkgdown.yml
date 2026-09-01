@@ -11,7 +11,7 @@ reference:
   - create_sack
   - find_potato_sack
   - add_genomes
-  - load_potato_v2
+  - load_potato
   - load_potatoes
   - load_potato_config
 
@@ -42,8 +42,8 @@ reference:
 - title: "Visualization"
   desc: "Plot pathways and results"
   contents:
-  - plot_v2
-  - plot_v2_interactive
+  - plot_potato
+  - plot_potato_interactive
   - view_pathway_detail
   - plot_all_pathways_heatmap
   - plot_annotation_coverage
@@ -81,8 +81,7 @@ reference:
 
 - title: "Graph utilities"
   desc: "Internal graph building"
-  contents:
-  - build_graph_v2
+  - build_graph
   - get_enzyme_nodes
 
 - title: "Exclude S7 internal methods"

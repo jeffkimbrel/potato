@@ -121,7 +121,7 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 **1. `write_potato()` - Save potato object to JSON file**
 ```r
 write_potato(
-  potato,                                    # Potato S7 object (from sack@potatoes or load_potato_v2())
+  potato,                                    # Potato S7 object (from sack@potatoes or load_potato())
   path = "inst/potatoes/my_potato.json",    # Output path
   indent = 2,                                # JSON indentation (default: 2 spaces)
   validate = TRUE                            # Validate before writing (default: TRUE)
@@ -138,7 +138,7 @@ Writes potato S7 object to JSON file with:
 - User loaded potato from sack, made edits in R, wants to save: `write_potato(sack@potatoes$ed_network, "updated.json")`
 - User built potato programmatically in R, needs to export to file
 - Batch operations: load all potatoes, modify, write back out
-- Symmetric with `load_potato_v2()` - what you load, you should be able to write
+- Symmetric with `load_potato()` - what you load, you should be able to write
 
 **2. `split_potato()` - Extract pathways from multi-pathway network**
 ```r
@@ -269,7 +269,7 @@ Result: `mo_nif` pathway uses 0.9 threshold, all other pathways unchanged
 **Implementation details:**
 
 - [ ] Add `extends` field to schema (optional, references potato `id`)
-- [ ] Merge logic in `load_potato_v2()`:
+- [ ] Merge logic in `load_potato()`:
   - Load base potato first
   - Deep merge: genes/compounds/pathways are additive
   - Pathway-level overrides: if pathway ID exists, merge/override fields
@@ -572,7 +572,7 @@ ED network: transport + npED → gluconate available → FUNCTIONAL
 
 **Solution:**
 
-- [ ] Add export button to `plot_v2_interactive()`
+- [ ] Add export button to `plot_potato_interactive()`
 - [ ] Update `update_potato_coordinates()` for V2
 - [ ] Update `align_coordinates()` for V2
 - [ ] Normalize pixel coords to plot coords
@@ -580,7 +580,7 @@ ED network: transport + npED → gluconate available → FUNCTIONAL
 **Workflow:**
 
 ```r
-plot_v2(pot, interactive = TRUE, layout = "fr")
+plot_potato(pot, interactive = TRUE, layout = "fr")
 # Arrange nodes → Export → Import
 update_potato_coordinates("pathway.json", "coords.json")
 ```

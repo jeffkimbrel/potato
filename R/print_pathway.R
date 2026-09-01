@@ -14,7 +14,7 @@ print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_dat
 
   # Load if path provided
   if (is.character(potato)) {
-    potato <- load_potato_v2(potato)
+    potato <- load_potato(potato)
   }
 
   cli::cli_h1(potato@name)

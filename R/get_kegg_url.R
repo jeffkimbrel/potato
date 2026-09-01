@@ -14,7 +14,7 @@ get_kegg_url <- function(potato, pathway_id = NULL, genes = TRUE, compounds = TR
 
   # Load if path provided
   if (is.character(potato)) {
-    potato <- load_potato_v2(potato)
+    potato <- load_potato(potato)
   }
 
   # Handle pathway selection

@@ -35,7 +35,7 @@ PotatoV2 <- S7::new_class(
 #' @param path Path to v2 potato JSON
 #' @export
 
-load_potato_v2 <- function(path) {
+load_potato <- function(path) {
   potato_data <- jsonlite::read_json(path, simplifyVector = FALSE)
 
   # Validate schema version
@@ -81,10 +81,10 @@ load_potato_v2 <- function(path) {
 
 
 #' Build igraph from v2 potato
-#' @param potato_v2 Potato loaded with load_potato_v2()
+#' @param potato_v2 Potato loaded with load_potato()
 #' @param pathway_id Which pathway to build (default: first pathway)
 #' @export
-build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
+build_graph <- function(potato_v2, pathway_id = NULL) {
 
   if (is.null(pathway_id)) {
     pathway_id <- names(potato_v2@pathways)[1]
@@ -263,30 +263,30 @@ build_graph_v2 <- function(potato_v2, pathway_id = NULL) {
 
 
 #' Simple plot of v2 graph
-#' @param potato_or_graph Either a potato_v2 object, path to v2 JSON, or igraph from build_graph_v2()
+#' @param potato_or_graph Either a potato_v2 object, path to v2 JSON, or igraph from build_graph()
 #' @param interactive Use interactive visNetwork plot (TRUE) or static ggraph (FALSE)
 #' @param layout Layout algorithm for static plot (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"
 #' @export
-plot_v2 <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
+plot_potato <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
 
   # Build graph if needed
   potato <- NULL
   if (is.character(potato_or_graph)) {
     # Path to JSON
-    potato <- load_potato_v2(potato_or_graph)
-    g <- build_graph_v2(potato)
+    potato <- load_potato(potato_or_graph)
+    g <- build_graph(potato)
   } else if (inherits(potato_or_graph, "potato_v2") ||
              (is.list(potato_or_graph) && !is.null(potato_or_graph$schema_version))) {
     # Potato object
     potato <- potato_or_graph
-    g <- build_graph_v2(potato_or_graph)
+    g <- build_graph(potato_or_graph)
   } else {
     # Assume it's already a graph
     g <- potato_or_graph
   }
 
   if (interactive) {
-    plot_v2_interactive(g, layout = layout)
+    plot_potato_interactive(g, layout = layout)
   } else {
     if (!requireNamespace("ggraph", quietly = TRUE)) {
       cli::cli_abort("Package {.pkg ggraph} required")
@@ -394,11 +394,11 @@ plot_v2 <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
 
 
 #' Interactive visNetwork plot of v2 graph
-#' @param g Graph from build_graph_v2()
+#' @param g Graph from build_graph()
 #' @param layout Layout algorithm (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"
 #' @param height Height of the plot (default: "100vh")
 #' @export
-plot_v2_interactive <- function(g, layout = "fr", height = "100vh") {
+plot_potato_interactive <- function(g, layout = "fr", height = "100vh") {
   if (!requireNamespace("visNetwork", quietly = TRUE)) {
     cli::cli_abort(c(
       "Package {.pkg visNetwork} is required for interactive plots",
