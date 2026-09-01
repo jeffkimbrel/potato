@@ -1,0 +1,189 @@
+# potato
+
+The goal of potato is to …
+
+## Installation
+
+You can install the development version of potato from
+[GitHub](https://github.com/) with:
+
+``` r
+
+# install.packages("pak")
+pak::pak("jeffkimbrel/potato")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+``` r
+
+library(potato)
+## basic example code
+```
+
+What is special about using `README.Rmd` instead of just `README.md`?
+You can include R chunks like so:
+
+``` r
+
+summary(cars)
+#>      speed           dist       
+#>  Min.   : 4.0   Min.   :  2.00  
+#>  1st Qu.:12.0   1st Qu.: 26.00  
+#>  Median :15.0   Median : 36.00  
+#>  Mean   :15.4   Mean   : 42.98  
+#>  3rd Qu.:19.0   3rd Qu.: 56.00  
+#>  Max.   :25.0   Max.   :120.00
+```
+
+You’ll still need to render `README.Rmd` regularly, to keep `README.md`
+up-to-date. `devtools::build_readme()` is handy for this.
+
+You can also embed plots, for example:
+
+![](reference/figures/README-pressure-1.png)
+
+In that case, don’t forget to commit and push the resulting figure
+files, so they display on GitHub and CRAN.
+
+# Package index
+
+## Setup
+
+Initialize sacks and load potatoes
+
+- [`initialize_potato_sack()`](https://jeffkimbrel.github.io/potato/reference/initialize_potato_sack.md)
+  : Initialize a new potato sack project
+- [`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md)
+  : Create a PotatoSack from project directory
+- [`find_potato_sack()`](https://jeffkimbrel.github.io/potato/reference/find_potato_sack.md)
+  : Find the root of a potato sack project
+- [`add_genomes()`](https://jeffkimbrel.github.io/potato/reference/add_genomes.md)
+  : Add genomes to a potato sack
+- [`load_potato_v2()`](https://jeffkimbrel.github.io/potato/reference/load_potato_v2.md)
+  : Load potato v2 schema
+- [`load_potatoes()`](https://jeffkimbrel.github.io/potato/reference/load_potatoes.md)
+  : Load multiple potatoes from directory
+- [`load_potato_config()`](https://jeffkimbrel.github.io/potato/reference/load_potato_config.md)
+  : Load potato configuration from YAML
+
+## Annotation
+
+Run annotation tools
+
+- [`run_kofam()`](https://jeffkimbrel.github.io/potato/reference/run_kofam.md)
+  : Run kofam annotation on all genomes
+- [`run_blast()`](https://jeffkimbrel.github.io/potato/reference/run_blast.md)
+  : Run BLAST annotation on all genomes
+- [`run_hmm()`](https://jeffkimbrel.github.io/potato/reference/run_hmm.md)
+  : Run HMM annotation on all genomes
+- [`create_kofam_hal()`](https://jeffkimbrel.github.io/potato/reference/create_kofam_hal.md)
+  : Create .hal file for kofam from potato KO list
+- [`create_blast_db()`](https://jeffkimbrel.github.io/potato/reference/create_blast_db.md)
+  : Create filtered BLAST database from potato reference sequences
+- [`create_hmm_profile()`](https://jeffkimbrel.github.io/potato/reference/create_hmm_profile.md)
+  : Create filtered HMM profile file from potato detection terms
+
+## Scoring
+
+Score pathway presence/absence
+
+- [`score_pathways()`](https://jeffkimbrel.github.io/potato/reference/score_pathways.md)
+  : Score pathway presence/absence across all genomes
+- [`get_pathway_scores()`](https://jeffkimbrel.github.io/potato/reference/get_pathway_scores.md)
+  : Get pathway-level scoring results
+- [`get_gene_results()`](https://jeffkimbrel.github.io/potato/reference/get_gene_results.md)
+  : Get gene-level annotation results
+
+## Analysis
+
+Analyze results
+
+- [`summarize_missing_genes()`](https://jeffkimbrel.github.io/potato/reference/summarize_missing_genes.md)
+  : Identify genes missing across genomes
+- [`find_near_miss_pathways()`](https://jeffkimbrel.github.io/potato/reference/find_near_miss_pathways.md)
+  : Find pathways that are close to being called present
+- [`inspect_gene_thresholds()`](https://jeffkimbrel.github.io/potato/reference/inspect_gene_thresholds.md)
+  : Inspect gene-level annotation hits and thresholds
+
+## Visualization
+
+Plot pathways and results
+
+- [`plot_v2()`](https://jeffkimbrel.github.io/potato/reference/plot_v2.md)
+  : Simple plot of v2 graph
+- [`plot_v2_interactive()`](https://jeffkimbrel.github.io/potato/reference/plot_v2_interactive.md)
+  : Interactive visNetwork plot of v2 graph
+- [`view_pathway_detail()`](https://jeffkimbrel.github.io/potato/reference/view_pathway_detail.md)
+  : View pathway details as HTML table in browser
+- [`plot_all_pathways_heatmap()`](https://jeffkimbrel.github.io/potato/reference/plot_all_pathways_heatmap.md)
+  : Plot comprehensive pathway completion heatmap across all genomes
+- [`plot_annotation_coverage()`](https://jeffkimbrel.github.io/potato/reference/plot_annotation_coverage.md)
+  : Plot annotation coverage heatmap
+- [`plot_pathway_prevalence()`](https://jeffkimbrel.github.io/potato/reference/plot_pathway_prevalence.md)
+  : Plot pathway prevalence across genomes
+- [`plot_pathway_uniqueness()`](https://jeffkimbrel.github.io/potato/reference/plot_pathway_uniqueness.md)
+  : Plot pathway uniqueness distribution
+- [`update_potato_coordinates()`](https://jeffkimbrel.github.io/potato/reference/update_potato_coordinates.md)
+  : Update potato JSON with node coordinates
+- [`align_coordinates()`](https://jeffkimbrel.github.io/potato/reference/align_coordinates.md)
+  : Align node coordinates to grid or by axis
+- [`potato_theme()`](https://jeffkimbrel.github.io/potato/reference/potato_theme.md)
+  : POTATO plot theme
+
+## Utilities
+
+Helper functions
+
+- [`get_kegg_url()`](https://jeffkimbrel.github.io/potato/reference/get_kegg_url.md)
+  : Generate KEGG URL for a specific pathway
+- [`get_pathway_verification()`](https://jeffkimbrel.github.io/potato/reference/get_pathway_verification.md)
+  : Get simple pathway verification status table
+- [`get_verification_status()`](https://jeffkimbrel.github.io/potato/reference/get_verification_status.md)
+  : Get verification status of pathways
+- [`print_potato()`](https://jeffkimbrel.github.io/potato/reference/print_potato.md)
+  : Print potato structure as text
+- [`print_provenance()`](https://jeffkimbrel.github.io/potato/reference/print_provenance.md)
+  : Print provenance summary
+- [`get_potato_hashes()`](https://jeffkimbrel.github.io/potato/reference/get_potato_hashes.md)
+  : Get potato hashes for multiple potatoes
+- [`compute_potato_hash()`](https://jeffkimbrel.github.io/potato/reference/compute_potato_hash.md)
+  : Compute MD5 hash of potato R object
+
+## Validation
+
+Validate potatoes and configs
+
+- [`validate_potato()`](https://jeffkimbrel.github.io/potato/reference/validate_potato.md)
+  : Validate potato structure
+- [`validate_multi_pathway()`](https://jeffkimbrel.github.io/potato/reference/validate_multi_pathway.md)
+  : Validate multi-pathway network potato (V2 schema)
+- [`validate_database_configs()`](https://jeffkimbrel.github.io/potato/reference/validate_database_configs.md)
+  : Validate database configurations
+
+## Classes
+
+S7 object classes
+
+- [`PotatoSack()`](https://jeffkimbrel.github.io/potato/reference/PotatoSack.md)
+  : Potato Sack S7 Class
+- [`PotatoV2()`](https://jeffkimbrel.github.io/potato/reference/PotatoV2.md)
+  : PotatoV2 S7 class
+- [`Potato()`](https://jeffkimbrel.github.io/potato/reference/Potato.md)
+  : Potato S7 Class
+- [`GenomeFile()`](https://jeffkimbrel.github.io/potato/reference/GenomeFile.md)
+  : Genome File S7 Class
+
+## Graph utilities
+
+Internal graph building
+
+- [`build_graph_v2()`](https://jeffkimbrel.github.io/potato/reference/build_graph_v2.md)
+  : Build igraph from v2 potato
+- [`get_enzyme_nodes()`](https://jeffkimbrel.github.io/potato/reference/get_enzyme_nodes.md)
+  : Get enzyme nodes from potato
+
+## Exclude S7 internal methods
+
