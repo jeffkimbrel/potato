@@ -11,6 +11,9 @@
 
 run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL, overwrite = FALSE) {
 
+  # Initialize message collection
+  messages_list <- list()
+
   # Get conda_env from config if not provided
   if (is.null(conda_env)) {
     conda_env <- sack@config$annotation$conda_env
@@ -30,7 +33,9 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
         "i" = "Use {.code overwrite = TRUE} to replace existing results"
       ))
     } else {
-      cli::cli_alert_warning("Overwriting existing kofam results")
+      msg <- "Overwriting existing kofam results"
+      cli::cli_alert_warning(msg)
+      messages_list[[length(messages_list) + 1]] <- list(type = "warning", message = msg)
       sack@results$kofam <- NULL
     }
   }
@@ -44,7 +49,9 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   }
 
   # Create .hal file for selected potatoes
-  cli::cli_alert_info("Preparing kofam annotation...")
+  msg <- "Preparing kofam annotation..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
   hal_result <- create_kofam_hal(sack, potato_names)
   hal_path <- hal_result$hal_path
   hal_content <- hal_result$hal_content
@@ -166,7 +173,10 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   commands <- purrr::map_chr(results, ~.x$command)
 
   # Write raw outputs to files
-  cli::cli_alert_info("Saving raw outputs...")
+  msg <- "Saving raw outputs..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
+
   for (i in seq_along(genome_names)) {
     output_file <- file.path(annotation_dir, paste0(genome_names[i], ".kofam.txt"))
     writeLines(raw_outputs[[i]], output_file)
@@ -176,10 +186,15 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   log_file <- file.path(annotation_dir, "kofam.log")
   log_lines <- paste0(genome_names, "\t", commands)
   writeLines(c("genome\tcommand", log_lines), log_file)
-  cli::cli_alert_success("Saved outputs to {.path {annotation_dir}}")
+
+  msg <- paste0("Saved outputs to ", annotation_dir)
+  cli::cli_alert_success(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "success", message = msg)
 
   # STEP 2: Parse outputs sequentially using jakomics
-  cli::cli_alert_info("Parsing kofam results...")
+  msg <- "Parsing kofam results..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
   kegg <- reticulate::import("jakomics.kegg", delay_load = FALSE)
 
   kofam_results <- purrr::map(raw_outputs, function(output_lines) {
@@ -221,6 +236,12 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     cmd_template <- sprintf("%s run -n %s %s", conda_cmd, conda_env, cmd_template)
   }
 
+  # Store messages in provenance
+  messages_tbl <- tibble::tibble(
+    type = sapply(messages_list, function(x) x$type),
+    message = sapply(messages_list, function(x) x$message)
+  )
+
   sack@provenance$kofam <- list(
     timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
     tool_version = tool_version,
@@ -230,6 +251,7 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     potatoes_with_genes = potatoes_with_kofam,
     n_genomes = length(genome_paths),
     n_kos = length(all_kos),
+    messages = messages_tbl,
     commands = list(
       hal_content = hal_content,
       hal_path = hal_path,
@@ -239,7 +261,15 @@ run_kofam <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     )
   )
 
-  cli::cli_alert_success("Kofam annotation complete")
+  msg <- "Kofam annotation complete"
+  cli::cli_alert_success(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "success", message = msg)
+
+  # Update stored messages
+  sack@provenance$kofam$messages <- tibble::tibble(
+    type = sapply(messages_list, function(x) x$type),
+    message = sapply(messages_list, function(x) x$message)
+  )
 
   sack
 }

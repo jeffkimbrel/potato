@@ -11,6 +11,9 @@
 
 run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL, overwrite = FALSE) {
 
+  # Initialize message collection
+  messages_list <- list()
+
   # Get conda_env from config if not provided
   if (is.null(conda_env)) {
     conda_env <- sack@config$annotation$conda_env
@@ -30,7 +33,9 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
         "i" = "Use {.code overwrite = TRUE} to replace existing results"
       ))
     } else {
-      cli::cli_alert_warning("Overwriting existing blast results")
+      msg <- "Overwriting existing blast results"
+      cli::cli_alert_warning(msg)
+      messages_list[[length(messages_list) + 1]] <- list(type = "warning", message = msg)
       sack@results$blast <- NULL
     }
   }
@@ -54,7 +59,9 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     cli::cli_abort("blast config must have 'files' array")
   }
 
-  cli::cli_alert_info("Preparing BLAST annotation...")
+  msg <- "Preparing BLAST annotation..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
 
   # Create filtered BLAST database from potato reference sequences
   blast_result <- create_blast_db(sack, potato_names)
@@ -68,13 +75,17 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   annotation_dir <- file.path(sack@sack_root, "results", "annotations", sack@metadata$annotation_session)
 
   # Build BLAST database
-  cli::cli_alert_info("Building BLAST database...")
+  msg <- "Building BLAST database..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
   makedb_cmd <- sprintf("makeblastdb -in %s -dbtype prot", shQuote(blast_db))
   if (!is.null(conda_env)) {
     makedb_cmd <- sprintf("conda run -n %s %s", conda_env, makedb_cmd)
   }
   system(makedb_cmd)
-  cli::cli_alert_success("BLAST database ready")
+  msg <- "BLAST database ready"
+  cli::cli_alert_success(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "success", message = msg)
 
   # Filter potatoes
   if (is.null(potato_names)) {
@@ -175,7 +186,9 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   commands <- purrr::map_chr(results, ~.x$command)
 
   # Write raw outputs to files
-  cli::cli_alert_info("Saving raw outputs...")
+  msg <- "Saving raw outputs..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
   for (i in seq_along(genome_names)) {
     output_file <- file.path(annotation_dir, paste0(genome_names[i], ".blast.txt"))
     writeLines(raw_outputs[[i]], output_file)
@@ -185,10 +198,14 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
   log_file <- file.path(annotation_dir, "blast.log")
   log_lines <- paste0(genome_names, "\t", commands)
   writeLines(c("genome\tcommand", log_lines), log_file)
-  cli::cli_alert_success("Saved outputs to {.path {annotation_dir}}")
+  msg <- paste0("Saved outputs to ", annotation_dir)
+  cli::cli_alert_success(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "success", message = msg)
 
   # STEP 2: Parse outputs sequentially using jakomics
-  cli::cli_alert_info("Parsing BLAST results...")
+  msg <- "Parsing BLAST results..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
   blast_module <- reticulate::import("jakomics.blast", delay_load = FALSE)
 
   blast_results <- purrr::map(raw_outputs, function(output_lines) {
@@ -243,6 +260,12 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     blastp_template <- sprintf("%s run -n %s %s", conda_cmd, conda_env, blastp_template)
   }
 
+  # Store messages in provenance
+  messages_tbl <- tibble::tibble(
+    type = sapply(messages_list, function(x) x$type),
+    message = sapply(messages_list, function(x) x$message)
+  )
+
   sack@provenance$blast <- list(
     timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
     tool_version = tool_version,
@@ -252,6 +275,7 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     potatoes_with_genes = potatoes_with_blast,
     n_genomes = length(genome_paths),
     n_subjects = length(all_subjects),
+    messages = messages_tbl,
     commands = list(
       fasta_content = fasta_content,
       blast_db = blast_db,
@@ -261,7 +285,15 @@ run_blast <- function(sack, potato_names = NULL, conda_env = NULL, workers = NUL
     )
   )
 
-  cli::cli_alert_success("BLAST annotation complete")
+  msg <- "BLAST annotation complete"
+  cli::cli_alert_success(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "success", message = msg)
+
+  # Update stored messages
+  sack@provenance$blast$messages <- tibble::tibble(
+    type = sapply(messages_list, function(x) x$type),
+    message = sapply(messages_list, function(x) x$message)
+  )
 
   sack
 }

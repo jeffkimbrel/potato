@@ -1,0 +1,98 @@
+#' Summarize blast annotation
+#'
+#' Displays messages from run_blast(). Messages are retrieved from
+#' provenance data stored in the sack, so this works even if the original
+#' run_blast() call was in an eval=FALSE chunk.
+#'
+#' @param sack PotatoSack object
+#' @param verbose Logical. If TRUE, prints detailed messages (default: TRUE)
+#'
+#' @return A list containing:
+#'   \item{summary}{Tibble with annotation summary (n_genomes, n_potatoes, n_subjects, tool_version)}
+#'   \item{messages}{Tibble with columns type, message}
+#'   \item{status}{List with ok (logical)}
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' sack <- run_blast(sack)
+#' result <- summarize_blast(sack)
+#' result$summary
+#' result$messages  # Render this tibble in qmd
+#' }
+summarize_blast <- function(sack, verbose = FALSE) {
+
+  # Check if blast has been run
+  if (is.null(sack@provenance$blast)) {
+    cli::cli_alert_info("BLAST annotation has not been run on this sack")
+    return(list(
+      summary = tibble::tibble(),
+      messages = tibble::tibble(type = character(), message = character()),
+      status = list(ok = FALSE)
+    ))
+  }
+
+  prov <- sack@provenance$blast
+
+  # Build summary tibble
+  summary_tbl <- tibble::tibble(
+    timestamp = prov$timestamp,
+    n_genomes = prov$n_genomes,
+    n_potatoes = length(prov$potatoes_requested),
+    n_subjects = prov$n_subjects,
+    tool_version = prov$tool_version,
+    conda_env = prov$conda_env %||% "none",
+    workers = prov$workers
+  )
+
+  # Get messages from provenance (may not exist if run_blast was called before message tracking)
+  if (!is.null(prov$messages) && nrow(prov$messages) > 0) {
+    messages_tbl <- prov$messages
+  } else {
+    # Reconstruct basic messages from provenance
+    messages_tbl <- tibble::tibble(
+      type = c("info", "success"),
+      message = c(
+        glue::glue("BLAST annotation run on {prov$n_genomes} genome{ifelse(prov$n_genomes == 1, '', 's')}"),
+        glue::glue("Annotation complete: {prov$n_subjects} subject sequences across {prov$n_potatoes} potato{ifelse(prov$n_potatoes == 1, '', 'es')}")
+      )
+    )
+  }
+
+  # Print messages if verbose
+  if (verbose) {
+    cli::cli_h2("BLAST Annotation Summary")
+
+    for (i in seq_len(nrow(messages_tbl))) {
+      msg <- messages_tbl[i, ]
+      switch(msg$type,
+        "info" = cli::cli_alert_info(msg$message),
+        "success" = cli::cli_alert_success(msg$message),
+        "warning" = cli::cli_alert_warning(msg$message),
+        "danger" = cli::cli_alert_danger(msg$message),
+        cli::cli_text(msg$message)
+      )
+    }
+
+    cli::cli_text("")
+    cli::cli_dl(c(
+      "Genomes" = as.character(prov$n_genomes),
+      "Potatoes" = paste(prov$potatoes_requested, collapse = ", "),
+      "Subject sequences" = as.character(prov$n_subjects),
+      "Tool version" = prov$tool_version
+    ))
+  }
+
+  # Build status
+  status <- list(
+    ok = TRUE
+  )
+
+  # Return summary
+  list(
+    summary = summary_tbl,
+    messages = messages_tbl,
+    status = status
+  )
+}

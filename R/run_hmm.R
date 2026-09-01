@@ -11,6 +11,9 @@
 
 run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL, overwrite = FALSE) {
 
+  # Initialize message collection
+  messages_list <- list()
+
   # Get conda_env from config if not provided
   if (is.null(conda_env)) {
     conda_env <- sack@config$annotation$conda_env
@@ -30,7 +33,9 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
         "i" = "Use {.code overwrite = TRUE} to replace existing results"
       ))
     } else {
-      cli::cli_alert_warning("Overwriting existing hmm results")
+      msg <- "Overwriting existing hmm results"
+      cli::cli_alert_warning(msg)
+      messages_list[[length(messages_list) + 1]] <- list(type = "warning", message = msg)
       sack@results$hmm <- NULL
     }
   }
@@ -50,7 +55,9 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     cli::cli_abort("No hmm database configured in potato_config.yaml")
   }
 
-  cli::cli_alert_info("Preparing HMM annotation...")
+  msg <- "Preparing HMM annotation..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
 
   # Create filtered HMM profile from potato detection terms
   hmm_result <- create_hmm_profile(sack, potato_names)
@@ -165,7 +172,9 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
   commands <- purrr::map_chr(results, ~.x$command)
 
   # Write raw outputs to files
-  cli::cli_alert_info("Saving raw outputs...")
+  msg <- "Saving raw outputs..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
   for (i in seq_along(genome_names)) {
     output_file <- file.path(annotation_dir, paste0(genome_names[i], ".hmm.txt"))
     writeLines(raw_outputs[[i]], output_file)
@@ -175,10 +184,14 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
   log_file <- file.path(annotation_dir, "hmm.log")
   log_lines <- paste0(genome_names, "\t", commands)
   writeLines(c("genome\tcommand", log_lines), log_file)
-  cli::cli_alert_success("Saved outputs to {.path {annotation_dir}}")
+  msg <- paste0("Saved outputs to ", annotation_dir)
+  cli::cli_alert_success(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "success", message = msg)
 
   # STEP 2: Parse outputs sequentially
-  cli::cli_alert_info("Parsing HMM results...")
+  msg <- "Parsing HMM results..."
+  cli::cli_alert_info(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "info", message = msg)
 
   hmm_results <- purrr::map(raw_outputs, function(output_lines) {
     # Parse hmmsearch --tblout format
@@ -221,6 +234,12 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     hmmsearch_template <- sprintf("%s run -n %s %s", conda_cmd, conda_env, hmmsearch_template)
   }
 
+  # Store messages in provenance
+  messages_tbl <- tibble::tibble(
+    type = sapply(messages_list, function(x) x$type),
+    message = sapply(messages_list, function(x) x$message)
+  )
+
   sack@provenance$hmm <- list(
     timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
     tool_version = tool_version,
@@ -230,6 +249,7 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     potatoes_with_genes = potatoes_with_hmm,
     n_genomes = length(genome_paths),
     n_profiles = length(all_profiles),
+    messages = messages_tbl,
     commands = list(
       profile_content = profile_content,
       hmm_profile = hmm_profile,
@@ -238,7 +258,15 @@ run_hmm <- function(sack, potato_names = NULL, conda_env = NULL, workers = NULL,
     )
   )
 
-  cli::cli_alert_success("HMM annotation complete")
+  msg <- "HMM annotation complete"
+  cli::cli_alert_success(msg)
+  messages_list[[length(messages_list) + 1]] <- list(type = "success", message = msg)
+
+  # Update stored messages
+  sack@provenance$hmm$messages <- tibble::tibble(
+    type = sapply(messages_list, function(x) x$type),
+    message = sapply(messages_list, function(x) x$message)
+  )
 
   sack
 }
