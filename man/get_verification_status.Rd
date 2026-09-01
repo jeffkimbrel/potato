@@ -21,7 +21,7 @@ get_verification_status(
 \item{force}{Logical. If TRUE, bypasses verification guard (only used when abort_if_verified=TRUE). Default FALSE.}
 }
 \value{
-Prints verification summary and invisibly returns a tibble (or TRUE in guard mode)
+Tibble with verification status (or TRUE in guard mode)
 }
 \description{
 Shows which pathways in potatoes are verified or need verification.

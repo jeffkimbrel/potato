@@ -9,7 +9,7 @@
 #' @param abort_if_verified Logical. If TRUE, aborts with error if pathway is verified (guard mode). Default FALSE.
 #' @param force Logical. If TRUE, bypasses verification guard (only used when abort_if_verified=TRUE). Default FALSE.
 #'
-#' @return Prints verification summary and invisibly returns a tibble (or TRUE in guard mode)
+#' @return Tibble with verification status (or TRUE in guard mode)
 #' @export
 get_verification_status <- function(potato_or_sack,
                                     pathway_id = NULL,
@@ -119,58 +119,23 @@ get_verification_status <- function(potato_or_sack,
     }
   }
 
-  # Print summary (unless in guard mode and everything is OK)
-  if (!abort_if_verified || length(results) > 0) {
-    cli::cli_h2("Pathway Verification Status")
-    cli::cli_text("")
-
-    for (potato_id in names(results)) {
-      res <- results[[potato_id]]
-
-      if (res$verified == res$total) {
-        # All verified
-        cli::cli_alert_success("{.strong {potato_id}}: {res$verified}/{res$total} verified")
-        if (!is.na(res$verified_names[1])) {
-          cli::cli_text("  {.emph Verified}: {paste(res$verified_names, collapse=', ')}")
-        }
-      } else if (res$verified > 0) {
-        # Some verified, some not
-        cli::cli_alert_warning("{.strong {potato_id}}: {res$verified}/{res$total} verified")
-        if (!is.na(res$verified_names[1])) {
-          cli::cli_text("  {.emph Verified}: {paste(res$verified_names, collapse=', ')}")
-        }
-        if (!is.na(res$unverified[1])) {
-          cli::cli_text("  {.emph Unverified}: {paste(res$unverified, collapse=', ')}")
-        }
-      } else {
-        # All unverified
-        cli::cli_alert_warning("{.strong {potato_id}}: {res$verified}/{res$total} verified")
-        if (!is.na(res$unverified[1])) {
-          cli::cli_text("  {.emph Unverified}: {paste(res$unverified, collapse=', ')}")
-        }
-      }
-    }
-
-    cli::cli_text("")
-  }
-
   # Build tibble for return
-  result_df <- dplyr::bind_rows(lapply(names(results), function(id) {
-    res <- results[[id]]
-    data.frame(
-      potato = id,
-      verified = res$verified,
-      total = res$total,
-      verified_pathways = if (!is.na(res$verified_names[1])) paste(res$verified_names, collapse = ", ") else NA_character_,
-      unverified = if (!is.na(res$unverified[1])) paste(res$unverified, collapse = ", ") else NA_character_,
-      stringsAsFactors = FALSE
-    )
-  }))
+  result_tbl <- tibble::tibble(
+    potato = names(results),
+    verified = sapply(results, function(x) x$verified),
+    total = sapply(results, function(x) x$total),
+    verified_pathways = sapply(results, function(x) {
+      if (!is.na(x$verified_names[1])) paste(x$verified_names, collapse = ", ") else NA_character_
+    }),
+    unverified = sapply(results, function(x) {
+      if (!is.na(x$unverified[1])) paste(x$unverified, collapse = ", ") else NA_character_
+    })
+  )
 
   # In guard mode, return TRUE if we got here (no abort)
   if (abort_if_verified) {
     return(invisible(TRUE))
   }
 
-  invisible(result_df)
+  result_tbl
 }
