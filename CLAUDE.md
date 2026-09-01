@@ -777,6 +777,34 @@ sack <- readRDS("sack.rds")  # Standard R load
   - Shows both all-steps and essential-only metrics
   - Includes `min_fraction` threshold per pathway
 
+**Provenance Reporting Functions (v0.10.2)**
+- ✅ Two-tier function pattern for qmd/RMarkdown rendering
+  - `summarize_*()` functions display execution messages from provenance
+  - `get_*_details()` functions return detailed results with plots
+- ✅ Message storage in provenance
+  - Annotation functions collect messages during execution
+  - Messages stored as tibbles in `sack@provenance$*$messages`
+  - Enables rendering in eval=FALSE chunks
+- ✅ `summarize_add_genomes()` - Display genome addition history
+  - Returns list with $summary (per-call statistics), $messages (type, message tibble), $status
+  - Reconstructs messages from provenance data
+- ✅ `get_genome_details()` - Genome QC metrics
+  - Returns $summary (file paths, sizes, protein counts, added_in_call), $plot (protein count bar chart)
+- ✅ `summarize_kofam()` - Display kofam annotation messages
+  - Returns $summary (timestamp, n_genomes, n_potatoes, n_kos, tool_version), $messages, $status
+  - Backward compatible for sacks created before message tracking
+- ✅ `get_kofam_details()` - Kofam hit statistics
+  - Returns $summary (per-genome hits), $per_potato (aggregated stats), $plot (hits per genome)
+- ✅ `summarize_blast()` - Display BLAST annotation messages
+  - Returns $summary (timestamp, n_genomes, n_subjects), $messages, $status
+- ✅ `get_blast_details()` - BLAST hit statistics
+  - Returns $summary, $per_potato, $plot
+- ✅ `summarize_hmm()` - Display HMM annotation messages
+  - Returns $summary (timestamp, n_genomes, n_profiles), $messages, $status
+- ✅ `get_hmm_details()` - HMM hit statistics
+  - Returns $summary, $per_potato, $plot
+- ✅ All summarize functions default to `verbose = FALSE` (return data without printing)
+
 **Multi-Pathway Networks (v0.9.0)**
 - ✅ Multi-pathway JSON schema implemented
   - Global `nodes` array: gene definitions with detection methods
