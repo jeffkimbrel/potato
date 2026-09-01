@@ -1,8 +1,11 @@
 pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
-articles: {}
-last_built: 2026-09-01T18:45Z
+articles:
+  annotation: annotation.html
+  custom-potatoes: custom-potatoes.html
+  setup: setup.html
+last_built: 2026-09-01T19:29Z
 urls:
   reference: https://jeffkimbrel.github.io/potato/reference
   article: https://jeffkimbrel.github.io/potato/articles

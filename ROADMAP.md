@@ -138,7 +138,7 @@ Current workflow: manual JSON editing (error-prone, tedious)
 ``` r
 
 write_potato(
-  potato,                                    # Potato S7 object (from sack@potatoes or load_potato_v2())
+  potato,                                    # Potato S7 object (from sack@potatoes or load_potato())
   path = "inst/potatoes/my_potato.json",    # Output path
   indent = 2,                                # JSON indentation (default: 2 spaces)
   validate = TRUE                            # Validate before writing (default: TRUE)
@@ -155,7 +155,7 @@ coordinates, etc.
 save: `write_potato(sack@potatoes$ed_network, "updated.json")` - User
 built potato programmatically in R, needs to export to file - Batch
 operations: load all potatoes, modify, write back out - Symmetric with
-[`load_potato_v2()`](https://jeffkimbrel.github.io/potato/reference/load_potato_v2.md) -
+[`load_potato()`](https://jeffkimbrel.github.io/potato/reference/load_potato.md) -
 what you load, you should be able to write
 
 **2. `split_potato()` - Extract pathways from multi-pathway network**
@@ -298,7 +298,7 @@ unchanged
 Add `extends` field to schema (optional, references potato `id`)
 
 Merge logic in
-[`load_potato_v2()`](https://jeffkimbrel.github.io/potato/reference/load_potato_v2.md):
+[`load_potato()`](https://jeffkimbrel.github.io/potato/reference/load_potato.md):
 
 - Load base potato first
 - Deep merge: genes/compounds/pathways are additive
@@ -660,7 +660,7 @@ V2. Workflow broken.
 **Solution:**
 
 Add export button to
-[`plot_v2_interactive()`](https://jeffkimbrel.github.io/potato/reference/plot_v2_interactive.md)
+[`plot_potato_interactive()`](https://jeffkimbrel.github.io/potato/reference/plot_potato_interactive.md)
 
 Update
 [`update_potato_coordinates()`](https://jeffkimbrel.github.io/potato/reference/update_potato_coordinates.md)
@@ -676,7 +676,7 @@ Normalize pixel coords to plot coords
 
 ``` r
 
-plot_v2(pot, interactive = TRUE, layout = "fr")
+plot_potato(pot, interactive = TRUE, layout = "fr")
 # Arrange nodes → Export → Import
 update_potato_coordinates("pathway.json", "coords.json")
 ```

@@ -12,7 +12,7 @@ Initialize sacks and load potatoes
   : Find the root of a potato sack project
 - [`add_genomes()`](https://jeffkimbrel.github.io/potato/reference/add_genomes.md)
   : Add genomes to a potato sack
-- [`load_potato_v2()`](https://jeffkimbrel.github.io/potato/reference/load_potato_v2.md)
+- [`load_potato()`](https://jeffkimbrel.github.io/potato/reference/load_potato.md)
   : Load potato v2 schema
 - [`load_potatoes()`](https://jeffkimbrel.github.io/potato/reference/load_potatoes.md)
   : Load multiple potatoes from directory
@@ -62,9 +62,9 @@ Analyze results
 
 Plot pathways and results
 
-- [`plot_v2()`](https://jeffkimbrel.github.io/potato/reference/plot_v2.md)
+- [`plot_potato()`](https://jeffkimbrel.github.io/potato/reference/plot_potato.md)
   : Simple plot of v2 graph
-- [`plot_v2_interactive()`](https://jeffkimbrel.github.io/potato/reference/plot_v2_interactive.md)
+- [`plot_potato_interactive()`](https://jeffkimbrel.github.io/potato/reference/plot_potato_interactive.md)
   : Interactive visNetwork plot of v2 graph
 - [`view_pathway_detail()`](https://jeffkimbrel.github.io/potato/reference/view_pathway_detail.md)
   : View pathway details as HTML table in browser
@@ -130,7 +130,7 @@ S7 object classes
 
 Internal graph building
 
-- [`build_graph_v2()`](https://jeffkimbrel.github.io/potato/reference/build_graph_v2.md)
+- [`build_graph()`](https://jeffkimbrel.github.io/potato/reference/build_graph.md)
   : Build igraph from v2 potato
 - [`get_enzyme_nodes()`](https://jeffkimbrel.github.io/potato/reference/get_enzyme_nodes.md)
   : Get enzyme nodes from potato

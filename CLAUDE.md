@@ -797,24 +797,26 @@ Handles shared genes across pathways - ✅ Essential-only scoring metrics
 separately from all genes - Returns NA when no required genes defined -
 ✅ Per-pathway thresholds included in results (`min_fraction` column)
 
-**Visualization (v0.7.0 - v0.9.0)** - ✅ `plot_potato()` - Dual-mode
-visualization system - **Static mode** (`interactive = FALSE`): ggraph
-network plots - Force-directed layouts for multi-pathway networks -
-Step-based layouts for single-pathway potatoes - Pathway convex hulls
-with ggforce - Publication-quality PDF/PNG export - **Interactive mode**
-(`interactive = TRUE`): visNetwork plots - Drag-and-drop node
-positioning - Full viewport display (100vh) - Export coordinates to
-JSON - Zoom, pan, highlight on hover - Navigation controls - **Curated
-layouts**: Supports embedded x,y coordinates in potato JSON - Dual
-coordinate systems: `x,y` (enzyme-only) and `x_compounds,y_compounds`
-(with compounds) - Hybrid approach: uses curated coords where available,
-layout algorithm for new nodes - Auto-detection of coordinate type when
-importing - **Pathway filtering**: `pathway` parameter to show single
-pathway from multi-pathway network - **Compound display**:
-`show_compounds` toggle for bipartite graphs - Deduplicated compounds
-(same compound appears once) - Compounds positioned between connected
-enzymes - Different shapes: triangles for compounds, circles for genes -
-✅ `plot_pathway_heatmap()` - ggplot2 tile heatmap across genomes - ✅
+**Visualization (v0.7.0 - v0.9.0)** - ✅
+[`plot_potato()`](https://jeffkimbrel.github.io/potato/reference/plot_potato.md) -
+Dual-mode visualization system - **Static mode**
+(`interactive = FALSE`): ggraph network plots - Force-directed layouts
+for multi-pathway networks - Step-based layouts for single-pathway
+potatoes - Pathway convex hulls with ggforce - Publication-quality
+PDF/PNG export - **Interactive mode** (`interactive = TRUE`): visNetwork
+plots - Drag-and-drop node positioning - Full viewport display (100vh) -
+Export coordinates to JSON - Zoom, pan, highlight on hover - Navigation
+controls - **Curated layouts**: Supports embedded x,y coordinates in
+potato JSON - Dual coordinate systems: `x,y` (enzyme-only) and
+`x_compounds,y_compounds` (with compounds) - Hybrid approach: uses
+curated coords where available, layout algorithm for new nodes -
+Auto-detection of coordinate type when importing - **Pathway
+filtering**: `pathway` parameter to show single pathway from
+multi-pathway network - **Compound display**: `show_compounds` toggle
+for bipartite graphs - Deduplicated compounds (same compound appears
+once) - Compounds positioned between connected enzymes - Different
+shapes: triangles for compounds, circles for genes - ✅
+`plot_pathway_heatmap()` - ggplot2 tile heatmap across genomes - ✅
 `plot_genome_pathways()` - ggplot2 horizontal bars for one genome -
 Shows per-pathway threshold markers (red vertical bars) - Each pathway
 displays its actual min_fraction threshold - ✅
@@ -896,7 +898,7 @@ documentation for details.
 [`run_hmm()`](https://jeffkimbrel.github.io/potato/reference/run_hmm.md),
 [`score_pathways()`](https://jeffkimbrel.github.io/potato/reference/score_pathways.md),
 visualization functions
-([`plot_v2()`](https://jeffkimbrel.github.io/potato/reference/plot_v2.md),
+([`plot_potato()`](https://jeffkimbrel.github.io/potato/reference/plot_potato.md),
 [`view_pathway_detail()`](https://jeffkimbrel.github.io/potato/reference/view_pathway_detail.md),
 `plot_pathway_heatmap()`), analysis functions
 ([`get_gene_results()`](https://jeffkimbrel.github.io/potato/reference/get_gene_results.md),
@@ -1143,7 +1145,8 @@ annotate_genomes(genome_dir = "mags/", potato_dir = "potatoes/")
 - **R preference:** Use R wherever possible, Python backend only when
   necessary
 - **Naming:** “Potato” not “pathway” in user-facing functions
-  (`load_potato()` not `load_pathway()`)
+  ([`load_potato()`](https://jeffkimbrel.github.io/potato/reference/load_potato.md)
+  not `load_pathway()`)
 - **Validation:** Warn by default, not strict fail (users want
   flexibility)
 - **Documentation:** Biological context in docs (explain *why*, not just
