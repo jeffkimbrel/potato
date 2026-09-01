@@ -149,7 +149,12 @@ build_graph <- function(potato_v2, pathway_id = NULL) {
 
     for (e in input_edges) {
       rxn <- edges[[e$idx]]$reaction
-      if (is.null(rxn)) rxn <- "default"
+      if (is.null(rxn)) {
+        rxn <- "default"
+      } else if (is.list(rxn)) {
+        # Handle reaction arrays - use first reaction or combine
+        rxn <- paste(unlist(rxn), collapse = ",")
+      }
       if (is.null(reaction_map[[rxn]])) {
         reaction_map[[rxn]] <- list(inputs = list(), outputs = list())
       }
@@ -158,7 +163,12 @@ build_graph <- function(potato_v2, pathway_id = NULL) {
 
     for (e in output_edges) {
       rxn <- edges[[e$idx]]$reaction
-      if (is.null(rxn)) rxn <- "default"
+      if (is.null(rxn)) {
+        rxn <- "default"
+      } else if (is.list(rxn)) {
+        # Handle reaction arrays - use first reaction or combine
+        rxn <- paste(unlist(rxn), collapse = ",")
+      }
       if (is.null(reaction_map[[rxn]])) {
         reaction_map[[rxn]] <- list(inputs = list(), outputs = list())
       }
@@ -275,9 +285,8 @@ plot_potato <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
     # Path to JSON
     potato <- load_potato(potato_or_graph)
     g <- build_graph(potato)
-  } else if (inherits(potato_or_graph, "potato_v2") ||
-             (is.list(potato_or_graph) && !is.null(potato_or_graph$schema_version))) {
-    # Potato object
+  } else if (S7::S7_inherits(potato_or_graph, PotatoV2)) {
+    # PotatoV2 S7 object
     potato <- potato_or_graph
     g <- build_graph(potato_or_graph)
   } else {
@@ -295,8 +304,8 @@ plot_potato <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
     # Get pathway name for title
     pathway_name <- if (!is.null(potato)) {
       # Get first pathway name
-      first_pathway_id <- names(potato$pathways)[1]
-      potato$pathways[[first_pathway_id]]$name
+      first_pathway_id <- names(potato@pathways)[1]
+      potato@pathways[[first_pathway_id]]$name
     } else {
       NULL
     }
@@ -416,7 +425,7 @@ plot_potato_interactive <- function(g, layout = "fr", height = "100vh") {
     dashes = FALSE,
     stringsAsFactors = FALSE
   )
-  edges_df$color <- replicate(nrow(edges_df), list(color = "#216bde", highlight = "#216bde"), simplify = FALSE)
+  edges_df$color <- I(replicate(nrow(edges_df), list(color = "#216bde", highlight = "#216bde"), simplify = FALSE))
 
   # Add red dashed edges between split gene nodes (same gene, different reactions)
   gene_nodes <- igraph::V(g)$name[igraph::V(g)$type == "gene"]
