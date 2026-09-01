@@ -42,6 +42,7 @@ PotatoSack <- S7::new_class(
 
 
 #' Print method for PotatoSack
+#' @keywords internal
 #' @export
 S7::method(print, PotatoSack) <- function(x, ...) {
   if (!requireNamespace("cli", quietly = TRUE)) {
@@ -97,6 +98,7 @@ S7::method(print, PotatoSack) <- function(x, ...) {
 
 
 #' Summary method for PotatoSack
+#' @keywords internal
 #' @export
 S7::method(summary, PotatoSack) <- function(object, ...) {
   print(object)

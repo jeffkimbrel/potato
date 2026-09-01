@@ -644,6 +644,7 @@ validate_multi_pathway <- function(data, strict) {
 
 
 #' Print method for Potato
+#' @keywords internal
 #' @export
 S7::method(print, Potato) <- function(x, ...) {
   cat("<Potato:", x@id, ">\n")
@@ -661,6 +662,7 @@ S7::method(print, Potato) <- function(x, ...) {
 
 
 #' Summary method for Potato
+#' @keywords internal
 #' @export
 S7::method(summary, Potato) <- function(object, ...) {
   cat("Potato:", object@name, "\n")

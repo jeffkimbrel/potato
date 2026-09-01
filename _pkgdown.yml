@@ -1,0 +1,92 @@
+url: https://jeffkimbrel.github.io/potato/
+template:
+  bootstrap: 5
+  light-switch: yes
+
+reference:
+- title: "Setup"
+  desc: "Initialize sacks and load potatoes"
+  contents:
+  - initialize_potato_sack
+  - create_sack
+  - find_potato_sack
+  - add_genomes
+  - load_potato_v2
+  - load_potatoes
+  - load_potato_config
+
+- title: "Annotation"
+  desc: "Run annotation tools"
+  contents:
+  - run_kofam
+  - run_blast
+  - run_hmm
+  - create_kofam_hal
+  - create_blast_db
+  - create_hmm_profile
+
+- title: "Scoring"
+  desc: "Score pathway presence/absence"
+  contents:
+  - score_pathways
+  - get_pathway_scores
+  - get_gene_results
+
+- title: "Analysis"
+  desc: "Analyze results"
+  contents:
+  - summarize_missing_genes
+  - find_near_miss_pathways
+  - inspect_gene_thresholds
+
+- title: "Visualization"
+  desc: "Plot pathways and results"
+  contents:
+  - plot_v2
+  - plot_v2_interactive
+  - view_pathway_detail
+  - plot_all_pathways_heatmap
+  - plot_annotation_coverage
+  - plot_pathway_prevalence
+  - plot_pathway_uniqueness
+  - update_potato_coordinates
+  - align_coordinates
+  - potato_theme
+
+- title: "Utilities"
+  desc: "Helper functions"
+  contents:
+  - get_kegg_url
+  - get_pathway_verification
+  - get_verification_status
+  - print_potato
+  - print_provenance
+  - get_potato_hashes
+  - compute_potato_hash
+
+- title: "Validation"
+  desc: "Validate potatoes and configs"
+  contents:
+  - validate_potato
+  - validate_multi_pathway
+  - validate_database_configs
+
+- title: "Classes"
+  desc: "S7 object classes"
+  contents:
+  - PotatoSack
+  - PotatoV2
+  - Potato
+  - GenomeFile
+
+- title: "Graph utilities"
+  desc: "Internal graph building"
+  contents:
+  - build_graph_v2
+  - get_enzyme_nodes
+
+- title: "Exclude S7 internal methods"
+  contents:
+  - -matches("print,potato")
+  - -matches("-method$")
+

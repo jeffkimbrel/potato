@@ -10,3 +10,8 @@
 ^environment\.yaml$
 ^results$
 ^working\.R$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^README\.Rmd$

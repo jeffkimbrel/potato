@@ -10,3 +10,4 @@ print(x, ...)
 \description{
 Print method for GenomeFile
 }
+\keyword{internal}

@@ -27,6 +27,7 @@ GenomeFile <- S7::new_class(
 
 
 #' Print method for GenomeFile
+#' @keywords internal
 #' @export
 S7::method(print, GenomeFile) <- function(x, ...) {
   cat("<GenomeFile>\n")

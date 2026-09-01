@@ -8,6 +8,14 @@
 \description{
 POTATO is the R successor to the GATOR (Genome annotATOR) python code.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://jeffkimbrel.github.io/potato/}
+  \item Report bugs at \url{https://github.com/jeffkimbrel/potato/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Jeff Kimbrel \email{first.last@example.com}
 

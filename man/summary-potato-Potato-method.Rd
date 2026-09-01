@@ -10,3 +10,4 @@ summary(object, ...)
 \description{
 Summary method for Potato
 }
+\keyword{internal}
