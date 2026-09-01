@@ -32,6 +32,18 @@ reference:
   - get_pathway_scores
   - get_gene_results
 
+- title: "Reporting"
+  desc: "Display provenance and results for qmd/RMarkdown"
+  contents:
+  - summarize_add_genomes
+  - get_genome_details
+  - summarize_kofam
+  - get_kofam_details
+  - summarize_blast
+  - get_blast_details
+  - summarize_hmm
+  - get_hmm_details
+
 - title: "Analysis"
   desc: "Analyze results"
   contents:
