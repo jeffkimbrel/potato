@@ -5,9 +5,9 @@ template:
 
 reference:
 - title: "Setup"
-  desc: "Initialize sacks and load potatoes"
+  desc: "Initialize projects and create sacks"
   contents:
-  - initialize_potato_sack
+  - initialize_potato_project
   - create_sack
   - find_potato_sack
   - add_genomes
