@@ -2,10 +2,10 @@
 
 ## Setup
 
-Initialize sacks and load potatoes
+Initialize projects and create sacks
 
-- [`initialize_potato_sack()`](https://jeffkimbrel.github.io/potato/reference/initialize_potato_sack.md)
-  : Initialize a new potato sack project
+- [`initialize_potato_project()`](https://jeffkimbrel.github.io/potato/reference/initialize_potato_project.md)
+  : Initialize a new potato project
 - [`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md)
   : Create a PotatoSack from project directory
 - [`find_potato_sack()`](https://jeffkimbrel.github.io/potato/reference/find_potato_sack.md)

@@ -2,7 +2,7 @@
 
 ## Checked Functions
 
-- initialize_potato_sack
+- initialize_potato_project
 - create_sack
   - find_potato_sack
   - load_potato_config

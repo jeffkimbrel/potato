@@ -29,7 +29,7 @@ PotatoSack(
 
 - `sack_root`:
 
-  Path to the sack directory
+  Path to the project directory
 
 - `config`:
 

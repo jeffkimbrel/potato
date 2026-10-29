@@ -13,8 +13,8 @@ load_potato_config(config_path = NULL)
 
 - config_path:
 
-  Path to potato_config.yaml file. If NULL, searches for it using
-  find_potato_sack() from current directory.
+  Path to potato_config.yaml file. If NULL, searches for it by finding
+  the project directory from current directory.
 
 ## Value
 
@@ -35,6 +35,6 @@ The configuration file defines:
 ``` r
 if (FALSE) { # \dontrun{
 config <- load_potato_config("potato_config.yaml")
-config <- load_potato_config()  # Auto-finds in current sack
+config <- load_potato_config()  # Auto-finds in current project
 } # }
 ```

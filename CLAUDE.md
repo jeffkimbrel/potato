@@ -627,20 +627,25 @@ sack <- readRDS("sack.rds")  # Standard R load
 structures. Keep foundation simple - GenBank conversion can be added
 later (see ROADMAP.md).
 
-### S7 Object vs Folder - Both Called “Sack”
+### Project vs Sack - Clear Terminology
 
-**Decision:** Accept that “sack” refers to both the folder structure and
-the S7 object. Context makes it clear.
+**Decision:** Use distinct terms to avoid confusion:
 
-- **Folder sack:** Created by
-  [`initialize_potato_sack()`](https://jeffkimbrel.github.io/potato/reference/initialize_potato_sack.md) -
-  directory with config, potatoes/, etc.
-- **S7 PotatoSack:** In-memory object created by
+- **Potato Project:** On-disk folder structure created by
+  [`initialize_potato_project()`](https://jeffkimbrel.github.io/potato/reference/initialize_potato_project.md)
+  - Contains config, potatoes/, genomes/, results/, .Rproj
+  - Persistent, version-controlled
+  - One per folder
+- **Sack (S7 PotatoSack):** In-memory object created by
   [`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md)
-  from folder files
+  - Loaded from project directory
+  - Multiple sacks possible from one project (different subsets,
+    analysis variants)
+  - Saved/loaded with
+    [`saveRDS()`](https://rdrr.io/r/base/readRDS.html)/[`readRDS()`](https://rdrr.io/r/base/readRDS.html)
 
 [`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md)
-constructs the S7 object from directory files. Use standard
+constructs the S7 object from a project directory. Use standard
 [`saveRDS()`](https://rdrr.io/r/base/readRDS.html)/[`readRDS()`](https://rdrr.io/r/base/readRDS.html)
 for persistence.
 
@@ -674,7 +679,7 @@ workflows exist:**
   instead
 - **RDS auto-detection in load:** Simplified -
   [`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md)
-  only constructs from directory, doesn’t load RDS files
+  only constructs from project directory, doesn’t load RDS files
 
 ------------------------------------------------------------------------
 
@@ -924,7 +929,7 @@ latest code. All functions are documented with roxygen2 - see R package
 documentation for details.
 
 **Main workflow functions:**
-[`initialize_potato_sack()`](https://jeffkimbrel.github.io/potato/reference/initialize_potato_sack.md),
+[`initialize_potato_project()`](https://jeffkimbrel.github.io/potato/reference/initialize_potato_project.md),
 [`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md),
 [`add_genomes()`](https://jeffkimbrel.github.io/potato/reference/add_genomes.md),
 [`run_kofam()`](https://jeffkimbrel.github.io/potato/reference/run_kofam.md),

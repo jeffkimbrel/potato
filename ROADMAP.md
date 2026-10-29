@@ -398,6 +398,66 @@ auditing potato collection and tracking migration to gap-based scoring
 
 ------------------------------------------------------------------------
 
+### Potato Filtering at Sack Creation **\[MEDIUM PRIORITY\]**
+
+**Problem:** Users may want to create multiple sacks from the same
+project with different potato subsets. Currently
+[`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md)
+loads ALL potatoes from the `potatoes/` directory with no filtering
+options.
+
+**Use cases:** - Focused analysis: nitrogen metabolism only vs carbon
+metabolism only - Performance: load subset for quick testing, all
+potatoes for full run - Multiple sacks: `sack_nitrogen`, `sack_carbon`
+from one project directory
+
+**Solution:** Add filtering parameters to
+[`create_sack()`](https://jeffkimbrel.github.io/potato/reference/create_sack.md)
+
+**Proposed signature:**
+
+``` r
+
+create_sack(
+  path = NULL,
+  tags = NULL,              # Filter potatoes by tags (e.g., c("nitrogen", "metabolism"))
+  pattern = NULL,           # Regex pattern for filenames (e.g., "nitrogen.*\\.json")
+  include_inactive = FALSE  # Load potatoes marked active: false
+)
+```
+
+**Implementation:** - Pass filtering parameters through to
+[`load_potatoes()`](https://jeffkimbrel.github.io/potato/reference/load_potatoes.md)
+call (line 53 in R/create_sack.R) -
+[`load_potatoes()`](https://jeffkimbrel.github.io/potato/reference/load_potatoes.md)
+already supports `tags` and `include_inactive` parameters - Add
+`pattern` parameter to
+[`load_potatoes()`](https://jeffkimbrel.github.io/potato/reference/load_potatoes.md)
+for filename filtering
+
+**Example workflows:**
+
+``` r
+
+# Load all nitrogen-related pathways
+sack_n <- create_sack(tags = "nitrogen")
+
+# Load specific pathways by filename pattern
+sack_denit <- create_sack(pattern = "denitrification|nitrate")
+
+# Load everything including inactive/deprecated potatoes
+sack_full <- create_sack(include_inactive = TRUE)
+
+# Combine filters
+sack_custom <- create_sack(tags = c("metabolism", "energy"), pattern = "^amino")
+```
+
+**Benefits:** - Multiple specialized sacks from one project - Faster
+iteration during development (load subset) - Organized analysis
+workflows (group related pathways)
+
+------------------------------------------------------------------------
+
 ### Potato Locking System **\[HIGH PRIORITY\]**
 
 **Problem:** User edits potato JSON after annotation → hash mismatch →

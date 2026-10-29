@@ -18,4 +18,5 @@ find_potato_sack(path = NULL)
 
 ## Value
 
-Character path to the project root, or NULL if not inside a potato sack.
+Character path to the project root, or NULL if not inside a potato
+project.
