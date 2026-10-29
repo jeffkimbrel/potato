@@ -299,7 +299,7 @@ initialize_potato_project <- function(path, copy_potatoes = TRUE, template_confi
 #'
 #' @param path Character. Starting path to search from. Defaults to current working directory.
 #'
-#' @returns Character path to the project root, or NULL if not inside a potato sack.
+#' @returns Character path to the project root, or NULL if not inside a potato project.
 #' @export
 
 find_potato_sack <- function(path = NULL) {

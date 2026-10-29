@@ -567,14 +567,20 @@ sack <- readRDS("sack.rds")  # Standard R load
 
 **Rationale:** Don't force users to reorganize their existing data structures. Keep foundation simple - GenBank conversion can be added later (see ROADMAP.md).
 
-### S7 Object vs Folder - Both Called "Sack"
+### Project vs Sack - Clear Terminology
 
-**Decision:** Accept that "sack" refers to both the folder structure and the S7 object. Context makes it clear.
+**Decision:** Use distinct terms to avoid confusion:
 
-- **Folder sack:** Created by `initialize_potato_sack()` - directory with config, potatoes/, etc.
-- **S7 PotatoSack:** In-memory object created by `create_sack()` from folder files
+- **Potato Project:** On-disk folder structure created by `initialize_potato_project()`
+  - Contains config, potatoes/, genomes/, results/, .Rproj
+  - Persistent, version-controlled
+  - One per folder
+- **Sack (S7 PotatoSack):** In-memory object created by `create_sack()`
+  - Loaded from project directory
+  - Multiple sacks possible from one project (different subsets, analysis variants)
+  - Saved/loaded with `saveRDS()`/`readRDS()`
 
-`create_sack()` constructs the S7 object from directory files. Use standard `saveRDS()`/`readRDS()` for persistence.
+`create_sack()` constructs the S7 object from a project directory. Use standard `saveRDS()`/`readRDS()` for persistence.
 
 ### No Examples in Documentation
 
@@ -592,7 +598,7 @@ sack <- readRDS("sack.rds")  # Standard R load
 - **Provenance export functions:** Removed - future feature, not needed yet
 - **combine_sacks():** Removed - complex function for combining multiple annotation runs
 - **Custom save/load functions:** Removed `save_potato_sack()`, `load_saved_sack()`, `inspect_saved_sack()` - use standard `saveRDS()`/`readRDS()` instead
-- **RDS auto-detection in load:** Simplified - `create_sack()` only constructs from directory, doesn't load RDS files
+- **RDS auto-detection in load:** Simplified - `create_sack()` only constructs from project directory, doesn't load RDS files
 
 ---
 
@@ -843,7 +849,7 @@ All features above have been implemented and basic testing done on:
 
 **Key workflow:** Use `devtools::load_all()` when testing (not `library(potato)`) to load latest code. All functions are documented with roxygen2 - see R package documentation for details.
 
-**Main workflow functions:** `initialize_potato_sack()`, `create_sack()`, `add_genomes()`, `run_kofam()`, `run_blast()`, `run_hmm()`, `score_pathways()`, visualization functions (`plot_potato()`, `view_pathway_detail()`, `plot_pathway_heatmap()`), analysis functions (`get_gene_results()`, `get_pathway_scores()`).
+**Main workflow functions:** `initialize_potato_project()`, `create_sack()`, `add_genomes()`, `run_kofam()`, `run_blast()`, `run_hmm()`, `score_pathways()`, visualization functions (`plot_potato()`, `view_pathway_detail()`, `plot_pathway_heatmap()`), analysis functions (`get_gene_results()`, `get_pathway_scores()`).
 
 ---
 

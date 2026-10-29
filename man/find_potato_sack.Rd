@@ -10,7 +10,7 @@ find_potato_sack(path = NULL)
 \item{path}{Character. Starting path to search from. Defaults to current working directory.}
 }
 \value{
-Character path to the project root, or NULL if not inside a potato sack.
+Character path to the project root, or NULL if not inside a potato project.
 }
 \description{
 Walks up the directory tree looking for a \code{potato_config.yaml} file.

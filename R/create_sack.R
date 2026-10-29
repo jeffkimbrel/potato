@@ -1,17 +1,17 @@
 #' Create a PotatoSack from project directory
 #'
-#' Constructs a PotatoSack S7 object from a project directory containing
+#' Constructs a PotatoSack S7 object from a potato project directory containing
 #' potato_config.yaml and potatoes. To save/load sacks, use standard R
 #' functions: saveRDS(sack, "sack.rds") and readRDS("sack.rds").
 #'
-#' @param path Character. Path to sack directory. If NULL, searches upward from current directory.
+#' @param path Character. Path to project directory. If NULL, searches upward from current directory.
 #'
 #' @returns PotatoSack S7 object
 #' @export
 
 create_sack <- function(path = NULL) {
 
-  # Auto-find sack directory if not specified
+  # Auto-find project directory if not specified
   if (is.null(path)) {
     path <- find_potato_sack()
   }

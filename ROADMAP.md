@@ -358,6 +358,54 @@ Result: `mo_nif` pathway uses 0.9 threshold, all other pathways unchanged
 
 ---
 
+### Potato Filtering at Sack Creation **[MEDIUM PRIORITY]**
+
+**Problem:** Users may want to create multiple sacks from the same project with different potato subsets. Currently `create_sack()` loads ALL potatoes from the `potatoes/` directory with no filtering options.
+
+**Use cases:**
+- Focused analysis: nitrogen metabolism only vs carbon metabolism only
+- Performance: load subset for quick testing, all potatoes for full run
+- Multiple sacks: `sack_nitrogen`, `sack_carbon` from one project directory
+
+**Solution:** Add filtering parameters to `create_sack()`
+
+**Proposed signature:**
+```r
+create_sack(
+  path = NULL,
+  tags = NULL,              # Filter potatoes by tags (e.g., c("nitrogen", "metabolism"))
+  pattern = NULL,           # Regex pattern for filenames (e.g., "nitrogen.*\\.json")
+  include_inactive = FALSE  # Load potatoes marked active: false
+)
+```
+
+**Implementation:**
+- Pass filtering parameters through to `load_potatoes()` call (line 53 in R/create_sack.R)
+- `load_potatoes()` already supports `tags` and `include_inactive` parameters
+- Add `pattern` parameter to `load_potatoes()` for filename filtering
+
+**Example workflows:**
+```r
+# Load all nitrogen-related pathways
+sack_n <- create_sack(tags = "nitrogen")
+
+# Load specific pathways by filename pattern
+sack_denit <- create_sack(pattern = "denitrification|nitrate")
+
+# Load everything including inactive/deprecated potatoes
+sack_full <- create_sack(include_inactive = TRUE)
+
+# Combine filters
+sack_custom <- create_sack(tags = c("metabolism", "energy"), pattern = "^amino")
+```
+
+**Benefits:**
+- Multiple specialized sacks from one project
+- Faster iteration during development (load subset)
+- Organized analysis workflows (group related pathways)
+
+---
+
 ### Potato Locking System **[HIGH PRIORITY]**
 
 **Problem:** User edits potato JSON after annotation → hash mismatch → results meaningless

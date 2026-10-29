@@ -4,7 +4,7 @@
 #' with tool configurations, database paths, and thresholds.
 #'
 #' @param config_path Path to potato_config.yaml file. If NULL, searches for it
-#'   using find_potato_sack() from current directory.
+#'   by finding the project directory from current directory.
 #'
 #' @returns List with parsed configuration
 #'
@@ -19,14 +19,14 @@
 #' @examples
 #' \dontrun{
 #' config <- load_potato_config("potato_config.yaml")
-#' config <- load_potato_config()  # Auto-finds in current sack
+#' config <- load_potato_config()  # Auto-finds in current project
 #' }
 load_potato_config <- function(config_path = NULL) {
 
   # Auto-find config if not specified
   if (is.null(config_path)) {
-    sack_root <- find_potato_sack()
-    config_path <- file.path(sack_root, "potato_config.yaml")
+    project_root <- find_potato_sack()
+    config_path <- file.path(project_root, "potato_config.yaml")
   }
 
   if (!file.exists(config_path)) {

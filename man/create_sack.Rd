@@ -7,13 +7,13 @@
 create_sack(path = NULL)
 }
 \arguments{
-\item{path}{Character. Path to sack directory. If NULL, searches upward from current directory.}
+\item{path}{Character. Path to project directory. If NULL, searches upward from current directory.}
 }
 \value{
 PotatoSack S7 object
 }
 \description{
-Constructs a PotatoSack S7 object from a project directory containing
+Constructs a PotatoSack S7 object from a potato project directory containing
 potato_config.yaml and potatoes. To save/load sacks, use standard R
 functions: saveRDS(sack, "sack.rds") and readRDS("sack.rds").
 }

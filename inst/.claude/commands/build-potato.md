@@ -629,9 +629,9 @@ When excluding plant/eukaryotic pathways, note in top-level potato notes:
 
 **Before building any potato**, determine WHERE to save it:
 
-1. **Check if in a potato sack:**
+1. **Check if in a potato project:**
    - Look for `potato_config.yaml` in current directory or parent directories
-   - If found, this is a SACK → save potato to `<sack_root>/potatoes/`
+   - If found, this is a PROJECT → save potato to `<project_root>/potatoes/`
    - Read config from `potato_config.yaml`
 
 2. **Check if in potato package repo:**

@@ -26,7 +26,7 @@ configuration, potatoes, genomes, annotation results, and provenance tracking.
 \describe{
 \item{\code{sack_id}}{Unique identifier for this sack (hash or user-provided)}
 
-\item{\code{sack_root}}{Path to the sack directory}
+\item{\code{sack_root}}{Path to the project directory}
 
 \item{\code{config}}{Loaded potato configuration}
 

@@ -8,7 +8,7 @@ load_potato_config(config_path = NULL)
 }
 \arguments{
 \item{config_path}{Path to potato_config.yaml file. If NULL, searches for it
-using find_potato_sack() from current directory.}
+by finding the project directory from current directory.}
 }
 \value{
 List with parsed configuration
@@ -28,6 +28,6 @@ The configuration file defines:
 \examples{
 \dontrun{
 config <- load_potato_config("potato_config.yaml")
-config <- load_potato_config()  # Auto-finds in current sack
+config <- load_potato_config()  # Auto-finds in current project
 }
 }

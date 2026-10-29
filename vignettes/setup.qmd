@@ -21,8 +21,9 @@ This vignette walks through setting up a POTATO analysis environment, including:
 
 - Installing dependencies
 - Configuring annotation tools
-- Creating a new sack
-- Loading pathway definitions (potatoes)
+- Creating a new project
+- Loading the project into a sack (PotatoSack S7 object)
+- Adding genomes for annotation
 
 ## Prerequisites
 
@@ -54,54 +55,63 @@ The environment includes:
 - **HMMER3** - Profile HMM searches
 - **BLAST+** - Sequence similarity searches
 
-## Creating a New Sack
+## Creating a New Project
 
-A "sack" is POTATO's project container that holds:
-
-- Configuration (database paths, tool settings)
-- Loaded pathway definitions (potatoes)
-- Genome files
-- Annotation results
-- Pathway scores
+A POTATO project is an on-disk folder structure that holds configuration files and input data. The in-memory "sack" (PotatoSack S7 object) is created from this project structure.
 
 ### Initialize Directory Structure
 
 ```{r}
-# Create a new sack in the current directory
-initialize_potato_sack(
-  sack_root = "my_potato_analysis",
-  sack_id = "marine_mags_2024"
+# Create a new project
+initialize_potato_project(
+  path = "my_potato_analysis",
+  copy_potatoes = TRUE  # Copies bundled potatoes from package
 )
 ```
 
 This creates:
 ```
 my_potato_analysis/
-├── config/
-│   └── potato_config.yaml
-├── potatoes/
-├── genomes/
-└── results/
+├── potato_config.yaml      # Configuration file
+├── my_potato_analysis.Rproj # RStudio project file
+├── potatoes/                # Pathway definitions (JSON files)
+├── genomes/                 # Input genome files
+├── results/                 # Output files
+│   ├── annotations/        # Gene-level annotation results
+│   └── scores/             # Pathway-level scoring results
+├── .claude/                 # Claude Code agents for building potatoes
+├── .gitignore
+└── README.md
 ```
 
 ### Configure Annotation Databases
 
-Edit `config/potato_config.yaml` to point to your local databases:
+Edit `potato_config.yaml` to point to your local databases:
 
 ```yaml
 databases:
   kofam:
     type: kofam
-    profiles: /path/to/kofam/profiles
+    profiles_dir: /path/to/kofam/profiles/
     ko_list: /path/to/kofam/ko_list
+    executable: exec_annotation
+    thresholds:
+      score_ratio: 1.0
 
   blast:
     type: blast
-    database: /path/to/blast/db
+    path: /path/to/blast_db.faa
+    executable: blastp
+    thresholds:
+      evalue: 1e-7
+      bitscore: 50
 
   hmm:
     type: hmm
-    profiles: /path/to/hmm/profiles
+    path: /path/to/profiles.hmm
+    executable: hmmsearch
+    thresholds:
+      evalue: 1e-10
 ```
 
 **Database locations:**
@@ -112,55 +122,20 @@ databases:
 
 ### Create Sack Object
 
-Load the initialized sack into R:
+Load the initialized project into an R PotatoSack object:
 
 ```{r}
-# From within the sack directory
+# From within the project directory
 sack <- create_sack()
 
 # Or specify path
-sack <- create_sack("path/to/my_potato_analysis")
+sack <- create_sack("my_potato_analysis")
 ```
 
-## Loading Potatoes
-
-Potatoes are pathway definitions in JSON format. POTATO includes several built-in pathways.
-
-### Built-in Pathways
-
-```{r}
-# List available built-in potatoes
-list.files(system.file("potatoes", package = "potato"),
-           pattern = "\\.json$")
-```
-
-### Load Specific Potatoes
-
-```{r}
-# Load from built-in potatoes
-sack <- load_potatoes(
-  sack,
-  potato_dir = system.file("potatoes", package = "potato"),
-  pattern = "glyoxylate|nitrogen"  # Filter by name
-)
-
-# Or load all built-in potatoes
-sack <- load_potatoes(
-  sack,
-  potato_dir = system.file("potatoes", package = "potato")
-)
-```
-
-### Load Custom Potatoes
-
-```{r}
-# Copy custom potatoes to your sack's potatoes/ directory
-# Then load them
-sack <- load_potatoes(
-  sack,
-  potato_dir = "my_potato_analysis/potatoes"
-)
-```
+**What `create_sack()` does:**
+- Loads `potato_config.yaml` and validates database configuration
+- Loads all potatoes from the `potatoes/` directory
+- Creates an empty PotatoSack S7 object ready for genome annotation
 
 ### Inspect Loaded Potatoes
 
@@ -179,22 +154,39 @@ print(potato)
 get_pathway_verification(sack)
 ```
 
-## Adding Genomes
+### Using a Template Configuration
 
-Add protein FASTA files (.faa) to your sack:
+If you already have a working project with configured databases, you can reuse that configuration:
 
 ```{r}
-# Add genomes from directory
-sack <- add_genomes(
-  sack,
-  genome_paths = "path/to/genomes/*.faa"
+# Create new project using existing config as template
+initialize_potato_project(
+  path = "new_project",
+  template_config = "existing_project/potato_config.yaml"
 )
+```
+
+This copies the `databases:`, `annotation:`, and `scoring:` sections from your template, so you don't need to reconfigure database paths.
+
+## Adding Genomes
+
+Add protein FASTA files (.faa or .fasta) to your sack:
+
+```{r}
+# Add genomes from directory (glob pattern)
+sack <- add_genomes(sack, "path/to/genomes/*.faa")
+
+# Add specific files
+sack <- add_genomes(sack, c("genome1.faa", "genome2.faa"))
 
 # Check added genomes
 sack@genomes
 ```
 
-**IMPORTANT**: POTATO requires **protein** FASTA files (.faa), not nucleotide sequences.
+**IMPORTANT**:
+- POTATO requires **protein** FASTA files (.faa or .fasta), not nucleotide sequences
+- Genomes are registered by path (not copied), so keep them in place
+- Use `add_genomes()` multiple times to add more genomes incrementally
 
 ## Saving Your Sack
 
@@ -227,12 +219,7 @@ sack <- run_kofam(sack, conda_env = "potato")
 
 ### Database paths not recognized
 
-Check that paths in `potato_config.yaml` are absolute and the files exist:
-
-```{r}
-# Validate config
-validate_database_configs(sack@config)
-```
+Check that paths in `potato_config.yaml` are absolute and the files exist. The config is validated automatically when you call `create_sack()`, so you'll see errors immediately if paths are wrong.
 
 ### Memory issues with large genome sets
 

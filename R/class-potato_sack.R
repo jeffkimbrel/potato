@@ -11,7 +11,7 @@ PotatoSack <- S7::new_class(
     #' @field sack_id Unique identifier for this sack (hash or user-provided)
     sack_id = S7::class_character,
 
-    #' @field sack_root Path to the sack directory
+    #' @field sack_root Path to the project directory
     sack_root = S7::class_character,
 
     #' @field config Loaded potato configuration
