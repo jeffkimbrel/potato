@@ -118,6 +118,14 @@ Help users build well-structured potato JSON files through:
 - **GATOR translation:** `geneA + geneB + geneC` → create complex; `geneA | geneB` → alternatives (separate edges)
 - **Alternative complexes:** Multiple complexes = alternatives (e.g., ureABC OR ureAB_ureC)
 
+**Complex Naming Convention:**
+- **Pattern**: Concatenate component gene symbols in order
+- **Two components**: `napA + napB` → `napAB`
+- **Three components**: `narG + narH + narI` → `narGHI`
+- **Four+ components**: `amoA + amoB + amoC` → `amoABC`, `vnfD + vnfK + vnfG` → `vnfDKG`
+- **Alternative**: Use descriptive name `urease_complex` (less common, use for very long component lists)
+- **Examples**: `nifDK` (2), `narGHI` (3), `amoABC` (3), `vnfDKG` (3), `nirBD` (2), `nrfAH` (2)
+
 ## Compound Definition (V2)
 
 **V2 Schema:**
@@ -173,10 +181,24 @@ Help users build well-structured potato JSON files through:
 - **Compound name normalization:** Multi-part compounds have parts sorted alphabetically
 - **OR Branches:** Create edges from previous step to ALL alternatives
 
+**Edge Attributes in OR Branches:**
+
+When alternatives exist (nirK | nirS), **all alternatives get `required: true`**:
+```json
+{"from": "C00088", "to": "nirK", "required": true, "marker": true},
+{"from": "C00088", "to": "nirS", "required": true, "marker": true}
+```
+
+**Why:** Gap-based scoring finds best path. Setting all alternatives as required means "at least one of these must be present."
+
+**NOT** `required: false` for alternatives - that would make entire step optional.
+
 Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
 ```json
-{"from": "A", "to": "C", "compound": "intermediate"},
-{"from": "B", "to": "C", "compound": "intermediate"}
+{"from": "C00100", "to": "A", "required": true, "marker": false},
+{"from": "C00100", "to": "B", "required": true, "marker": false},
+{"from": "A", "to": "C00200", "required": true, "marker": false},
+{"from": "B", "to": "C00200", "required": true, "marker": false}
 ```
 
 ## Scoring
@@ -1615,6 +1637,30 @@ print_potato(pot)
 
 **Don't ask permission to search PFAM** - do it automatically and report findings.
 
+### Batch Conversion Mode (NEW)
+
+When converting multiple pathways from Excel/legacy sources, PFAM enrichment can be deferred:
+
+**Fast conversion (KO-only) - PREFERRED FOR BATCH:**
+- Use only KO terms from source
+- Document in potato notes: "PFAM enrichment pending"
+- User can enrich later with separate enrichment pass
+- Acceptable for initial conversion of large pathway sets
+
+**Full enrichment:**
+- Search PFAM for each gene during conversion
+- Slower but produces complete potatoes immediately
+- Better for high-priority or standalone pathways
+
+**Ask user if uncertain:** "Quick conversion (KO-only) or full enrichment (add PFAM)?"
+
+For batch conversions where user requests speed, **fast mode is acceptable**. Add note in potato:
+```json
+{
+  "notes": "Converted from GATOR v1. PFAM enrichment pending - only KO terms included."
+}
+```
+
 ### Custom HMMs (in addition to PFAM)
 
 **Custom HMMs:** User-curated profiles (e.g., mlrA, nifH variants)
@@ -1791,7 +1837,12 @@ Input/output are now **arrays of compound IDs** (not verbose objects):
 
 ### Compound ID Validation Safeguard
 
-After defining compounds array, validate KEGG IDs before building edges:
+**CRITICAL:** After defining compounds array, validate KEGG IDs before building edges.
+
+**Even when converting from trusted sources** (Excel, published papers, KEGG modules), always validate:
+- Prevents downstream errors in edges
+- Catches typos and duplicates early
+- Verifies compound names match expectations
 
 #### Validation Check:
 
@@ -1840,14 +1891,53 @@ For protein complexes (e.g., nitrogenase nifDK):
 - Sequential steps that form complex
 - Use edge "compound" field to note "complex formation"
 
+### Gene Naming Edge Cases
+
+**Hyphenated names (pmoA-amoA):**
+- Indicates homology between genes from different pathways
+- For potato, pick the contextually relevant name
+- Example: `pmoA-amoA` in nitrification → use `amoA` (ammonia context)
+- Example: `pmoA-amoA` in methanotrophy → use `pmoA` (methane context)
+- Document in notes: "Homologous to pmoA (methane monooxygenase)" or vice versa
+
+**Uppercase/numeric codes (NR, GLUD1_2, NIT-6):**
+- Often eukaryotic or generic enzyme abbreviations
+- Use as-is if from trusted source (GATOR, KEGG)
+- Verify organism distribution (prokaryotic?) if uncertain
+- Examples: `NR` (nitrate reductase NAD(P)H), `NIT-6` (nitrite reductase NAD(P)H)
+
+**Generic abbreviations:**
+- Some genes use enzyme class abbreviations: `NR`, `GDH`, `MDH`
+- Keep original if from database, but add full name in `name` field
+- Add notes clarifying which specific variant if multiple exist
+
 ### Marker Genes
 
 **Heuristics for `marker: true`:**
 - Pathway-specific (not found in central metabolism)
-- Mentioned as "key" or "diagnostic" in literature
+- Mentioned in literature as "key" or "diagnostic"
 - Examples: nifH (nitrogen fixation), aceA (glyoxylate cycle), pmoA (methane oxidation)
 
 When uncertain, ask user: "Which genes are diagnostic markers?"
+
+**Marker Gene Inference (Batch Conversions):**
+
+When user input unavailable, use these heuristics:
+
+**Strong markers (set marker: true):**
+- Pathway-specific (not in central metabolism)
+- Mentioned in literature as "diagnostic" or "key"
+- First committed step (after substrate entry)
+- Unique enzyme for that transformation
+- Examples: nirK/nirS (denitrification), amoA (nitrification), nifH (N2 fixation)
+
+**Weak markers (set marker: false):**
+- Found in multiple pathways
+- Central metabolism enzymes (narG shared across denitrification, DNRA, nitrification)
+- Late-stage or optional steps
+- Housekeeping functions
+
+**Document uncertainty:** Add to notes: "Marker genes inferred from literature - review recommended"
 
 ### Thresholds
 
