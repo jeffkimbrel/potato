@@ -1,16 +1,18 @@
-#' Initialize a new potato sack project
+#' Initialize a new potato project
 #'
 #' Creates a new project folder with the standard structure: potatoes directory,
 #' config file, RStudio project file, and folders for genomes and results.
-#' A "potato sack" is a collection of potatoes (pathways) for an annotation project.
+#' A potato project is the on-disk folder structure. Use create_sack() to load
+#' the project into an in-memory PotatoSack object for analysis.
 #'
 #' @param path Character. Full path where the project will be created.
-#' @param copy_potatoes Logical. If TRUE (default), copies example potatoes from package to project.
+#' @param copy_potatoes Logical. If TRUE (default), copies bundled potatoes from package to project.
+#' @param template_config Character. Optional path to existing potato_config.yaml to copy database settings from.
 #'
 #' @returns Invisibly returns the path to the new project folder.
 #' @export
 
-initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
+initialize_potato_project <- function(path, copy_potatoes = TRUE, template_config = NULL) {
 
   project_path <- normalizePath(path, mustWork = FALSE)
   name <- basename(project_path)
@@ -37,14 +39,14 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
     dir.create(d, recursive = TRUE, showWarnings = FALSE)
   }
 
-  # --- Copy example potatoes from package ---
+  # --- Copy bundled potatoes from package ---
   if (copy_potatoes) {
     package_potatoes <- system.file("potatoes", package = "potato")
     if (nzchar(package_potatoes) && dir.exists(package_potatoes)) {
       potato_files <- list.files(package_potatoes, pattern = "\\.json$", full.names = TRUE)
       if (length(potato_files) > 0) {
         file.copy(potato_files, file.path(project_path, "potatoes"), overwrite = FALSE)
-        cli::cli_alert_success("Copied {length(potato_files)} example potato{?es}")
+        cli::cli_alert_success("Copied {length(potato_files)} bundled potato{?es}")
       }
     }
   }
@@ -73,64 +75,111 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
   }
 
   # --- potato_config.yaml ---
-  yaml_lines <- c(
-    paste0("project_name: ", name),
-    paste0("created: ", format(Sys.Date(), "%Y-%m-%d")),
-    "",
-    "# Directory paths (relative to this file)",
-    "paths:",
-    "  potatoes: potatoes/",
-    "  genomes: genomes/",
-    "  results: results/",
-    "",
-    "# Database definitions",
-    "# Each database has a type (kofam, blast, hmm, pfam) and type-specific config",
-    "databases:",
-    "  # KOfam database",
-    "  kofam:",
-    "    type: kofam",
-    "    profiles_dir: /path/to/kofam/profiles/",
-    "    ko_list: /path/to/kofam/ko_list",
-    "    executable: exec_annotation",
-    "    thresholds:",
-    "      score_ratio: 1.0  # 1.0 = use native KOfam thresholds",
-    "  ",
-    "  # BLAST database",
-    "  # blast:",
-    "  #   type: blast",
-    "  #   files: ['/path/to/database.faa']",
-    "  #   executable: blastp",
-    "  #   thresholds:",
-    "  #     evalue: 1e-7",
-    "  #     bitscore: 50",
-    "  #     pident: 30",
-    "  ",
-    "  # HMM database",
-    "  # hmm:",
-    "  #   type: hmm",
-    "  #   files: ['/path/to/profiles.hmm']",
-    "  #   executable: hmmsearch",
-    "  #   thresholds:",
-    "  #     evalue: 1e-10",
-    "  ",
-    "  # PFAM database",
-    "  # pfam:",
-    "  #   type: pfam",
-    "  #   files: ['/path/to/Pfam-A.hmm']",
-    "  #   executable: hmmsearch",
-    "  #   thresholds:",
-    "  #     evalue: 1e-5",
-    "",
-    "# Annotation settings",
-    "annotation:",
-    "  parallel: true",
-    "  workers: 4",
-    "",
-    "# Scoring settings",
-    "scoring:",
-    "  min_fraction: 0.75",
-    "  use_specificity: true"
-  )
+
+  # Load template config if provided
+  if (!is.null(template_config)) {
+    if (!file.exists(template_config)) {
+      cli::cli_abort("Template config not found: {.path {template_config}}")
+    }
+
+    cli::cli_alert_info("Using template config: {.file {basename(template_config)}}")
+    template <- yaml::read_yaml(template_config)
+
+    # Build config with new project info but template databases/settings
+    yaml_lines <- c(
+      paste0("project_name: ", name),
+      paste0("created: ", format(Sys.Date(), "%Y-%m-%d")),
+      "",
+      "# Directory paths (relative to this file)",
+      "paths:",
+      "  potatoes: potatoes/",
+      "  genomes: genomes/",
+      "  results: results/"
+    )
+
+    # Add databases from template
+    if (!is.null(template$databases) && length(template$databases) > 0) {
+      yaml_lines <- c(yaml_lines, "", "# Database definitions (from template)")
+      yaml_content <- yaml::as.yaml(list(databases = template$databases))
+      yaml_lines <- c(yaml_lines, strsplit(yaml_content, "\n")[[1]])
+    }
+
+    # Add annotation settings from template
+    if (!is.null(template$annotation)) {
+      yaml_lines <- c(yaml_lines, "", "# Annotation settings (from template)")
+      yaml_content <- yaml::as.yaml(list(annotation = template$annotation))
+      yaml_lines <- c(yaml_lines, strsplit(yaml_content, "\n")[[1]])
+    }
+
+    # Add scoring settings from template
+    if (!is.null(template$scoring)) {
+      yaml_lines <- c(yaml_lines, "", "# Scoring settings (from template)")
+      yaml_content <- yaml::as.yaml(list(scoring = template$scoring))
+      yaml_lines <- c(yaml_lines, strsplit(yaml_content, "\n")[[1]])
+    }
+
+  } else {
+    # Default config with placeholders
+    yaml_lines <- c(
+      paste0("project_name: ", name),
+      paste0("created: ", format(Sys.Date(), "%Y-%m-%d")),
+      "",
+      "# Directory paths (relative to this file)",
+      "paths:",
+      "  potatoes: potatoes/",
+      "  genomes: genomes/",
+      "  results: results/",
+      "",
+      "# Database definitions",
+      "# Each database has a type (kofam, blast, hmm, pfam) and type-specific config",
+      "databases:",
+      "  # KOfam database",
+      "  kofam:",
+      "    type: kofam",
+      "    profiles_dir: /path/to/kofam/profiles/",
+      "    ko_list: /path/to/kofam/ko_list",
+      "    executable: exec_annotation",
+      "    thresholds:",
+      "      score_ratio: 1.0  # 1.0 = use native KOfam thresholds",
+      "  ",
+      "  # BLAST database",
+      "  # blast:",
+      "  #   type: blast",
+      "  #   files: ['/path/to/database.faa']",
+      "  #   executable: blastp",
+      "  #   thresholds:",
+      "  #     evalue: 1e-7",
+      "  #     bitscore: 50",
+      "  #     pident: 30",
+      "  ",
+      "  # HMM database",
+      "  # hmm:",
+      "  #   type: hmm",
+      "  #   files: ['/path/to/profiles.hmm']",
+      "  #   executable: hmmsearch",
+      "  #   thresholds:",
+      "  #     evalue: 1e-10",
+      "  ",
+      "  # PFAM database",
+      "  # pfam:",
+      "  #   type: pfam",
+      "  #   files: ['/path/to/Pfam-A.hmm']",
+      "  #   executable: hmmsearch",
+      "  #   thresholds:",
+      "  #     evalue: 1e-5",
+      "",
+      "# Annotation settings",
+      "annotation:",
+      "  parallel: true",
+      "  workers: 4",
+      "",
+      "# Scoring settings",
+      "scoring:",
+      "  min_fraction: 0.75",
+      "  use_specificity: true"
+    )
+  }
+
   writeLines(yaml_lines, file.path(project_path, "potato_config.yaml"))
 
   # --- .Rproj file ---
@@ -172,14 +221,14 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
   readme_lines <- c(
     paste0("# ", name),
     "",
-    "A potato sack annotation project.",
+    "A POTATO annotation project.",
     "",
     "## Getting Started",
     "",
-    "1. **Edit configuration**: Open `potato_config.yaml` and update the database paths under `tools:`",
-    "2. **Add genomes**: Place your `.faa` or `.gbk` files in `genomes/`",
-    "3. **Select potatoes**: Review pathways in `potatoes/`, add/remove as needed",
-    "4. **Run annotation**: Load the R package and run your annotation workflow",
+    "1. **Edit configuration**: Open `potato_config.yaml` and configure your databases",
+    "2. **Create a sack**: Run `sack <- create_sack()` to load the project into memory",
+    "3. **Add genomes**: `sack <- add_genomes(sack, \"path/to/genomes/*.faa\")`",
+    "4. **Run annotation**: Use `run_kofam()`, `run_blast()`, `run_hmm()`, then `score_pathways()`",
     "",
     "## Project Structure",
     "",
@@ -224,7 +273,7 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
   }
 
   # --- Summary ---
-  cli::cli_alert_info("Potato sack initialized: {project_path}")
+  cli::cli_alert_info("Potato project initialized: {project_path}")
   cli::cli_alert_info("Config   : {file.path(project_path, 'potato_config.yaml')}")
   cli::cli_alert_info("RStudio  : {file.path(project_path, paste0(name, '.Rproj'))}")
   cli::cli_alert_info("Potatoes : {file.path(project_path, 'potatoes/')}")
@@ -234,8 +283,8 @@ initialize_potato_sack <- function(path, copy_potatoes = TRUE) {
 
   cli::cli_alert_info("Next steps:")
   cli::cli_alert_info("1. Open {name}.Rproj in RStudio or load folder in Positron")
-  cli::cli_alert_info("2. Edit potato_config.yaml to set your database paths")
-  cli::cli_alert_info("3. Run: sack <- create_sack()")
+  cli::cli_alert_info("2. Edit potato_config.yaml to configure your databases")
+  cli::cli_alert_info("3. Create a sack: sack <- create_sack()")
   cli::cli_alert_info('4. Add genomes: sack <- add_genomes(sack, "path/to/genomes/*.faa")')
   cli::cli_alert_info('5. Save: saveRDS(sack, "sack.rds")  |  Load: sack <- readRDS("sack.rds")')
 
