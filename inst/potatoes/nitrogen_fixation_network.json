@@ -1,0 +1,161 @@
+{
+  "schema_version": "v2",
+  "id": "nitrogen_fixation_network",
+  "name": "Nitrogen Fixation Network",
+  "source": "GATOR v1, KEGG M00175",
+  "tags": ["nitrogen", "energy"],
+  "notes": "Two major nitrogen fixation systems: Mo-dependent (classical nifHDK) and V-dependent (alternative vnfHDGK). Both reduce atmospheric N2 to NH3. Mo-nif is most common; V-nif used when molybdenum is scarce. Fe-only system (anfHDGK) exists but not included here.",
+
+  "genes": [
+    {
+      "id": "nifH",
+      "name": "nitrogenase iron protein",
+      "type": "enzyme",
+      "databases": {
+        "kofam": ["K02588"]
+      },
+      "notes": "Fe protein component (dinitrogenase reductase). Delivers electrons to nifDK. Highly conserved marker gene for Mo-nif system."
+    },
+    {
+      "id": "nifD",
+      "name": "nitrogenase molybdenum-iron protein alpha chain",
+      "type": "enzyme",
+      "databases": {
+        "kofam": ["K02586"]
+      },
+      "ec": ["1.18.6.1"],
+      "notes": "MoFe protein alpha subunit. Forms complex with nifK."
+    },
+    {
+      "id": "nifK",
+      "name": "nitrogenase molybdenum-iron protein beta chain",
+      "type": "enzyme",
+      "databases": {
+        "kofam": ["K02591"]
+      },
+      "ec": ["1.18.6.1"],
+      "notes": "MoFe protein beta subunit. Forms complex with nifD."
+    },
+    {
+      "id": "nifHDK",
+      "name": "molybdenum nitrogenase complex",
+      "type": "complex",
+      "components": ["nifH", "nifD", "nifK"],
+      "notes": "Complete Mo-dependent nitrogenase complex. nifH (Fe protein) delivers electrons to nifDK (MoFe protein). All three components required for N2 fixation."
+    },
+    {
+      "id": "vnfH",
+      "name": "vanadium nitrogenase iron protein",
+      "type": "enzyme",
+      "databases": {
+        "kofam": ["K22899"]
+      },
+      "notes": "Fe protein for V-nitrogenase. Analogous to nifH but works with VFe protein."
+    },
+    {
+      "id": "vnfD",
+      "name": "vanadium-dependent nitrogenase alpha chain",
+      "type": "enzyme",
+      "databases": {
+        "kofam": ["K22896"]
+      },
+      "notes": "VFe protein alpha subunit. Uses vanadium instead of molybdenum."
+    },
+    {
+      "id": "vnfK",
+      "name": "vanadium-dependent nitrogenase beta chain",
+      "type": "enzyme",
+      "databases": {
+        "kofam": ["K22897"]
+      },
+      "notes": "VFe protein beta subunit."
+    },
+    {
+      "id": "vnfG",
+      "name": "vanadium nitrogenase delta subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": ["K22898"]
+      },
+      "notes": "Additional subunit unique to V-nitrogenase."
+    },
+    {
+      "id": "vnfHDKG",
+      "name": "vanadium nitrogenase complex",
+      "type": "complex",
+      "components": ["vnfH", "vnfD", "vnfK", "vnfG"],
+      "notes": "Complete V-dependent nitrogenase complex. vnfH (Fe protein) delivers electrons to vnfDKG (VFe protein). All four components required for N2 fixation. Alternative to Mo-nitrogenase when molybdenum is scarce."
+    },
+    {
+      "id": "nifF",
+      "name": "flavodoxin",
+      "type": "chaperone",
+      "databases": {
+        "kofam": ["K00531"]
+      },
+      "notes": "Electron carrier protein that transfers electrons to nifH. Part of electron transfer chain but not core nitrogenase complex. Optional/accessory gene."
+    }
+  ],
+
+  "compounds": [
+    {
+      "id": "C00697",
+      "name": "Nitrogen",
+      "kegg_compound": "C00697"
+    },
+    {
+      "id": "C00014",
+      "name": "Ammonia",
+      "kegg_compound": "C00014"
+    }
+  ],
+
+  "pathways": {
+    "nitrogen_fixation": {
+      "name": "Nitrogen Fixation (Mo or V dependent)",
+      "type": "variant",
+      "verified": true,
+      "notes": "Biological nitrogen fixation via two alternative nitrogenase systems: Mo-dependent (classical, most common) or V-dependent (used when Mo is scarce). Both reduce N2 to NH3. Either complete system indicates N2 fixation capability. Diagnostic markers: nifH (Mo-nif specific) and vnfH (V-nif specific).",
+
+      "genes": ["nifH", "nifD", "nifK", "vnfH", "vnfD", "vnfK", "vnfG", "nifF"],
+      "markers": ["nifH", "vnfH"],
+      "input": ["C00697"],
+      "output": ["C00014"],
+
+      "edges": [
+        {
+          "from": "C00697",
+          "to": "nifHDK",
+          "required": false,
+          "marker": false,
+          "reaction": "R05185"
+        },
+        {
+          "from": "nifHDK",
+          "to": "C00014",
+          "required": false,
+          "marker": false,
+          "reaction": "R05185"
+        },
+        {
+          "from": "C00697",
+          "to": "vnfHDKG",
+          "required": false,
+          "marker": false
+        },
+        {
+          "from": "vnfHDKG",
+          "to": "C00014",
+          "required": false,
+          "marker": false
+        }
+      ],
+
+      "scoring": {
+        "max_gaps": 0,
+        "marker_mode": "any",
+        "notes": "Gap-based scoring finds complete route from N2 to NH3. Either Mo-nif (nifH + nifDK) OR V-nif (vnfH + vnfDKG) constitutes complete pathway. No partial functionality."
+      }
+    }
+  }
+}
