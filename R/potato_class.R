@@ -525,12 +525,15 @@ validate_multi_pathway <- function(data, strict) {
           if (!pathway$scoring$marker_mode %in% c("any", "all")) {
             errors <- c(errors, sprintf("%s: marker_mode must be 'any' or 'all'", path_prefix))
           }
-          # Check for marker edges
+          # Check for markers: pathway-level markers field OR edge-level marker attributes
+          has_pathway_markers <- !is.null(pathway$markers) && length(pathway$markers) > 0
+          has_edge_markers <- FALSE
           if (!is.null(pathway$edges) && length(pathway$edges) > 0) {
             marker_count <- sum(sapply(pathway$edges, function(e) !is.null(e$marker) && e$marker == TRUE), na.rm = TRUE)
-            if (marker_count == 0) {
-              warnings <- c(warnings, sprintf("%s: marker_mode specified but no marker edges", path_prefix))
-            }
+            has_edge_markers <- marker_count > 0
+          }
+          if (!has_pathway_markers && !has_edge_markers) {
+            warnings <- c(warnings, sprintf("%s: marker_mode specified but no markers defined (use pathway-level 'markers' field or edge-level 'marker' attributes)", path_prefix))
           }
         }
 
@@ -589,11 +592,13 @@ validate_multi_pathway <- function(data, strict) {
     for (pathway_id in names(data$pathways)) {
       pathway <- data$pathways[[pathway_id]]
 
-      # Collect genes from explicit genes array OR from edges
+      # Collect genes from explicit genes array AND from edges
+      # (genes array may list components; edges may reference complexes - need both)
       if (!is.null(pathway$genes) && length(pathway$genes) > 0) {
         used_genes <- c(used_genes, pathway$genes)
-      } else if (!is.null(pathway$edges)) {
-        # Extract from edges
+      }
+      if (!is.null(pathway$edges)) {
+        # Also extract from edges
         for (edge in pathway$edges) {
           if (!is.null(edge$from) && edge$from %in% gene_ids) {
             used_genes <- c(used_genes, edge$from)
@@ -626,6 +631,19 @@ validate_multi_pathway <- function(data, strict) {
 
   used_genes <- unique(used_genes)
   used_compounds <- unique(used_compounds)
+
+  # Also consider components of used complexes as "used"
+  # Complexes themselves are already in used_genes - we're adding their components too
+  components_to_add <- c()
+  for (gene in data$genes) {
+    if (!is.null(gene$type) && gene$type == "complex" && gene$id %in% used_genes) {
+      # This complex is used - mark all its components as used too
+      if (!is.null(gene$components)) {
+        components_to_add <- c(components_to_add, gene$components)
+      }
+    }
+  }
+  used_genes <- unique(c(used_genes, components_to_add))
 
   orphaned_genes <- setdiff(gene_ids, used_genes)
   orphaned_compounds <- setdiff(compound_ids, used_compounds)

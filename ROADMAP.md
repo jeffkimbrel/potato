@@ -31,67 +31,7 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 
 **Schema Status:** V2 is frozen (stable). Package versions (v0.11.x, v0.12.x) track implementation milestones, not schema changes. Future breaking changes would require V3.
 
-```json
-{
-  "schema_version": "v2",
-  "id": "pathway_id",
-  "name": "Human Readable Name",
-  "source": "KEGG M00123 / custom",
-  "tags": ["metabolism"],
-  "notes": "Brief description",
-  
-  "genes": [
-    {
-      "id": "geneSymbol",
-      "name": "enzyme name",
-      "type": "enzyme",
-      "databases": {
-        "kofam": ["K00001"],
-        "blast": ["ref_seq_id"],
-        "hmm": ["PF00001"]
-      },
-      "ec": ["1.1.1.1"],
-      "reactions": ["R00001"]
-    },
-    {
-      "id": "complexABC",
-      "name": "multi-subunit complex",
-      "type": "complex",
-      "components": ["geneA", "geneB", "geneC"],
-      "notes": "All components required for function"
-    }
-  ],
-  
-  "compounds": [
-    {"id": "C00031", "name": "D-glucose"}
-  ],
-  
-  "pathways": {
-    "pathway_id": {
-      "name": "Pathway Display Name",
-      "type": "variant",  // or "independent"
-      "verified": false,
-      "genes": ["geneA", "geneB", "geneC"],  // Components for scoring
-      "input": ["C00031"],   // Required for gap-based scoring
-      "output": ["C00022"],  // Required for gap-based scoring
-      "edges": [
-        {
-          "from": "C00031",
-          "to": "complexABC",
-          "required": true,
-          "marker": true,
-          "reaction": "R00001"
-        }
-      ],
-      "scoring": {
-        "min_fraction": 0.75,    // Fraction-based scoring
-        "max_gaps": 1,           // Gap-based scoring (optional)
-        "marker_mode": "any"
-      }
-    }
-  }
-}
-```
+**Complete schema documentation:** See [inst/POTATO_SCHEMA_V2.md](inst/POTATO_SCHEMA_V2.md)
 
 **Key features:**
 - `genes`: Global definitions with detection methods OR complex definitions
@@ -102,6 +42,8 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 - `verified`: Always `false` for new pathways (only humans verify)
 - Pathway types: `variant` (alternatives) or `independent` (different functions)
 - `input`/`output`: Mandatory for gap-based scoring, optional for fraction-based
+- Marker genes: Pathway-level `markers` field (v0.14.4+) OR edge-level `marker` attributes
+- Scoring methods: Fraction-based (`min_fraction`) and/or gap-based (`max_gaps`)
 
 ---
 
@@ -421,6 +363,81 @@ sack_custom <- create_sack(tags = c("metabolism", "energy"), pattern = "^amino")
 
 ---
 
+### Potato Version Upgrades **[LOW PRIORITY]**
+
+**Problem:** Bundled potatoes in package may get bug fixes or improvements, but projects use static snapshots from initialization. No way to "upgrade" a potato mid-analysis without losing existing results.
+
+**Current behavior (keep for now):**
+- Projects snapshot potatoes at initialization → reproducible, but no updates
+- Editing potato JSON breaks hash → results invalidated
+- **Friction is good:** forces users to start over if changing pathway definitions
+
+**Future feature - Versioned potato upgrades:**
+
+Allow multiple versions of the same potato to coexist in a sack, distinguished by hash suffix:
+```
+glycolate_cycle_a3f4b2c  (v1 - original definition)
+glycolate_cycle_d8e1f9a  (v2 - bug fix, revised thresholds)
+```
+
+**Implementation:**
+
+- [ ] `upgrade_potato(sack, potato_id)` - loads latest package version alongside existing
+- [ ] New potato gets hash-suffixed ID: `{original_id}_{hash_short}`
+- [ ] Both potatoes retained with their annotation results
+- [ ] User can compare: did bug fix change pathway calls?
+- [ ] Provenance tracks upgrade event: "glycolate_cycle upgraded from a3f4b2c → d8e1f9a"
+
+**Use case:**
+
+```r
+sack <- run_kofam(sack)  # Uses glycolate_cycle (hash a3f4b2c)
+# Package releases bug fix for glycolate_cycle
+sack <- upgrade_potato(sack, "glycolate_cycle")  # Adds glycolate_cycle_d8e1f9a
+sack <- run_kofam(sack)  # Runs on new version only
+# Now have results for both versions - can compare
+```
+
+**Benefits:**
+- Compare old vs new definitions side-by-side
+- Preserve historical results (reproducibility)
+- Gradual migration (test new version before removing old)
+- Clear audit trail via hash tracking
+
+**Related:** Potato locking system (above) prevents accidental edits. This feature is for **intentional** upgrades.
+
+---
+
+### Update Claude Skills in Projects **[LOW PRIORITY]**
+
+**Problem:** Claude agent skill files (`.claude/commands/*.md`) may improve in package, but projects have static copies from initialization.
+
+**Solution:** Add `update_skills()` function
+
+```r
+update_skills()  # Updates .claude/ directory from package to current project
+
+# Or specify path
+update_skills("path/to/project")
+```
+
+**Implementation:**
+
+- [ ] Copy `.claude/` directory from package `inst/.claude/` to project
+- [ ] Warn if local modifications detected (file hash mismatch)
+- [ ] Option: `force = TRUE` to overwrite local changes
+- [ ] Report which files updated, which skipped
+- [ ] Safe operation: agents have no associated data (unlike potatoes)
+
+**Benefits:**
+- Get bug fixes and improvements to agents
+- Low risk: agents don't have associated results
+- Users can customize agents locally and decline updates
+
+**Note:** Unlike potatoes (which need version tracking for reproducibility), agent updates are safe because they don't affect annotation results.
+
+---
+
 ### Incremental Annotation **[HIGH PRIORITY]**
 
 **Problem:** Running annotation twice errors unless `overwrite = TRUE` (replaces ALL results). Can't add potatoes incrementally.
@@ -438,6 +455,57 @@ sack_custom <- create_sack(tags = c("metabolism", "energy"), pattern = "^amino")
 sack <- run_kofam(sack, potato_names = "pathway_A")
 sack <- run_kofam(sack, potato_names = "pathway_B")  # Should merge
 ```
+
+---
+
+### Pathway-Level Marker Genes **[MEDIUM PRIORITY]**
+
+**Problem:** Current schema ties `marker` attribute to edges, but biologically, marker genes are properties of the pathway independent of topology. When genes are in complexes, you can't mark individual components.
+
+**Current schema:**
+```json
+"edges": [
+  {"from": "substrate", "to": "geneA", "marker": true}
+]
+```
+
+**Issue:** 
+- If geneA is part of complex geneABC, edges reference the complex, not individual genes
+- Can't mark geneA as diagnostic when it's buried in a complex
+- Edge-level markers don't make sense for non-catalytic genes (chaperones, regulators)
+
+**Proposed schema enhancement:**
+
+Add pathway-level `markers` field:
+```json
+"pathways": {
+  "pathway_id": {
+    "markers": ["nifH", "vnfH"],  // Gene IDs that are diagnostic
+    "edges": [...],
+    "scoring": {
+      "marker_mode": "any"  // Already exists, just not implemented
+    }
+  }
+}
+```
+
+**Implementation:**
+
+- [ ] Add `markers` field to V2 schema (optional, array of gene IDs)
+- [ ] Update `score_pathways()` to use pathway-level markers for `marker_mode` scoring
+- [ ] `marker_mode: "any"` = pathway present if ANY marker detected
+- [ ] `marker_mode: "all"` = pathway present only if ALL markers detected
+- [ ] Validate: marker gene IDs must exist in pathway's `genes` array
+- [ ] Visualization: `view_pathway_detail()` shows checkmark in marker column for listed genes
+- [ ] Maintain backward compatibility: if no pathway-level `markers` field, fall back to edge-level `marker` attributes
+
+**Benefits:**
+- Clearer biological meaning (these genes ARE markers, period)
+- Works with complexes (mark components directly)
+- Enables marking non-catalytic genes (electron carriers, chaperones)
+- Decouples diagnostic value from topology
+
+**Example:** Nitrogen fixation - nifH and vnfH are diagnostic regardless of whether they're in complexes or sequential steps.
 
 ---
 
@@ -613,6 +681,50 @@ ED network: transport + npED → gluconate available → FUNCTIONAL
 ---
 
 ## Visualization
+
+### Visualize Non-Catalytic Genes **[MEDIUM PRIORITY]**
+
+**Problem:** Pathways include non-catalytic genes (chaperones, regulators, electron carriers, maturation factors) that are listed in the `genes` array but don't appear in network plots because they aren't in edges.
+
+**Current behavior:**
+- Only genes with edges (catalytic enzymes, complexes) are visualized
+- Non-catalytic genes like nifF (electron carrier), regulatory genes, chaperones are invisible in plots
+- They ARE tracked in scoring and appear in results tables
+
+**Why it matters:**
+- Accessory genes provide biological context (e.g., nifF shows electron transfer pathway)
+- Users want to see "full picture" of pathway genes, not just catalytic core
+- Currently appears incomplete ("where's nifF? it's in the genes list!")
+
+**Proposed solutions:**
+
+**Option 1: Ghost nodes**
+- Non-catalytic genes appear as dimmed/outlined nodes
+- Not connected by edges (float near relevant enzymes)
+- Tooltip shows role: "electron carrier", "chaperone", etc.
+- Visual distinction from catalytic genes
+
+**Option 2: Sidebar panel**
+- Network plot shows catalytic genes only
+- Separate "Accessory Genes" panel lists non-catalytic genes with detection status
+- Less cluttered but separates information
+
+**Option 3: Optional layer toggle**
+- Default: catalytic genes only
+- Toggle "Show accessory genes" adds ghost nodes
+- User controls complexity
+
+**Implementation:**
+
+- [ ] Identify non-catalytic genes: in `genes` array but not referenced in pathway `edges`
+- [ ] Add visual styling for non-catalytic nodes (dimmed, dashed border)
+- [ ] Position near related complexes (e.g., nifF near nifHDK)
+- [ ] Update legend to distinguish catalytic vs. accessory genes
+- [ ] Consider interactive toggle for complexity control
+
+**Example:** Nitrogen fixation with nifF (electron carrier) would show nifF as ghost node near nifHDK complex.
+
+---
 
 ### V2 Coordinate System **[MEDIUM PRIORITY]**
 

@@ -102,9 +102,13 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       is_required <- any(sapply(pathway_edges, function(e) {
         (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
       }))
-      is_marker <- any(sapply(pathway_edges, function(e) {
+
+      # Check marker status: pathway-level markers field OR edge-level marker attribute
+      is_marker_from_edges <- any(sapply(pathway_edges, function(e) {
         (e$from == gene$id || e$to == gene$id) && !is.null(e$marker) && e$marker
       }))
+      is_marker_from_pathway <- !is.null(pathway_info$markers) && gene$id %in% pathway_info$markers
+      is_marker <- is_marker_from_edges || is_marker_from_pathway
 
       # Get all pathways this complex appears in
       gene_pathways <- get_pathways_for_gene(gene$id)
@@ -141,9 +145,13 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       is_required <- any(sapply(pathway_edges, function(e) {
         (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
       }))
-      is_marker <- any(sapply(pathway_edges, function(e) {
+
+      # Check marker status: pathway-level markers field OR edge-level marker attribute
+      is_marker_from_edges <- any(sapply(pathway_edges, function(e) {
         (e$from == gene$id || e$to == gene$id) && !is.null(e$marker) && e$marker
       }))
+      is_marker_from_pathway <- !is.null(pathway_info$markers) && gene$id %in% pathway_info$markers
+      is_marker <- is_marker_from_edges || is_marker_from_pathway
 
       # Get reactions used in pathway for this gene
       pathway_reactions <- unique(sapply(pathway_edges, function(e) {

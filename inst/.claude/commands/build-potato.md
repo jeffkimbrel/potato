@@ -45,7 +45,13 @@ Help users build well-structured potato JSON files through:
 
 **CRITICAL:** All potatoes use V2 schema. No V1 compatibility.
 
-## Required Fields
+**Complete schema documentation:** See [inst/POTATO_SCHEMA_V2.md](../POTATO_SCHEMA_V2.md) for full reference including validation rules, complete examples, and package version features.
+
+## Quick Reference
+
+Below is a condensed overview. Refer to the full schema document for details.
+
+### Required Fields
 
 ```json
 {
@@ -73,235 +79,79 @@ Help users build well-structured potato JSON files through:
 }
 ```
 
-## Gene Definition (V2)
+### Gene Definitions
 
-**V2 Schema:**
-- Global `genes` array defines **detection methods only** (databases, EC, name, type)
-- **NO step, required, marker on genes** - these go on edges
-- Same gene can have different roles in different pathways
-- **Protein complexes** - Multi-component units where all subunits required
+**Types:** `enzyme`, `transport`, `chaperone`, `complex`
 
-**Regular gene example:**
-```json
-{
-  "id": "gnaD",
-  "name": "gluconate dehydratase",
-  "type": "enzyme",
-  "databases": {
-    "kofam": ["K05308"]
-  },
-  "ec": ["4.2.1.140"],
-  "reactions": ["R01541"],
-  "notes": "Bifunctional: acts on gluconate and galactonate",
-  "x": 100,        // Optional: visualization coordinates
-  "y": 200
-}
-```
+**Regular genes** have detection methods:
+- `databases`: {"kofam": ["K#####"], "hmm": ["PF#####"], "blast": ["seq_id"]}
+- NO step/required/marker on genes (those go on edges)
 
-**Protein complex example:**
-```json
-{
-  "id": "ureABC",
-  "name": "urease enzyme complex",
-  "type": "complex",
-  "components": ["ureA", "ureB", "ureC"],
-  "notes": "Three-subunit urease complex. All components required for activity."
-}
-```
+**Complexes** are multi-component units:
+- `"type": "complex"` with `"components": ["geneA", "geneB", "geneC"]`
+- All components must exist as separate genes
+- Naming: Concatenate component symbols (napAB, narGHI, vnfDKG)
+- **GATOR translation:** `geneA + geneB` → complex; `geneA | geneB` → alternatives (separate edges)
 
-**Complex guidelines:**
-- Use `"type": "complex"` for multi-component units
-- `components` array lists component gene IDs (all must exist as separate genes with detection methods)
-- NO `databases` field on complexes (detection via components)
-- Edges reference complex ID (appears as single node in visualization)
-- Pathway's `genes` array lists components (not complex ID) for scoring
-- **GATOR translation:** `geneA + geneB + geneC` → create complex; `geneA | geneB` → alternatives (separate edges)
-- **Alternative complexes:** Multiple complexes = alternatives (e.g., ureABC OR ureAB_ureC)
-
-**Complex Naming Convention:**
-- **Pattern**: Concatenate component gene symbols in order
-- **Two components**: `napA + napB` → `napAB`
-- **Three components**: `narG + narH + narI` → `narGHI`
-- **Four+ components**: `amoA + amoB + amoC` → `amoABC`, `vnfD + vnfK + vnfG` → `vnfDKG`
-- **Alternative**: Use descriptive name `urease_complex` (less common, use for very long component lists)
-- **Examples**: `nifDK` (2), `narGHI` (3), `amoABC` (3), `vnfDKG` (3), `nirBD` (2), `nrfAH` (2)
-
-## Compound Definition (V2)
-
-**V2 Schema:**
-- Global `compounds` array defines all metabolites
-
-**Compound example:**
-```json
-{
-  "id": "C00031",
-  "name": "D-glucose",
-  "kegg_compound": "C00031"
-}
-```
-
-**Key Rules:**
-- **CRITICAL:** `"verified": false` - This field goes in EACH pathway definition. ALWAYS set to false. NEVER set to true. Only humans verify pathways after review.
-- **Detection methods:** Use `databases` field. Include multiple sources when possible:
-  - **kofam** - KEGG Orthology IDs (K##### format)
-  - **hmm** - HMM profile NAMEs (includes PFAM like PF##### and custom HMMs)
-  - **blast** - Custom reference sequence IDs
-- **IMPORTANT:** PFAM profiles go in `hmm` field (PFAM is a type of HMM database), NOT a separate `pfam` field
-
-**Schema Format Notes:**
-- **Current format (v0.11.0+):** Uses `genes` array (not `nodes`), simplified input/output as arrays of compound IDs
-- **Legacy V2 format:** Some older potatoes use `nodes` array and verbose input/output objects
-- When converting or updating, use current format for consistency
-- Validation handles both formats but new potatoes should use current
-
-## Edges (V2 bipartite graph)
-
-**V2 Schema:**
-- Edges connect genes AND compounds
-- `required` and `marker` on edges (not genes)
-- Same gene can be required in one pathway, optional in another
-- **Why edge-level attributes:** Same gene can act on different substrates in different pathways
+### Compound Definitions
 
 ```json
-{
-  "from": "C00031",                 // Can be gene ID or compound ID
-  "to": "geneA",                    // Can be gene ID or compound ID
-  "required": true,                 // Is this edge required for pathway?
-  "marker": false,                  // Is this edge diagnostic?
-  "reaction": "R00001"              // KEGG reaction ID (optional)
-}
+{"id": "C00031", "name": "D-glucose", "kegg_compound": "C00031"}
 ```
 
-**Important notes:**
-- Edges are defined per pathway in `pathways.pathway_id.edges`
-- Bipartite graph: compounds and genes both nodes
-- `required`/`marker` on edges because same gene has different roles in different pathways
-- **Edge-level attributes rationale:** One gene can have one substrate in one pathway, different substrate in another
-- **Empty edges allowed:** Transport pathways can have `edges: []` if no internal reactions (e.g., substrate relocation)
-- **Compound name normalization:** Multi-part compounds have parts sorted alphabetically
-- **OR Branches:** Create edges from previous step to ALL alternatives
+For transport pathways, use location qualifiers: "NH4_external", "NH4_internal"
 
-**Edge Attributes in OR Branches:**
+### Edges (Bipartite Graph)
 
-When alternatives exist (nirK | nirS), **all alternatives get `required: true`**:
+Edges connect genes AND compounds. Attributes live on edges (not genes) because same gene can have different roles in different pathways.
+
+```json
+{"from": "C00031", "to": "geneA", "required": true, "marker": false, "reaction": "R00001"}
+```
+
+**OR branches:** When alternatives exist (nirK | nirS), all get `required: true` (means "at least one needed"):
 ```json
 {"from": "C00088", "to": "nirK", "required": true, "marker": true},
 {"from": "C00088", "to": "nirS", "required": true, "marker": true}
 ```
 
-**Why:** Gap-based scoring finds best path. Setting all alternatives as required means "at least one of these must be present."
+**Empty edges allowed** for transport pathways with no internal reactions.
 
-**NOT** `required: false` for alternatives - that would make entire step optional.
+### Scoring
 
-Example: Step 1 has genes A and B (alternatives), step 2 has gene C:
-```json
-{"from": "C00100", "to": "A", "required": true, "marker": false},
-{"from": "C00100", "to": "B", "required": true, "marker": false},
-{"from": "A", "to": "C00200", "required": true, "marker": false},
-{"from": "B", "to": "C00200", "required": true, "marker": false}
-```
+**Two methods available** (can use both):
 
-## Scoring
+**Fraction-based:** `min_fraction: 0.75` (detected genes / total genes ≥ threshold)
+- Simple gene count, doesn't verify connectivity
+- Use for simple pathways or incomplete MAGs
 
-**CRITICAL: Two Scoring Methods Available** (as of v0.11.0)
+**Gap-based:** `max_gaps: 0` (requires `input`/`output` compounds)
+- DAG traversal: finds best path from input→output
+- Counts missing genes in path
+- Use when connectivity matters (broken middle = non-functional)
 
-### Method 1: Fraction-Based Scoring (original method)
+**Dual scoring:** Can use both; pathway passes if EITHER succeeds.
 
-```json
-{
-  "min_fraction": 0.75,             // Threshold for pathway presence (0.0-1.0, default: 0.75)
-  "marker_mode": "any",             // "any" or "all" (how many markers required)
-  "notes": "Scoring rationale"
-}
-```
+### Marker Genes
 
-**How it works:**
-- Counts detected genes / total genes
-- Simple presence/absence based on gene count
-- Does NOT verify connectivity through DAG
-- Example: 6/8 genes = 0.75 fraction
+**Two ways to define markers:**
 
-**Limitations:**
-- Float precision issues (0.67 threshold fails 2/3 genes at 0.6666...)
-- Doesn't distinguish complete vs. incomplete routes
-- 80% with broken middle step still scores 0.8
+1. **Pathway-level** (v0.14.4+, recommended): `"markers": ["nifH", "vnfH"]`
+2. **Edge-level**: `{"from": "X", "to": "nifH", "marker": true}`
 
-### Method 2: Gap-Based Scoring (NEW in v0.11.0)
+Use pathway-level when markers are in complexes or non-catalytic genes not in edges.
 
-```json
-{
-  "input": ["C00048"],              // Starting compound(s) - REQUIRED for gap-based scoring
-  "output": ["C00631"],             // Ending compound(s) - REQUIRED for gap-based scoring
-  "scoring": {
-    "max_gaps": 0,                  // Maximum missing genes allowed (0 = complete path required)
-    "marker_mode": "any"
-  }
-}
-```
+**Marker mode:** `"any"` (≥1 marker detected) or `"all"` (all markers detected)
 
-**How it works:**
-- Uses DAG traversal from input → output compounds
-- Finds best path considering OR branches
-- Counts missing genes (gaps) along the path
-- Pathway passes if gap_count ≤ max_gaps
+### Critical Rules
 
-**Benefits:**
-- Biologically meaningful ("allow 1 missing gene")
-- Handles alternative routes correctly (chooses best path)
-- No float precision issues
-- True connectivity validation (verifies complete route)
+- **`verified`:** ALWAYS `false` for new pathways (only humans verify after validation)
+- **NEVER EDIT VERIFIED PATHWAYS** without explicit user approval
+- **Database types:** Only `kofam`, `blast`, `hmm` (PFAM goes in `hmm`)
+- **Complexes in edges:** Reference complex ID (not components) for clean topology
+- **Pathway types:** `variant` (alternatives) or `independent` (different functions)
 
-**Requirements:**
-- `input` and `output` fields MUST be defined (arrays of compound IDs)
-- Compounds must exist in global `compounds` array
-- Path must be reachable (no disconnected subgraphs between input/output)
-
-### Dual Scoring (using both methods)
-
-**You can use BOTH methods together:**
-
-```json
-{
-  "input": ["C00048"],
-  "output": ["C00631"],
-  "scoring": {
-    "min_fraction": 1.0,            // Fraction-based threshold
-    "max_gaps": 0,                  // Gap-based threshold
-    "marker_mode": "any"
-  }
-}
-```
-
-**Pathway passes if EITHER method succeeds:**
-- Fraction ≥ min_fraction OR gap_count ≤ max_gaps
-- Provides flexibility for different assessment approaches
-- Both metrics reported in results
-
-### When to Use Which Method
-
-**Use fraction-based (`min_fraction` only) when:**
-- Pathway is simple/linear without critical connectivity
-- Working with incomplete MAGs where any gene presence is informative
-- You want permissive scoring (e.g., 0.5-0.7 threshold)
-
-**Use gap-based (`max_gaps` + `input`/`output`) when:**
-- Pathway connectivity is critical (broken middle step = non-functional)
-- You want strict validation (e.g., `max_gaps: 0` = complete path required)
-- Multiple alternative routes exist (gap-based finds best path)
-- Pathway is complex with branching
-
-**Use both when:**
-- You want comprehensive assessment with multiple scoring criteria
-- Uncertainty about best threshold approach
-- Research/exploratory analysis
-
-### Scoring Notes
-
-- **Essential-only tracking (v0.9.3):** Results include both all-genes and essential-only metrics
-  - `steps_detected` / `steps_total` (includes optional genes)
-  - `steps_detected_essential` / `steps_total_essential` (only `required: true` genes)
-- Each pathway can have different scoring parameters
-- Gap-based scoring ignores `required`/`marker` attributes (purely topological)
+For complete field definitions, validation rules, and examples, see [inst/POTATO_SCHEMA_V2.md](../POTATO_SCHEMA_V2.md).
 
 # Multi-Pathway Network Potatoes (v0.9.0-v0.9.3)
 
