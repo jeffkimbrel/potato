@@ -479,7 +479,9 @@ Track potato JSON files in git to maintain history of changes.
 
 ## Getting Help
 
-- **Schema reference:** See ROADMAP.md in package repo
+- **Schema reference:** See
+  [inst/POTATO_SCHEMA_V2.md](https://github.com/jeffkimbrel/potato/blob/master/inst/POTATO_SCHEMA_V2.md)
+  in package repo
 - **Examples:** Browse `inst/potatoes/` directory
 - **Interactive builder:** Use `/build-potato` skill
 - **Validation:** Run

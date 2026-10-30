@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">potato</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.15.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,66 +72,8 @@
 <div class="section level2">
 <h2 id="v2-schema-reference">V2 Schema Reference<a class="anchor" aria-label="anchor" href="#v2-schema-reference"></a></h2>
 <p><strong>Schema Status:</strong> V2 is frozen (stable). Package versions (v0.11.x, v0.12.x) track implementation milestones, not schema changes. Future breaking changes would require V3.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  <span class="dt">"schema_version"</span><span class="fu">:</span> <span class="st">"v2"</span><span class="fu">,</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"pathway_id"</span><span class="fu">,</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"Human Readable Name"</span><span class="fu">,</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="dt">"source"</span><span class="fu">:</span> <span class="st">"KEGG M00123 / custom"</span><span class="fu">,</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="dt">"tags"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"metabolism"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="dt">"notes"</span><span class="fu">:</span> <span class="st">"Brief description"</span><span class="fu">,</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  </span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>    <span class="fu">{</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>      <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"geneSymbol"</span><span class="fu">,</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"enzyme name"</span><span class="fu">,</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>      <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>        <span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K00001"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>        <span class="dt">"blast"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"ref_seq_id"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>        <span class="dt">"hmm"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"PF00001"</span><span class="ot">]</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>      <span class="fu">},</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>      <span class="dt">"ec"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"1.1.1.1"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>      <span class="dt">"reactions"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"R00001"</span><span class="ot">]</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>    <span class="fu">{</span></span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>      <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"complexABC"</span><span class="fu">,</span></span>
-<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"multi-subunit complex"</span><span class="fu">,</span></span>
-<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"complex"</span><span class="fu">,</span></span>
-<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>      <span class="dt">"components"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"geneA"</span><span class="ot">,</span> <span class="st">"geneB"</span><span class="ot">,</span> <span class="st">"geneC"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>      <span class="dt">"notes"</span><span class="fu">:</span> <span class="st">"All components required for function"</span></span>
-<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a>  </span>
-<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a>  <span class="dt">"compounds"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-32"><a href="#cb1-32" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"C00031"</span><span class="fu">,</span> <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"D-glucose"</span><span class="fu">}</span></span>
-<span id="cb1-33"><a href="#cb1-33" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-34"><a href="#cb1-34" tabindex="-1"></a>  </span>
-<span id="cb1-35"><a href="#cb1-35" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-36"><a href="#cb1-36" tabindex="-1"></a>    <span class="dt">"pathway_id"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-37"><a href="#cb1-37" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"Pathway Display Name"</span><span class="fu">,</span></span>
-<span id="cb1-38"><a href="#cb1-38" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"variant"</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">or</span> <span class="dt">"independent"</span></span>
-<span id="cb1-39"><a href="#cb1-39" tabindex="-1"></a>      <span class="dt">"verified"</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb1-40"><a href="#cb1-40" tabindex="-1"></a>      <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"geneA"</span><span class="ot">,</span> <span class="st">"geneB"</span><span class="ot">,</span> <span class="st">"geneC"</span><span class="ot">]</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">Components</span> <span class="er">for</span> <span class="er">scoring</span></span>
-<span id="cb1-41"><a href="#cb1-41" tabindex="-1"></a>      <span class="dt">"input"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"C00031"</span><span class="ot">]</span><span class="fu">,</span>   <span class="er">//</span> <span class="er">Required</span> <span class="er">for</span> <span class="er">gap-based</span> <span class="er">scoring</span></span>
-<span id="cb1-42"><a href="#cb1-42" tabindex="-1"></a>      <span class="dt">"output"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"C00022"</span><span class="ot">]</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">Required</span> <span class="er">for</span> <span class="er">gap-based</span> <span class="er">scoring</span></span>
-<span id="cb1-43"><a href="#cb1-43" tabindex="-1"></a>      <span class="dt">"edges"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-44"><a href="#cb1-44" tabindex="-1"></a>        <span class="fu">{</span></span>
-<span id="cb1-45"><a href="#cb1-45" tabindex="-1"></a>          <span class="dt">"from"</span><span class="fu">:</span> <span class="st">"C00031"</span><span class="fu">,</span></span>
-<span id="cb1-46"><a href="#cb1-46" tabindex="-1"></a>          <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"complexABC"</span><span class="fu">,</span></span>
-<span id="cb1-47"><a href="#cb1-47" tabindex="-1"></a>          <span class="dt">"required"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
-<span id="cb1-48"><a href="#cb1-48" tabindex="-1"></a>          <span class="dt">"marker"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
-<span id="cb1-49"><a href="#cb1-49" tabindex="-1"></a>          <span class="dt">"reaction"</span><span class="fu">:</span> <span class="st">"R00001"</span></span>
-<span id="cb1-50"><a href="#cb1-50" tabindex="-1"></a>        <span class="fu">}</span></span>
-<span id="cb1-51"><a href="#cb1-51" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-52"><a href="#cb1-52" tabindex="-1"></a>      <span class="dt">"scoring"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-53"><a href="#cb1-53" tabindex="-1"></a>        <span class="dt">"min_fraction"</span><span class="fu">:</span> <span class="fl">0.75</span><span class="fu">,</span>    <span class="er">//</span> <span class="er">Fraction-based</span> <span class="er">scoring</span></span>
-<span id="cb1-54"><a href="#cb1-54" tabindex="-1"></a>        <span class="dt">"max_gaps"</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">,</span>           <span class="er">//</span> <span class="er">Gap-based</span> <span class="er">scoring</span> <span class="er">(optional)</span></span>
-<span id="cb1-55"><a href="#cb1-55" tabindex="-1"></a>        <span class="dt">"marker_mode"</span><span class="fu">:</span> <span class="st">"any"</span></span>
-<span id="cb1-56"><a href="#cb1-56" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb1-57"><a href="#cb1-57" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb1-58"><a href="#cb1-58" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb1-59"><a href="#cb1-59" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p><strong>Key features:</strong> - <code>genes</code>: Global definitions with detection methods OR complex definitions - <code>type</code>: “enzyme”, “transport”, “chaperone”, or “complex” - Complexes: use <code>components</code> array (not <code>databases</code>), all components must exist as genes - <code>pathways</code>: One or more pathways with topology - <code>edges</code>: Connect genes/compounds (or complexes), carry <code>required</code>/<code>marker</code> - <code>verified</code>: Always <code>false</code> for new pathways (only humans verify) - Pathway types: <code>variant</code> (alternatives) or <code>independent</code> (different functions) - <code>input</code>/<code>output</code>: Mandatory for gap-based scoring, optional for fraction-based</p>
+<p><strong>Complete schema documentation:</strong> See <a href="inst/POTATO_SCHEMA_V2.html">inst/POTATO_SCHEMA_V2.md</a></p>
+<p><strong>Key features:</strong> - <code>genes</code>: Global definitions with detection methods OR complex definitions - <code>type</code>: “enzyme”, “transport”, “chaperone”, or “complex” - Complexes: use <code>components</code> array (not <code>databases</code>), all components must exist as genes - <code>pathways</code>: One or more pathways with topology - <code>edges</code>: Connect genes/compounds (or complexes), carry <code>required</code>/<code>marker</code> - <code>verified</code>: Always <code>false</code> for new pathways (only humans verify) - Pathway types: <code>variant</code> (alternatives) or <code>independent</code> (different functions) - <code>input</code>/<code>output</code>: Mandatory for gap-based scoring, optional for fraction-based - Marker genes: Pathway-level <code>markers</code> field (v0.14.4+) OR edge-level <code>marker</code> attributes - Scoring methods: Fraction-based (<code>min_fraction</code>) and/or gap-based (<code>max_gaps</code>)</p>
 <hr></div>
 <div class="section level2">
 <h2 id="data-integrity--workflow">Data Integrity &amp; Workflow<a class="anchor" aria-label="anchor" href="#data-integrity--workflow"></a></h2>
@@ -142,7 +84,7 @@
 <p><strong>Solution:</strong> Add utility functions for potato reorganization</p>
 <p><strong>Functions needed:</strong></p>
 <p><strong>1. <code>write_potato()</code> - Save potato object to JSON file</strong></p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">write_potato</span><span class="op">(</span></span>
 <span>  <span class="va">potato</span>,                                    <span class="co"># Potato S7 object (from sack@potatoes or load_potato())</span></span>
 <span>  path <span class="op">=</span> <span class="st">"inst/potatoes/my_potato.json"</span>,    <span class="co"># Output path</span></span>
@@ -152,7 +94,7 @@
 <p>Writes potato S7 object to JSON file with: - Proper field ordering (id, name, source, schema_version, tags, notes, genes, compounds, pathways) - Pretty-printed JSON with configurable indentation - Optional validation before writing (catches structural errors) - Preserves all metadata, coordinates, etc.</p>
 <p><strong>Use cases:</strong> - User loaded potato from sack, made edits in R, wants to save: <code>write_potato(sack@potatoes$ed_network, "updated.json")</code> - User built potato programmatically in R, needs to export to file - Batch operations: load all potatoes, modify, write back out - Symmetric with <code><a href="reference/load_potato.html">load_potato()</a></code> - what you load, you should be able to write</p>
 <p><strong>2. <code>split_potato()</code> - Extract pathways from multi-pathway network</strong></p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">split_potato</span><span class="op">(</span></span>
 <span>  potato_path <span class="op">=</span> <span class="st">"inst/potatoes/ed_network.json"</span>,</span>
 <span>  output_dir <span class="op">=</span> <span class="st">"inst/potatoes/"</span>,</span>
@@ -161,7 +103,7 @@
 <span><span class="op">)</span></span></code></pre></div>
 <p>Creates separate potato files, each with: - Only genes used in that pathway - Single pathway in <code>pathways</code> field - Original metadata (source, notes) preserved - New <code>notes</code> field: “Extracted from {original_potato} on {date}”</p>
 <p><strong>2. <code>merge_potatoes()</code> - Combine separate potatoes into network</strong></p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">merge_potatoes</span><span class="op">(</span></span>
 <span>  potato_paths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"inst/potatoes/ed_classic.json"</span>, </span>
 <span>                   <span class="st">"inst/potatoes/ed_np.json"</span><span class="op">)</span>,</span>
@@ -181,56 +123,56 @@
 <p><strong>Solution:</strong> Extension/overlay system with <code>extends</code> field</p>
 <p><strong>Use cases:</strong></p>
 <p><strong>1. Load from multiple directories:</strong></p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/create_sack.html">create_sack</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu">add_potatoes</span><span class="op">(</span><span class="va">sack</span>, <span class="st">"inst/potatoes"</span><span class="op">)</span>      <span class="co"># Bundled with package</span></span>
 <span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu">add_potatoes</span><span class="op">(</span><span class="va">sack</span>, <span class="st">"~/custom_potatoes"</span><span class="op">)</span>  <span class="co"># User custom potatoes</span></span></code></pre></div>
 <p><strong>2. Extend existing potato</strong> (add pathways to bundled network):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="dt">"schema_version"</span><span class="fu">:</span> <span class="st">"v2"</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="dt">"extends"</span><span class="fu">:</span> <span class="st">"nitrogen_fixation"</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="dt">"my_custom_nif"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"My Custom Nif Variant"</span><span class="fu">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"variant"</span><span class="fu">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>      <span class="dt">"notes"</span><span class="fu">:</span> <span class="st">"Custom variant for my specific organism group"</span><span class="fu">,</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>      <span class="dt">"edges"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>      <span class="dt">"scoring"</span><span class="fu">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">}</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>Result: Loaded potato has all original pathways PLUS <code>my_custom_nif</code></p>
+<p><strong>3. Override settings</strong> (adjust thresholds without copying whole file):</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="dt">"schema_version"</span><span class="fu">:</span> <span class="st">"v2"</span><span class="fu">,</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="dt">"extends"</span><span class="fu">:</span> <span class="st">"nitrogen_fixation"</span><span class="fu">,</span></span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="dt">"my_custom_nif"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"My Custom Nif Variant"</span><span class="fu">,</span></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"variant"</span><span class="fu">,</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>      <span class="dt">"notes"</span><span class="fu">:</span> <span class="st">"Custom variant for my specific organism group"</span><span class="fu">,</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>      <span class="dt">"edges"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>      <span class="dt">"scoring"</span><span class="fu">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">}</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Result: Loaded potato has all original pathways PLUS <code>my_custom_nif</code></p>
-<p><strong>3. Override settings</strong> (adjust thresholds without copying whole file):</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="dt">"schema_version"</span><span class="fu">:</span> <span class="st">"v2"</span><span class="fu">,</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="dt">"extends"</span><span class="fu">:</span> <span class="st">"nitrogen_fixation"</span><span class="fu">,</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>    <span class="dt">"mo_nif"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>      <span class="dt">"scoring"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>        <span class="dt">"min_fraction"</span><span class="fu">:</span> <span class="fl">0.9</span>  <span class="er">//</span> <span class="er">Override</span> <span class="er">bundled</span> <span class="fl">0.75</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="dt">"mo_nif"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>      <span class="dt">"scoring"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>        <span class="dt">"min_fraction"</span><span class="fu">:</span> <span class="fl">0.9</span>  <span class="er">//</span> <span class="er">Override</span> <span class="er">bundled</span> <span class="fl">0.75</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>Result: <code>mo_nif</code> pathway uses 0.9 threshold, all other pathways unchanged</p>
 <p><strong>4. Add custom genes to existing network:</strong></p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="dt">"schema_version"</span><span class="fu">:</span> <span class="st">"v2"</span><span class="fu">,</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="dt">"extends"</span><span class="fu">:</span> <span class="st">"urea_metabolism"</span><span class="fu">,</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>    <span class="fu">{</span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>      <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"my_custom_urease"</span><span class="fu">,</span></span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"novel urease variant"</span><span class="fu">,</span></span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>      <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"blast"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"my_ref_seq"</span><span class="ot">]</span><span class="fu">},</span></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>    <span class="dt">"urease"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>      <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"ureA"</span><span class="ot">,</span> <span class="st">"ureB"</span><span class="ot">,</span> <span class="st">"ureC"</span><span class="ot">,</span> <span class="st">"my_custom_urease"</span><span class="ot">]</span></span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="dt">"schema_version"</span><span class="fu">:</span> <span class="st">"v2"</span><span class="fu">,</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="dt">"extends"</span><span class="fu">:</span> <span class="st">"urea_metabolism"</span><span class="fu">,</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>    <span class="fu">{</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>      <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"my_custom_urease"</span><span class="fu">,</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"novel urease variant"</span><span class="fu">,</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>      <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"blast"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"my_ref_seq"</span><span class="ot">]</span><span class="fu">},</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>    <span class="dt">"urease"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>      <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"ureA"</span><span class="ot">,</span> <span class="st">"ureB"</span><span class="ot">,</span> <span class="st">"ureC"</span><span class="ot">,</span> <span class="st">"my_custom_urease"</span><span class="ot">]</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p><strong>Implementation details:</strong></p>
 <ul class="task-list"><li><label><input type="checkbox">Add <code>extends</code> field to schema (optional, references potato <code>id</code>)</label></li>
 <li>
@@ -258,13 +200,13 @@
 <p><strong>Phase 1: Schema Design ✅ COMPLETE (v0.11.0-dev)</strong> - ✅ Schema designed: <code>max_gaps</code> field in scoring block - ✅ No <code>method</code> field needed - presence of <code>max_gaps</code> + <code>input</code>/<code>output</code> triggers gap scoring - ✅ Both <code>min_fraction</code> and <code>max_gaps</code> can coexist - pathway passes if EITHER succeeds - ✅ Simplified input/output format: arrays of compound IDs (<code>["C00048"]</code>) instead of verbose objects - ✅ Validation updated: converts JSON arrays, validates compound IDs exist, checks connectivity - ✅ Visualization updated: <code><a href="reference/view_pathway_detail.html">view_pathway_detail()</a></code> displays input/output and max_gaps - ✅ Implemented in example potatoes: <code>glycerate_pathway_v2.json</code>, <code>glyoxylate_shunt_v2.json</code> - ✅ Style guide documented in CLAUDE.md “Gap-Based Scoring” section - ✅ Schema reference updated with examples</p>
 <p><strong>Phase 2: Scoring Implementation</strong> <strong>[HIGH PRIORITY - NEXT TASK]</strong> - [ ] Update <code><a href="reference/score_pathways.html">score_pathways()</a></code> to detect gap-based scoring parameters - [ ] Implement DAG traversal from <code>input</code> → <code>output</code> compounds - [ ] Find best path (fewest missing genes) considering OR branches - [ ] Calculate gap count for each pathway - [ ] Update results tibble to include: <code>gap_count</code>, <code>present_gaps</code> (boolean) - [ ] When both methods present, calculate both and report separately - [ ] Maintain backward compatibility with fraction-only potatoes</p>
 <p><strong>Example potato scoring block (implemented):</strong></p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="st">"input"</span><span class="er">:</span> <span class="ot">[</span><span class="st">"C00048"</span><span class="ot">]</span><span class="er">,</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="st">"output"</span><span class="er">:</span> <span class="ot">[</span><span class="st">"C00631"</span><span class="ot">]</span><span class="er">,</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="st">"scoring"</span><span class="er">:</span> <span class="fu">{</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="dt">"min_fraction"</span><span class="fu">:</span> <span class="fl">1.0</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">fraction-based</span> <span class="er">threshold</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="dt">"max_gaps"</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span>        <span class="er">//</span> <span class="er">gap-based</span> <span class="er">threshold</span> <span class="er">(both</span> <span class="er">can</span> <span class="er">be</span> <span class="er">present)</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="dt">"marker_mode"</span><span class="fu">:</span> <span class="st">"any"</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="st">"input"</span><span class="er">:</span> <span class="ot">[</span><span class="st">"C00048"</span><span class="ot">]</span><span class="er">,</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="st">"output"</span><span class="er">:</span> <span class="ot">[</span><span class="st">"C00631"</span><span class="ot">]</span><span class="er">,</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="st">"scoring"</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="dt">"min_fraction"</span><span class="fu">:</span> <span class="fl">1.0</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">fraction-based</span> <span class="er">threshold</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="dt">"max_gaps"</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span>        <span class="er">//</span> <span class="er">gap-based</span> <span class="er">threshold</span> <span class="er">(both</span> <span class="er">can</span> <span class="er">be</span> <span class="er">present)</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="dt">"marker_mode"</span><span class="fu">:</span> <span class="st">"any"</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p><strong>Benefits:</strong> - Biologically meaningful (“allow 1 missing gene”) - Handles alternative routes correctly - No float precision issues - True DAG traversal (checks connectivity) - Dual scoring provides flexibility</p>
 <p><strong>Implementation notes:</strong> - Ignore <code>required</code>/<code>marker</code> attributes for gap counting (purely topological) - Only traverse edges between <code>input</code> and <code>output</code> (ignore upstream/downstream context) - For cyclic pathways, gap-based scoring requires artificial start/end points via <code>input</code>/<code>output</code></p>
 <p><strong>Phase 3: Scoring Coverage Utility</strong> <strong>[LOW PRIORITY]</strong> - [ ] Add function to summarize scoring type coverage across potatoes - [ ] Report: which pathways use fraction-only, gaps-only, dual, or neither - [ ] Identify potatoes missing <code>input</code>/<code>output</code> (candidates for gap-based scoring) - [ ] Could be part of <code><a href="reference/validate_potato.html">validate_potato()</a></code> output or standalone <code>summarize_scoring_types()</code> - [ ] Useful for auditing potato collection and tracking migration to gap-based scoring</p>
@@ -276,7 +218,7 @@
 <p><strong>Use cases:</strong> - Focused analysis: nitrogen metabolism only vs carbon metabolism only - Performance: load subset for quick testing, all potatoes for full run - Multiple sacks: <code>sack_nitrogen</code>, <code>sack_carbon</code> from one project directory</p>
 <p><strong>Solution:</strong> Add filtering parameters to <code><a href="reference/create_sack.html">create_sack()</a></code></p>
 <p><strong>Proposed signature:</strong></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/create_sack.html">create_sack</a></span><span class="op">(</span></span>
 <span>  path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tags <span class="op">=</span> <span class="cn">NULL</span>,              <span class="co"># Filter potatoes by tags (e.g., c("nitrogen", "metabolism"))</span></span>
@@ -285,7 +227,7 @@
 <span><span class="op">)</span></span></code></pre></div>
 <p><strong>Implementation:</strong> - Pass filtering parameters through to <code><a href="reference/load_potatoes.html">load_potatoes()</a></code> call (line 53 in R/create_sack.R) - <code><a href="reference/load_potatoes.html">load_potatoes()</a></code> already supports <code>tags</code> and <code>include_inactive</code> parameters - Add <code>pattern</code> parameter to <code><a href="reference/load_potatoes.html">load_potatoes()</a></code> for filename filtering</p>
 <p><strong>Example workflows:</strong></p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load all nitrogen-related pathways</span></span>
 <span><span class="va">sack_n</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/create_sack.html">create_sack</a></span><span class="op">(</span>tags <span class="op">=</span> <span class="st">"nitrogen"</span><span class="op">)</span></span>
 <span></span>
@@ -311,6 +253,50 @@
 </ul><p><strong>Why critical:</strong> Prevents data corruption, results always match definitions</p>
 <hr></div>
 <div class="section level3">
+<h3 id="potato-version-upgrades-low-priority">Potato Version Upgrades <strong>[LOW PRIORITY]</strong>
+<a class="anchor" aria-label="anchor" href="#potato-version-upgrades-low-priority"></a></h3>
+<p><strong>Problem:</strong> Bundled potatoes in package may get bug fixes or improvements, but projects use static snapshots from initialization. No way to “upgrade” a potato mid-analysis without losing existing results.</p>
+<p><strong>Current behavior (keep for now):</strong> - Projects snapshot potatoes at initialization → reproducible, but no updates - Editing potato JSON breaks hash → results invalidated - <strong>Friction is good:</strong> forces users to start over if changing pathway definitions</p>
+<p><strong>Future feature - Versioned potato upgrades:</strong></p>
+<p>Allow multiple versions of the same potato to coexist in a sack, distinguished by hash suffix:</p>
+<pre><code>glycolate_cycle_a3f4b2c  (v1 - original definition)
+glycolate_cycle_d8e1f9a  (v2 - bug fix, revised thresholds)</code></pre>
+<p><strong>Implementation:</strong></p>
+<ul class="task-list"><li><label><input type="checkbox"><code>upgrade_potato(sack, potato_id)</code> - loads latest package version alongside existing</label></li>
+<li><label><input type="checkbox">New potato gets hash-suffixed ID: <code>{original_id}_{hash_short}</code></label></li>
+<li><label><input type="checkbox">Both potatoes retained with their annotation results</label></li>
+<li><label><input type="checkbox">User can compare: did bug fix change pathway calls?</label></li>
+<li><label><input type="checkbox">Provenance tracks upgrade event: “glycolate_cycle upgraded from a3f4b2c → d8e1f9a”</label></li>
+</ul><p><strong>Use case:</strong></p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_kofam.html">run_kofam</a></span><span class="op">(</span><span class="va">sack</span><span class="op">)</span>  <span class="co"># Uses glycolate_cycle (hash a3f4b2c)</span></span>
+<span><span class="co"># Package releases bug fix for glycolate_cycle</span></span>
+<span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu">upgrade_potato</span><span class="op">(</span><span class="va">sack</span>, <span class="st">"glycolate_cycle"</span><span class="op">)</span>  <span class="co"># Adds glycolate_cycle_d8e1f9a</span></span>
+<span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_kofam.html">run_kofam</a></span><span class="op">(</span><span class="va">sack</span><span class="op">)</span>  <span class="co"># Runs on new version only</span></span>
+<span><span class="co"># Now have results for both versions - can compare</span></span></code></pre></div>
+<p><strong>Benefits:</strong> - Compare old vs new definitions side-by-side - Preserve historical results (reproducibility) - Gradual migration (test new version before removing old) - Clear audit trail via hash tracking</p>
+<p><strong>Related:</strong> Potato locking system (above) prevents accidental edits. This feature is for <strong>intentional</strong> upgrades.</p>
+<hr></div>
+<div class="section level3">
+<h3 id="update-claude-skills-in-projects-low-priority">Update Claude Skills in Projects <strong>[LOW PRIORITY]</strong>
+<a class="anchor" aria-label="anchor" href="#update-claude-skills-in-projects-low-priority"></a></h3>
+<p><strong>Problem:</strong> Claude agent skill files (<code>.claude/commands/*.md</code>) may improve in package, but projects have static copies from initialization.</p>
+<p><strong>Solution:</strong> Add <code>update_skills()</code> function</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">update_skills</span><span class="op">(</span><span class="op">)</span>  <span class="co"># Updates .claude/ directory from package to current project</span></span>
+<span></span>
+<span><span class="co"># Or specify path</span></span>
+<span><span class="fu">update_skills</span><span class="op">(</span><span class="st">"path/to/project"</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Implementation:</strong></p>
+<ul class="task-list"><li><label><input type="checkbox">Copy <code>.claude/</code> directory from package <code>inst/.claude/</code> to project</label></li>
+<li><label><input type="checkbox">Warn if local modifications detected (file hash mismatch)</label></li>
+<li><label><input type="checkbox">Option: <code>force = TRUE</code> to overwrite local changes</label></li>
+<li><label><input type="checkbox">Report which files updated, which skipped</label></li>
+<li><label><input type="checkbox">Safe operation: agents have no associated data (unlike potatoes)</label></li>
+</ul><p><strong>Benefits:</strong> - Get bug fixes and improvements to agents - Low risk: agents don’t have associated results - Users can customize agents locally and decline updates</p>
+<p><strong>Note:</strong> Unlike potatoes (which need version tracking for reproducibility), agent updates are safe because they don’t affect annotation results.</p>
+<hr></div>
+<div class="section level3">
 <h3 id="incremental-annotation-high-priority">Incremental Annotation <strong>[HIGH PRIORITY]</strong>
 <a class="anchor" aria-label="anchor" href="#incremental-annotation-high-priority"></a></h3>
 <p><strong>Problem:</strong> Running annotation twice errors unless <code>overwrite = TRUE</code> (replaces ALL results). Can’t add potatoes incrementally.</p>
@@ -320,9 +306,40 @@
 <li><label><input type="checkbox">Update provenance for merged runs</label></li>
 <li><label><input type="checkbox">Apply to kofam, BLAST, HMM</label></li>
 </ul><p><strong>Use case:</strong></p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_kofam.html">run_kofam</a></span><span class="op">(</span><span class="va">sack</span>, potato_names <span class="op">=</span> <span class="st">"pathway_A"</span><span class="op">)</span></span>
 <span><span class="va">sack</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_kofam.html">run_kofam</a></span><span class="op">(</span><span class="va">sack</span>, potato_names <span class="op">=</span> <span class="st">"pathway_B"</span><span class="op">)</span>  <span class="co"># Should merge</span></span></code></pre></div>
+<hr></div>
+<div class="section level3">
+<h3 id="pathway-level-marker-genes-medium-priority">Pathway-Level Marker Genes <strong>[MEDIUM PRIORITY]</strong>
+<a class="anchor" aria-label="anchor" href="#pathway-level-marker-genes-medium-priority"></a></h3>
+<p><strong>Problem:</strong> Current schema ties <code>marker</code> attribute to edges, but biologically, marker genes are properties of the pathway independent of topology. When genes are in complexes, you can’t mark individual components.</p>
+<p><strong>Current schema:</strong></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="st">"edges"</span><span class="er">:</span> <span class="ot">[</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"substrate"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"geneA"</span><span class="fu">,</span> <span class="dt">"marker"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">}</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="ot">]</span></span></code></pre></div>
+<p><strong>Issue:</strong> - If geneA is part of complex geneABC, edges reference the complex, not individual genes - Can’t mark geneA as diagnostic when it’s buried in a complex - Edge-level markers don’t make sense for non-catalytic genes (chaperones, regulators)</p>
+<p><strong>Proposed schema enhancement:</strong></p>
+<p>Add pathway-level <code>markers</code> field:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="st">"pathways"</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="dt">"pathway_id"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>    <span class="dt">"markers"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"nifH"</span><span class="ot">,</span> <span class="st">"vnfH"</span><span class="ot">]</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">Gene</span> <span class="er">IDs</span> <span class="er">that</span> <span class="er">are</span> <span class="er">diagnostic</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>    <span class="dt">"edges"</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>    <span class="dt">"scoring"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>      <span class="dt">"marker_mode"</span><span class="fu">:</span> <span class="st">"any"</span>  <span class="er">//</span> <span class="er">Already</span> <span class="er">exists</span><span class="fu">,</span> <span class="er">just</span> <span class="er">not</span> <span class="er">implemented</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p><strong>Implementation:</strong></p>
+<ul class="task-list"><li><label><input type="checkbox">Add <code>markers</code> field to V2 schema (optional, array of gene IDs)</label></li>
+<li><label><input type="checkbox">Update <code><a href="reference/score_pathways.html">score_pathways()</a></code> to use pathway-level markers for <code>marker_mode</code> scoring</label></li>
+<li><label><input type="checkbox"><code>marker_mode: "any"</code> = pathway present if ANY marker detected</label></li>
+<li><label><input type="checkbox"><code>marker_mode: "all"</code> = pathway present only if ALL markers detected</label></li>
+<li><label><input type="checkbox">Validate: marker gene IDs must exist in pathway’s <code>genes</code> array</label></li>
+<li><label><input type="checkbox">Visualization: <code><a href="reference/view_pathway_detail.html">view_pathway_detail()</a></code> shows checkmark in marker column for listed genes</label></li>
+<li><label><input type="checkbox">Maintain backward compatibility: if no pathway-level <code>markers</code> field, fall back to edge-level <code>marker</code> attributes</label></li>
+</ul><p><strong>Benefits:</strong> - Clearer biological meaning (these genes ARE markers, period) - Works with complexes (mark components directly) - Enables marking non-catalytic genes (electron carriers, chaperones) - Decouples diagnostic value from topology</p>
+<p><strong>Example:</strong> Nitrogen fixation - nifH and vnfH are diagnostic regardless of whether they’re in complexes or sequential steps.</p>
 <hr></div>
 <div class="section level3">
 <h3 id="threshold-sensitivity-analysis-medium-priority">Threshold Sensitivity Analysis <strong>[MEDIUM PRIORITY]</strong>
@@ -344,33 +361,33 @@
 <p><strong>Goal:</strong> Handle multi-component protein complexes where all components are required for function</p>
 <p><strong>Current status:</strong> - ✅ Schema defined and frozen as part of V2 - ✅ Visualization complete (complex appears as single node) - ✅ Validation complete (checks components exist as genes) - [ ] Scoring logic not yet implemented</p>
 <p><strong>Schema structure:</strong></p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>    <span class="er">//</span> <span class="er">Component</span> <span class="er">genes</span> <span class="er">with</span> <span class="er">detection</span> <span class="er">methods</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtA"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11959"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtB"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11960"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtC"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11961"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtD"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11962"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtE"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11963"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    </span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>    <span class="er">//</span> <span class="er">Complex</span> <span class="er">definition</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>    <span class="fu">{</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>      <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtABCDE"</span><span class="fu">,</span></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"urea ABC transporter complex"</span><span class="fu">,</span></span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"complex"</span><span class="fu">,</span></span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>      <span class="dt">"components"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"urtA"</span><span class="ot">,</span> <span class="st">"urtB"</span><span class="ot">,</span> <span class="st">"urtC"</span><span class="ot">,</span> <span class="st">"urtD"</span><span class="ot">,</span> <span class="st">"urtE"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>      <span class="dt">"notes"</span><span class="fu">:</span> <span class="st">"All components required for function"</span></span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>    <span class="dt">"pathway_id"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>      <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"urtA"</span><span class="ot">,</span> <span class="st">"urtB"</span><span class="ot">,</span> <span class="st">"urtC"</span><span class="ot">,</span> <span class="st">"urtD"</span><span class="ot">,</span> <span class="st">"urtE"</span><span class="ot">]</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">List</span> <span class="er">components</span> <span class="er">for</span> <span class="er">scoring</span></span>
-<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>      <span class="dt">"edges"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>        <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"substrate"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"urtABCDE"</span><span class="fu">,</span> <span class="dt">"required"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span> <span class="dt">"marker"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">}</span>  <span class="er">//</span> <span class="er">Complex</span> <span class="er">in</span> <span class="er">edges</span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>      <span class="ot">]</span></span>
-<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>    <span class="er">//</span> <span class="er">Component</span> <span class="er">genes</span> <span class="er">with</span> <span class="er">detection</span> <span class="er">methods</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtA"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11959"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtB"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11960"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtC"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11961"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtD"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11962"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtE"</span><span class="fu">,</span> <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"enzyme"</span><span class="fu">,</span> <span class="dt">"databases"</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">"kofam"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"K11963"</span><span class="ot">]</span><span class="fu">}}</span><span class="ot">,</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>    </span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>    <span class="er">//</span> <span class="er">Complex</span> <span class="er">definition</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>    <span class="fu">{</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>      <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"urtABCDE"</span><span class="fu">,</span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a>      <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"urea ABC transporter complex"</span><span class="fu">,</span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a>      <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"complex"</span><span class="fu">,</span></span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a>      <span class="dt">"components"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"urtA"</span><span class="ot">,</span> <span class="st">"urtB"</span><span class="ot">,</span> <span class="st">"urtC"</span><span class="ot">,</span> <span class="st">"urtD"</span><span class="ot">,</span> <span class="st">"urtE"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a>      <span class="dt">"notes"</span><span class="fu">:</span> <span class="st">"All components required for function"</span></span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a>  <span class="dt">"pathways"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a>    <span class="dt">"pathway_id"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a>      <span class="dt">"genes"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"urtA"</span><span class="ot">,</span> <span class="st">"urtB"</span><span class="ot">,</span> <span class="st">"urtC"</span><span class="ot">,</span> <span class="st">"urtD"</span><span class="ot">,</span> <span class="st">"urtE"</span><span class="ot">]</span><span class="fu">,</span>  <span class="er">//</span> <span class="er">List</span> <span class="er">components</span> <span class="er">for</span> <span class="er">scoring</span></span>
+<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a>      <span class="dt">"edges"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb17-23"><a href="#cb17-23" tabindex="-1"></a>        <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"substrate"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"urtABCDE"</span><span class="fu">,</span> <span class="dt">"required"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span> <span class="dt">"marker"</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">}</span>  <span class="er">//</span> <span class="er">Complex</span> <span class="er">in</span> <span class="er">edges</span></span>
+<span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a>      <span class="ot">]</span></span>
+<span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p><strong>Key design decisions:</strong> - Components are regular genes with detection methods (kofam/blast/hmm) - Complex is additional entry with <code>type: "complex"</code> and <code>components</code> array - Complex uses <code>components</code> (not <code>databases</code>) - detected via component annotation - Multiple complexes = alternatives (e.g., <code>ureABC</code> OR <code>ureAB_ureC</code> like GATOR <code>|</code> operator) - Pathway’s <code>genes</code> array lists components (not complex IDs) for scoring - Edges reference complex IDs for clean network visualization</p>
 <p><strong>Implementation needed:</strong></p>
 <ul class="task-list"><li><label><input type="checkbox">Scoring logic: detect <code>type: "complex"</code> entries in genes array</label></li>
@@ -394,6 +411,24 @@
 <li><label><input type="checkbox">Relax thresholds for borderline hits when marker genes present</label></li>
 <li><label><input type="checkbox">Example: <code>gcl</code> scores 450 (threshold 678), BUT <code>glxK</code> (specific marker) present → likely real pathway</label></li>
 </ul><p><strong>Use case:</strong> Genome has glxR (ubiquitous) + glxK (specific marker only in glycerate pathway) + borderline gcl hit → context suggests gcl is real, not a paralog</p>
+<hr></div>
+<div class="section level3">
+<h3 id="required-edge-attributes-and-or-branch-scoring-medium-priority">Required Edge Attributes and OR Branch Scoring <strong>[MEDIUM PRIORITY]</strong>
+<a class="anchor" aria-label="anchor" href="#required-edge-attributes-and-or-branch-scoring-medium-priority"></a></h3>
+<p><strong>Goal:</strong> Clarify and implement <code>required</code> edge attribute logic for alternative pathway routes</p>
+<p><strong>Current situation:</strong> - <code>required</code> attribute exists on edges but scoring doesn’t fully utilize it - Unclear how to mark OR branches (Mo-nif OR V-nif alternatives) - Example: nitrogen fixation has two routes, all edges marked <code>required: false</code></p>
+<p><strong>Question to resolve:</strong> For OR branches (either Mo-nif OR V-nif needed): - Should all alternatives be <code>required: true</code> (meaning “at least one needed”)? - Or should all be <code>required: false</code> (meaning “optional” because alternatives exist)?</p>
+<p><strong>Implementation needed:</strong></p>
+<ul class="task-list"><li><label><input type="checkbox">Define clear semantics for <code>required</code> in OR branches</label></li>
+<li><label><input type="checkbox">Update schema documentation with examples</label></li>
+<li><label><input type="checkbox">Implement scoring logic that respects <code>required</code> attributes</label></li>
+<li>
+<label><input type="checkbox">Handle cases where:</label>
+<ul><li>All edges in route A are required IF taking route A</li>
+<li>All edges in route B are required IF taking route B</li>
+<li>At least ONE complete route must be present</li>
+</ul></li>
+</ul><p><strong>Related to:</strong> Gap-based scoring, protein complex scoring (complexes as alternatives)</p>
 <hr></div>
 <div class="section level3">
 <h3 id="inputoutput-validation-medium-priority">Input/Output Validation <strong>[MEDIUM PRIORITY]</strong>
@@ -446,6 +481,24 @@ ED network: transport + npED → gluconate available → FUNCTIONAL</code></pre>
 <div class="section level2">
 <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a></h2>
 <div class="section level3">
+<h3 id="visualize-non-catalytic-genes-medium-priority">Visualize Non-Catalytic Genes <strong>[MEDIUM PRIORITY]</strong>
+<a class="anchor" aria-label="anchor" href="#visualize-non-catalytic-genes-medium-priority"></a></h3>
+<p><strong>Problem:</strong> Pathways include non-catalytic genes (chaperones, regulators, electron carriers, maturation factors) that are listed in the <code>genes</code> array but don’t appear in network plots because they aren’t in edges.</p>
+<p><strong>Current behavior:</strong> - Only genes with edges (catalytic enzymes, complexes) are visualized - Non-catalytic genes like nifF (electron carrier), regulatory genes, chaperones are invisible in plots - They ARE tracked in scoring and appear in results tables</p>
+<p><strong>Why it matters:</strong> - Accessory genes provide biological context (e.g., nifF shows electron transfer pathway) - Users want to see “full picture” of pathway genes, not just catalytic core - Currently appears incomplete (“where’s nifF? it’s in the genes list!”)</p>
+<p><strong>Proposed solutions:</strong></p>
+<p><strong>Option 1: Ghost nodes</strong> - Non-catalytic genes appear as dimmed/outlined nodes - Not connected by edges (float near relevant enzymes) - Tooltip shows role: “electron carrier”, “chaperone”, etc. - Visual distinction from catalytic genes</p>
+<p><strong>Option 2: Sidebar panel</strong> - Network plot shows catalytic genes only - Separate “Accessory Genes” panel lists non-catalytic genes with detection status - Less cluttered but separates information</p>
+<p><strong>Option 3: Optional layer toggle</strong> - Default: catalytic genes only - Toggle “Show accessory genes” adds ghost nodes - User controls complexity</p>
+<p><strong>Implementation:</strong></p>
+<ul class="task-list"><li><label><input type="checkbox">Identify non-catalytic genes: in <code>genes</code> array but not referenced in pathway <code>edges</code></label></li>
+<li><label><input type="checkbox">Add visual styling for non-catalytic nodes (dimmed, dashed border)</label></li>
+<li><label><input type="checkbox">Position near related complexes (e.g., nifF near nifHDK)</label></li>
+<li><label><input type="checkbox">Update legend to distinguish catalytic vs. accessory genes</label></li>
+<li><label><input type="checkbox">Consider interactive toggle for complexity control</label></li>
+</ul><p><strong>Example:</strong> Nitrogen fixation with nifF (electron carrier) would show nifF as ghost node near nifHDK complex.</p>
+<hr></div>
+<div class="section level3">
 <h3 id="v2-coordinate-system-medium-priority">V2 Coordinate System <strong>[MEDIUM PRIORITY]</strong>
 <a class="anchor" aria-label="anchor" href="#v2-coordinate-system-medium-priority"></a></h3>
 <p><strong>Problem:</strong> V1 had coordinate export → curated layouts. Not carried to V2. Workflow broken.</p>
@@ -455,7 +508,7 @@ ED network: transport + npED → gluconate available → FUNCTIONAL</code></pre>
 <li><label><input type="checkbox">Update <code><a href="reference/align_coordinates.html">align_coordinates()</a></code> for V2</label></li>
 <li><label><input type="checkbox">Normalize pixel coords to plot coords</label></li>
 </ul><p><strong>Workflow:</strong></p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/plot_potato.html">plot_potato</a></span><span class="op">(</span><span class="va">pot</span>, interactive <span class="op">=</span> <span class="cn">TRUE</span>, layout <span class="op">=</span> <span class="st">"fr"</span><span class="op">)</span></span>
 <span><span class="co"># Arrange nodes → Export → Import</span></span>
 <span><span class="fu"><a href="reference/update_potato_coordinates.html">update_potato_coordinates</a></span><span class="op">(</span><span class="st">"pathway.json"</span>, <span class="st">"coords.json"</span><span class="op">)</span></span></code></pre></div>
