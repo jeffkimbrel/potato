@@ -504,9 +504,21 @@ plot_potato_interactive <- function(g, layout = "fr", height = "100vh") {
   coords <- layout_func(g)
 
   # Prepare nodes dataframe with hover text
+  # For genes, use gene_id as label (concise, unique)
+  # For compounds, use compound name as label
+  node_labels <- sapply(seq_len(igraph::vcount(g)), function(i) {
+    node_name <- igraph::V(g)$name[i]
+    node_type <- igraph::V(g)[node_name]$type
+    if (node_type == "compound") {
+      igraph::V(g)[node_name]$label
+    } else {
+      igraph::V(g)[node_name]$gene_id
+    }
+  })
+
   nodes_df <- data.frame(
     id = igraph::V(g)$name,
-    label = igraph::V(g)$label,
+    label = node_labels,
     title = character(igraph::vcount(g)),
     shape = character(igraph::vcount(g)),
     x = coords[, 1] * 100,  # Scale for visNetwork

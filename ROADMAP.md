@@ -612,6 +612,33 @@ Add pathway-level `markers` field:
 
 ---
 
+### Required Edge Attributes and OR Branch Scoring **[MEDIUM PRIORITY]**
+
+**Goal:** Clarify and implement `required` edge attribute logic for alternative pathway routes
+
+**Current situation:**
+- `required` attribute exists on edges but scoring doesn't fully utilize it
+- Unclear how to mark OR branches (Mo-nif OR V-nif alternatives)
+- Example: nitrogen fixation has two routes, all edges marked `required: false`
+
+**Question to resolve:** For OR branches (either Mo-nif OR V-nif needed):
+- Should all alternatives be `required: true` (meaning "at least one needed")?
+- Or should all be `required: false` (meaning "optional" because alternatives exist)?
+
+**Implementation needed:**
+
+- [ ] Define clear semantics for `required` in OR branches
+- [ ] Update schema documentation with examples
+- [ ] Implement scoring logic that respects `required` attributes
+- [ ] Handle cases where:
+  - All edges in route A are required IF taking route A
+  - All edges in route B are required IF taking route B
+  - At least ONE complete route must be present
+
+**Related to:** Gap-based scoring, protein complex scoring (complexes as alternatives)
+
+---
+
 ### Input/Output Validation **[MEDIUM PRIORITY]**
 
 **Goal:** Pathways aren't "complete" just by gene count - must transform **available inputs → desired outputs**

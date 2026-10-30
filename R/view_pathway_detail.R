@@ -238,15 +238,41 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   scoring_info <- pathway_info$scoring
   verified <- !is.null(pathway_info$verified) && pathway_info$verified == TRUE
 
+  # Run validation and collect warnings/errors
+  validation_result <- validate_potato(potato, strict = FALSE)
+
+  # Build validation messages HTML
+  validation_msgs <- ""
+  if (length(validation_result$errors) > 0 || length(validation_result$warnings) > 0) {
+    msg_list <- c(
+      if (length(validation_result$errors) > 0) paste0("<li style='color: #721c24;'><strong>Error:</strong> ", validation_result$errors, "</li>"),
+      if (length(validation_result$warnings) > 0) paste0("<li style='color: #856404;'>", validation_result$warnings, "</li>")
+    )
+    validation_msgs <- paste0(
+      "<p style='margin-top: 10px; margin-bottom: 5px;'><strong>Validation:</strong></p>",
+      "<ul style='margin-top: 0; padding-left: 20px;'>",
+      paste(msg_list, collapse = ""),
+      "</ul>"
+    )
+  } else {
+    validation_msgs <- "<p style='margin-top: 10px;'><strong>Validation:</strong> No issues found</p>"
+  }
+
   # Build verification status banner
   verification_html <- if (verified) {
-    "<div style='background: #d4edda; padding: 15px; margin-bottom: 15px; border-left: 4px solid #28a745; color: #155724;'>
-    <strong>✓ VERIFIED</strong> - This pathway has been manually validated.
-    </div>"
+    paste0(
+      "<div style='background: #d4edda; padding: 15px; margin-bottom: 15px; border-left: 4px solid #28a745; color: #155724;'>",
+      "<strong>✓ VERIFIED</strong> - This pathway has been manually verified.",
+      validation_msgs,
+      "</div>"
+    )
   } else {
-    "<div style='background: #fff3cd; padding: 15px; margin-bottom: 15px; border-left: 4px solid #ffc107; color: #856404;'>
-    <strong>⚠ UNVERIFIED</strong> - This pathway has not been validated.
-    </div>"
+    paste0(
+      "<div style='background: #fff3cd; padding: 15px; margin-bottom: 15px; border-left: 4px solid #ffc107; color: #856404;'>",
+      "<strong>⚠ UNVERIFIED</strong> - This pathway has not been verified.",
+      validation_msgs,
+      "</div>"
+    )
   }
 
   # Build metadata section
@@ -430,20 +456,31 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
         htmltools::tags$meta(charset = "utf-8"),
         htmltools::tags$title(title),
         htmltools::tags$style(htmltools::HTML("
-          body { font-family: sans-serif; margin: 20px; max-width: 1600px; }
+          body { font-family: sans-serif; margin: 20px; max-width: 1800px; }
           table { border-collapse: collapse; width: 100%; margin-bottom: 20px; table-layout: auto; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; word-wrap: break-word; }
           th { background-color: #f2f2f2; font-weight: bold; }
           tr:hover { background-color: #f5f5f5; }
           h2 { color: #333; }
           h3 { color: #666; margin-top: 20px; }
+          .top-container { display: flex; gap: 20px; margin-bottom: 30px; }
+          .metadata-col { flex: 0 0 48%; }
+          .viz-col { flex: 0 0 48%; }
         "))
       ),
       htmltools::tags$body(
         htmltools::tags$h1(title),
-        htmltools::HTML(metadata_html),
-        htmltools::tags$h3("Pathway Visualization"),
-        htmltools::tags$div(style = "margin: 20px 0; height: 600px;", plot_widget),
+        htmltools::tags$div(
+          class = "top-container",
+          htmltools::tags$div(
+            class = "metadata-col",
+            htmltools::HTML(metadata_html)
+          ),
+          htmltools::tags$div(
+            class = "viz-col",
+            htmltools::tags$div(style = "height: 500px;", plot_widget)
+          )
+        ),
         htmltools::tags$h3("Genes"),
         htmltools::HTML(paste0(
           "<table><tr>",
@@ -461,7 +498,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     temp_file <- tempfile(fileext = ".html")
     htmltools::save_html(page, temp_file)
   } else {
-    # No widget - use simple HTML
+    # No widget - use simple HTML (no visualization section)
     html <- paste0(
       "<!DOCTYPE html>",
       "<html>",
