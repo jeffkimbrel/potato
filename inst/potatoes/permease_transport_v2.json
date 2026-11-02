@@ -56,33 +56,32 @@
         {
           "from": "C00160_external",
           "to": "lctP",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "lctP",
           "to": "C00160_internal",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00160_external",
           "to": "lldP",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "lldP",
           "to": "C00160_internal",
-          "required": true,
-          "marker": true
+          "required": true
         }
       ],
       "scoring": {
         "min_fraction": 0.5,
-        "marker_mode": "all",
         "notes": "Single gene required"
-      }
+      },
+      "markers": [
+        "lctP",
+        "lldP"
+      ]
     }
   }
 }

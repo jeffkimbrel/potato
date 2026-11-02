@@ -363,12 +363,28 @@ validate_multi_pathway <- function(data, strict) {
             }
           }
 
-          # Validate required/marker attributes on edges
+          # Validate required attribute on edges
           if (!is.null(edge$required) && !is.logical(edge$required)) {
             errors <- c(errors, sprintf("%s: 'required' must be TRUE/FALSE", edge_prefix))
           }
-          if (!is.null(edge$marker) && !is.logical(edge$marker)) {
-            errors <- c(errors, sprintf("%s: 'marker' must be TRUE/FALSE", edge_prefix))
+
+          # Check for deprecated edge-level marker attribute
+          if (!is.null(edge$marker)) {
+            # Extract gene ID from edge (handle compound-gene, gene-compound, or gene-gene edges)
+            edge_gene <- NULL
+            if (edge$from %in% gene_ids) edge_gene <- edge$from
+            if (edge$to %in% gene_ids) edge_gene <- edge$to
+
+            if (!is.null(edge_gene)) {
+              # Check if this gene is in pathway-level markers
+              in_pathway_markers <- !is.null(pathway$markers) && edge_gene %in% pathway$markers
+
+              if (in_pathway_markers) {
+                warnings <- c(warnings, sprintf("%s: edge-level 'marker' attribute is deprecated (gene '%s' is already in pathway-level markers array - remove edge attribute)", edge_prefix, edge_gene))
+              } else {
+                warnings <- c(warnings, sprintf("%s: edge-level 'marker' attribute is deprecated and gene '%s' is NOT in pathway-level markers array (add to pathway markers or remove edge attribute)", edge_prefix, edge_gene))
+              }
+            }
           }
 
           # Validate reaction if present (can be string or array)
@@ -521,20 +537,9 @@ validate_multi_pathway <- function(data, strict) {
       if (is.null(pathway$scoring)) {
         warnings <- c(warnings, sprintf("%s: missing 'scoring' field", path_prefix))
       } else {
+        # Check for deprecated marker_mode in scoring
         if (!is.null(pathway$scoring$marker_mode)) {
-          if (!pathway$scoring$marker_mode %in% c("any", "all")) {
-            errors <- c(errors, sprintf("%s: marker_mode must be 'any' or 'all'", path_prefix))
-          }
-          # Check for markers: pathway-level markers field OR edge-level marker attributes
-          has_pathway_markers <- !is.null(pathway$markers) && length(pathway$markers) > 0
-          has_edge_markers <- FALSE
-          if (!is.null(pathway$edges) && length(pathway$edges) > 0) {
-            marker_count <- sum(sapply(pathway$edges, function(e) !is.null(e$marker) && e$marker == TRUE), na.rm = TRUE)
-            has_edge_markers <- marker_count > 0
-          }
-          if (!has_pathway_markers && !has_edge_markers) {
-            warnings <- c(warnings, sprintf("%s: marker_mode specified but no markers defined (use pathway-level 'markers' field or edge-level 'marker' attributes)", path_prefix))
-          }
+          warnings <- c(warnings, sprintf("%s: 'marker_mode' in scoring block is deprecated and should be removed (marker mode is now a runtime parameter, not a potato field)", path_prefix))
         }
 
         # Check min_fraction against gene count for float precision traps

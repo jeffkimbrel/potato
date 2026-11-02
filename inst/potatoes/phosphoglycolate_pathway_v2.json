@@ -96,50 +96,48 @@
           "from": "C00988",
           "to": "PGP",
           "required": true,
-          "marker": true,
           "reaction": "R01334"
         },
         {
           "from": "PGP",
           "to": "C00160",
           "required": true,
-          "marker": true,
           "reaction": "R01334"
         },
         {
           "from": "C00160",
           "to": "ghrA",
           "required": false,
-          "marker": true,
           "reaction": "R00465"
         },
         {
           "from": "ghrA",
           "to": "C00048",
           "required": false,
-          "marker": true,
           "reaction": "R00465"
         },
         {
           "from": "C00160",
           "to": "ghrB",
           "required": false,
-          "marker": true,
           "reaction": "R00465"
         },
         {
           "from": "ghrB",
           "to": "C00048",
           "required": false,
-          "marker": true,
           "reaction": "R00465"
         }
       ],
       "scoring": {
         "min_fraction": 0.67,
-        "marker_mode": "any",
         "notes": "PGP required, plus at least one of ghrA or ghrB"
-      }
+      },
+      "markers": [
+        "PGP",
+        "ghrA",
+        "ghrB"
+      ]
     }
   }
 }

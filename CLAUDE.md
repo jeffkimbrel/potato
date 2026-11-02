@@ -153,6 +153,7 @@ Each potato is a self-contained network with genes, compounds, and pathways:
       "kegg_module": "M00123",
       "verified": false,  // ALWAYS false unless manually validated
       "notes": "Pathway-specific notes",
+      "markers": ["geneA"],  // OPTIONAL: diagnostic marker genes (detected = confident pathway identification)
       
       "genes": ["geneA", "geneB", "chaperone1"],  // OPTIONAL: explicit gene list (includes non-catalytic genes)
       "input": ["C00031"],
@@ -163,29 +164,25 @@ Each potato is a self-contained network with genes, compounds, and pathways:
           "from": "C00031",
           "to": "geneA",
           "required": true,
-          "marker": true,
           "reaction": "R00001"
         },
         {
           "from": "geneA",
           "to": "C00118",
           "required": true,
-          "marker": true,
           "reaction": "R00001"
         },
         {
           "from": "C00118",
           "to": "geneB",
           "required": false,
-          "marker": false,
           "reaction": "R00002"
         }
       ],
       
       "scoring": {
         "min_fraction": 0.75,
-        "max_gaps": 1,
-        "marker_mode": "any"
+        "max_gaps": 1
       }
     }
   }
@@ -211,7 +208,11 @@ Each potato is a self-contained network with genes, compounds, and pathways:
 **Important Notes:**
 - **No step numbers** - Genes are counted directly, no sequential steps
 - **No node IDs** - Edges reference gene/compound IDs directly (or complex IDs for multi-component units)
-- **required/marker on edges** - Not on genes, because same gene can have different roles in different pathways (different substrates, different pathway context)
+- **Marker genes** - Pathway-level `markers` array lists diagnostic gene IDs (individual genes, NOT complexes). Annotation detects genes, so markers must be individual genes even if those genes are components of complexes in edges.
+  - **Marker mode (future)**: Runtime parameter `run_kofam(marker_only=TRUE)` will screen for pathway presence using just marker genes. Ignores complexes - detecting nifH alone sufficient to call nitrogen fixation present.
+  - **Complexes in markers**: If edge references a complex (e.g., nirBD), markers should list the most diagnostic component (e.g., nirB for nirBD complex) or all components if all are diagnostic (nirB, nirD). For transport complexes, list just the most specific component (e.g., urtA for urtABCDE).
+  - **NO marker_mode in potatoes**: marker_mode was removed from potato schema - it's a runtime parameter, not a potato field. Validation will warn if present.
+- **required on edges** - Edge-level attribute indicating if edge is required for pathway completion
 - **Empty edges allowed** - Transport pathways and other special cases can have `edges: []` (valid as of v0.11.1)
 - **Optional genes array** - Pathways can explicitly list genes (including non-catalytic genes like chaperones, regulators) via `"genes": ["geneA", "geneB"]`. If omitted, genes are inferred from edges. For complexes, list components (not complex ID).
 - **Standard database types only:** `kofam`, `blast`, `hmm` (no custom names)

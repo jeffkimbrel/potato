@@ -163,46 +163,42 @@
         {
           "from": "C00078",
           "to": "iaaM",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "iaaM",
           "to": "C02693",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C02693",
           "to": "amiE",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C02693",
           "to": "iaaH",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "amiE",
           "to": "C00954",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "iaaH",
           "to": "C00954",
-          "required": true,
-          "marker": false
+          "required": true
         }
       ],
       "scoring": {
         "min_fraction": 0.67,
         "max_gaps": 0,
-        "marker_mode": "any",
         "notes": "iaaM is diagnostic marker. Either amiE or iaaH required for second step."
-      }
+      },
+      "markers": [
+        "iaaM"
+      ]
     },
     "indolepyruvate_pathway": {
       "name": "Indolepyruvate Pathway (IPA pathway)",
@@ -219,70 +215,62 @@
         {
           "from": "C00078",
           "to": "IL4I1",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00078",
           "to": "Tam1",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00078",
           "to": "ARO8",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "IL4I1",
           "to": "C00331",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "Tam1",
           "to": "C00331",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "ARO8",
           "to": "C00331",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00331",
           "to": "ipdC",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "ipdC",
           "to": "C05659",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C05659",
           "to": "ALDH",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "ALDH",
           "to": "C00954",
-          "required": true,
-          "marker": false
+          "required": true
         }
       ],
       "scoring": {
         "min_fraction": 0.67,
         "max_gaps": 0,
-        "marker_mode": "any",
         "notes": "ipdC is diagnostic marker for bacterial IPA pathway. Requires at least one aminotransferase (IL4I1, Tam1, or ARO8) plus ipdC and ALDH."
-      }
+      },
+      "markers": [
+        "ipdC"
+      ]
     }
   }
 }

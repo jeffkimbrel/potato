@@ -103,22 +103,22 @@
           "from": "C00160",
           "to": "glcDEF",
           "required": true,
-          "marker": true,
           "reaction": "R00475"
         },
         {
           "from": "glcDEF",
           "to": "C00048",
           "required": true,
-          "marker": true,
           "reaction": "R00475"
         }
       ],
       "scoring": {
         "min_fraction": 1.0,
-        "marker_mode": "any",
         "notes": "Complex requires all 3 subunits (glcD, glcE, glcF) for function. glcD is the marker gene."
-      }
+      },
+      "markers": [
+        "glcD"
+      ]
     }
   }
 }

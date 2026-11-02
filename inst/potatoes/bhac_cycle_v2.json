@@ -133,79 +133,70 @@
           "from": "C00037",
           "to": "bhcC",
           "required": true,
-          "marker": false,
           "notes": "Glycine substrate"
         },
         {
           "from": "C00048",
           "to": "bhcC",
           "required": true,
-          "marker": false,
           "notes": "First glyoxylate incorporation"
         },
         {
           "from": "bhcC",
           "to": "C04105",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C04105",
           "to": "bhcB",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "bhcB",
           "to": "C20905",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C20905",
           "to": "bhcD",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "bhcD",
           "to": "C00049",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00049",
           "to": "bhcA",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00048",
           "to": "bhcA",
           "required": true,
-          "marker": true,
           "notes": "Second glyoxylate incorporation"
         },
         {
           "from": "bhcA",
           "to": "C00036",
           "required": true,
-          "marker": true,
           "notes": "Product: oxaloacetate"
         },
         {
           "from": "bhcA",
           "to": "C00037",
           "required": true,
-          "marker": true,
           "notes": "Glycine regenerated - completes cycle"
         }
       ],
       "scoring": {
         "min_fraction": 1.0,
-        "marker_mode": "all",
         "notes": "All 4 enzymes required for functional cycle"
-      }
+      },
+      "markers": [
+        "bhcA"
+      ]
     }
   }
 }

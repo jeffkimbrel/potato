@@ -36,7 +36,7 @@
         "1.1.1.49",
         "1.1.1.363"
       ],
-      "notes": "Oxidizes G6P to 6-phosphoglucono-\u03b4-lactone; also in pentose phosphate pathway. K00036 can encode either strict NADP+-dependent (EC 1.1.1.49) or dual-specificity NAD(P)+-accepting (EC 1.1.1.363) isoforms; cofactor specificity cannot be determined from KO annotation alone.",
+      "notes": "Oxidizes G6P to 6-phosphoglucono-δ-lactone; also in pentose phosphate pathway. K00036 can encode either strict NADP+-dependent (EC 1.1.1.49) or dual-specificity NAD(P)+-accepting (EC 1.1.1.363) isoforms; cofactor specificity cannot be determined from KO annotation alone.",
       "type": "enzyme"
     },
     {
@@ -121,7 +121,7 @@
       "ec": [
         "4.2.1.140"
       ],
-      "notes": "Bifunctional dehydratase that acts on gluconate (\u2192KDG, R01538) in spED/npED and on galactonate (\u2192KDGal, R03033) in archaeal spED. The entry dehydratase for all gluconate/galactonate ED modules.",
+      "notes": "Bifunctional dehydratase that acts on gluconate (→KDG, R01538) in spED/npED and on galactonate (→KDGal, R03033) in archaeal spED. The entry dehydratase for all gluconate/galactonate ED modules.",
       "type": "enzyme"
     },
     {
@@ -281,7 +281,7 @@
       "ec": [
         "2.7.1.178"
       ],
-      "notes": "Bifunctional kinase (EC 2.7.1.178); phosphorylates KDG to KDPG (C00679\u2192C04442) in gluconate pathways and phosphorylates KDGal to KDGalP (C01216\u2192C01286) in galactonate pathways. Crenarchaeota-specific (found in M00633) but bifunctionality means it can serve as an alternative kinase in both sp_gluconate (M00308) and sp_galactonate (M00633) variants.",
+      "notes": "Bifunctional kinase (EC 2.7.1.178); phosphorylates KDG to KDPG (C00679→C04442) in gluconate pathways and phosphorylates KDGal to KDGalP (C01216→C01286) in galactonate pathways. Crenarchaeota-specific (found in M00633) but bifunctionality means it can serve as an alternative kinase in both sp_gluconate (M00308) and sp_galactonate (M00633) variants.",
       "type": "enzyme"
     },
     {
@@ -483,91 +483,77 @@
       "name": "Classic ED (Phosphorylative)",
       "type": "variant",
       "kegg_module": "M00008",
-      "notes": "Fully phosphorylated ED pathway starting from D-glucose-6P. D-glucose-6P \u2192 pyruvate + glyceraldehyde-3P. Found in Pseudomonas, E. coli, many bacteria. Note: eda_alt (K28887) included as potential alternative aldolase, but KEGG M00008 does not list it - may be semi-phosphorylative-specific despite same chemistry.",
+      "notes": "Fully phosphorylated ED pathway starting from D-glucose-6P. D-glucose-6P → pyruvate + glyceraldehyde-3P. Found in Pseudomonas, E. coli, many bacteria. Note: eda_alt (K28887) included as potential alternative aldolase, but KEGG M00008 does not list it - may be semi-phosphorylative-specific despite same chemistry.",
       "edges": [
         {
           "from": "C01172",
           "to": "G6PD",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "G6PD",
           "to": "C01236",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C01236",
           "to": "pgl",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C01236",
           "to": "ybhE",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "pgl",
           "to": "C00345",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00345",
           "to": "edd",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "ybhE",
           "to": "C00345",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "edd",
           "to": "C04442",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C04442",
           "to": "eda",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "eda",
           "to": "C00022",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "eda",
           "to": "C00118",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C04442",
           "to": "eda_alt",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "eda_alt",
           "to": "C00022",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "eda_alt",
           "to": "C00118",
-          "required": true,
-          "marker": false
+          "required": true
         }
       ],
       "input": [
@@ -578,16 +564,19 @@
         "C00118"
       ],
       "scoring": {
-        "min_fraction": 0.8,
-        "marker_mode": "any"
+        "min_fraction": 0.8
       },
-      "verified": true
+      "verified": true,
+      "markers": [
+        "edd",
+        "eda"
+      ]
     },
     "non_phosphorylative": {
       "name": "Non-Phosphorylative ED",
       "type": "variant",
       "kegg_module": "M00309",
-      "notes": "Fully unphosphorylated ED pathway. Core ED: D-glucono-1,5-lactone \u2192 pyruvate + glycerate. Used by archaea (Sulfolobus, Thermoplasma, Pyrobaculum) and some bacteria. Final step to glycerate (not glycerate-3P) uses NAD/NADP or ferredoxin-dependent dehydrogenases.",
+      "notes": "Fully unphosphorylated ED pathway. Core ED: D-glucono-1,5-lactone → pyruvate + glycerate. Used by archaea (Sulfolobus, Thermoplasma, Pyrobaculum) and some bacteria. Final step to glycerate (not glycerate-3P) uses NAD/NADP or ferredoxin-dependent dehydrogenases.",
       "genes": [
         "gnl",
         "gnaD",
@@ -604,134 +593,112 @@
         {
           "from": "C00198",
           "to": "gnl",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00257",
           "to": "gnaD",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gnl",
           "to": "C00257",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00257",
           "to": "gnaD",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "gnaD",
           "to": "C00204",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00204",
           "to": "kdgA",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00204",
           "to": "kdpgA",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "kdgA",
           "to": "C00577",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00577",
           "to": "gadh",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00577",
           "to": "cutABC",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00577",
           "to": "aor",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "kdpgA",
           "to": "C00577",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00577",
           "to": "gadh",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00577",
           "to": "cutABC",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00577",
           "to": "aor",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gadh",
           "to": "C00258",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00258",
           "to": "gck",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "cutABC",
           "to": "C00258",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "aor",
           "to": "C00258",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gck",
           "to": "C00631",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "kdgA",
           "to": "C00022",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "kdpgA",
           "to": "C00022",
-          "required": true,
-          "marker": false
+          "required": true
         }
       ],
       "input": [
@@ -743,113 +710,100 @@
       ],
       "scoring": {
         "min_fraction": 0.75,
-        "marker_mode": "any",
         "max_gaps": 2,
-        "notes": "Dual scoring: fraction-based (75% genes) OR gap-based (\u22642 missing genes in best path from glucose to glycerate-2P). Tests complex resolution (cutABC)."
+        "notes": "Dual scoring: fraction-based (75% genes) OR gap-based (≤2 missing genes in best path from glucose to glycerate-2P). Tests complex resolution (cutABC)."
       },
-      "verified": true
+      "verified": true,
+      "markers": [
+        "gnaD",
+        "kdgA"
+      ]
     },
     "sp_gluconate": {
       "name": "Semi-Phosphorylative ED - gluconate",
       "type": "variant",
       "kegg_module": "M00308",
-      "notes": "Hybrid pathway: Core ED starts at gluconate, phosphorylates KDG mid-pathway. D-gluconate \u2192 pyruvate + glyceraldehyde-3P. Shares upstream glucose oxidation (gdh/gnl) with npED pathway. Note: M00308 extends to glycerate-3P via GAPDH/pgk, but we stop at G3P where enzymes overlap with glycolysis.",
+      "notes": "Hybrid pathway: Core ED starts at gluconate, phosphorylates KDG mid-pathway. D-gluconate → pyruvate + glyceraldehyde-3P. Shares upstream glucose oxidation (gdh/gnl) with npED pathway. Note: M00308 extends to glycerate-3P via GAPDH/pgk, but we stop at G3P where enzymes overlap with glycolysis.",
       "edges": [
         {
           "from": "C00257",
           "to": "gnaD",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gdh",
           "to": "C00198",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00198",
           "to": "gnl",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gnl",
           "to": "C00257",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00257",
           "to": "gnaD",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "gnaD",
           "to": "C00204",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00204",
           "to": "kdgK",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00204",
           "to": "kdgK_alt",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00204",
           "to": "sskdgK",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "kdgK",
           "to": "C04442",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C04442",
           "to": "eda",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C04442",
           "to": "eda_alt",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "kdgK_alt",
           "to": "C04442",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "sskdgK",
           "to": "C04442",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "eda",
           "to": "C00022",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "eda_alt",
           "to": "C00022",
-          "required": true,
-          "marker": false
+          "required": true
         }
       ],
       "input": [
@@ -859,100 +813,89 @@
         "C00022"
       ],
       "scoring": {
-        "min_fraction": 0.75,
-        "marker_mode": "any"
+        "min_fraction": 0.75
       },
-      "verified": false
+      "verified": false,
+      "markers": [
+        "gnaD",
+        "kdgK"
+      ]
     },
     "sp_galactonate": {
       "name": "Semi-Phosphorylative ED - galactonate",
       "type": "variant",
       "kegg_module": "M00633",
-      "notes": "Crenarchaeota-specific semi-phosphorylative variant. D-galactonate \u2192 3-phosphoglycerate via sskdgK (bifunctional kinase) and kdpgA or eda_alt (bifunctional aldolase), then non-phosphorylating GAPDH (gapN/gapN_alt). Found in Sulfolobus, Thermoplasma, Thermococcales.",
+      "notes": "Crenarchaeota-specific semi-phosphorylative variant. D-galactonate → 3-phosphoglycerate via sskdgK (bifunctional kinase) and kdpgA or eda_alt (bifunctional aldolase), then non-phosphorylating GAPDH (gapN/gapN_alt). Found in Sulfolobus, Thermoplasma, Thermococcales.",
       "edges": [
         {
           "from": "C00879",
           "to": "gnaD",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gnaD",
           "to": "C01216",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C01216",
           "to": "sskdgK",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "sskdgK",
           "to": "C01286",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C01286",
           "to": "kdpgA",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C01286",
           "to": "eda_alt",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "kdpgA",
           "to": "C00118",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00118",
           "to": "gapN",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00118",
           "to": "gapN_alt",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "eda_alt",
           "to": "C00118",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00118",
           "to": "gapN",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "C00118",
           "to": "gapN_alt",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gapN",
           "to": "C00197",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gapN_alt",
           "to": "C00197",
-          "required": true,
-          "marker": false
+          "required": true
         }
       ],
       "input": [
@@ -962,10 +905,12 @@
         "C00197"
       ],
       "scoring": {
-        "min_fraction": 0.75,
-        "marker_mode": "any"
+        "min_fraction": 0.75
       },
-      "verified": false
+      "verified": false,
+      "markers": [
+        "sskdgK"
+      ]
     },
     "gluconate_transport": {
       "name": "Gluconate Transport",
@@ -980,8 +925,7 @@
         "C00257"
       ],
       "scoring": {
-        "min_fraction": 1,
-        "marker_mode": "any"
+        "min_fraction": 1
       },
       "verified": false
     },
@@ -989,31 +933,27 @@
       "name": "Galactose Catabolism (ED Entry)",
       "type": "independent",
       "kegg_module": {},
-      "notes": "Galactose oxidation to galactonate, then entry into ED via bifunctional gnaD. The galactonate \u2192 KDGal conversion is catalyzed by the same gnaD enzyme that handles gluconate \u2192 KDG. KDGal is then cleaved by kdpgA (which handles both KDPG and KDGal substrates) to pyruvate + glyceraldehyde, feeding into the npED glyceraldehyde oxidation step. This pathway is characteristic of marine and soil organisms that encounter galactose from polysaccharide degradation (agar, carrageenan, pectin).",
+      "notes": "Galactose oxidation to galactonate, then entry into ED via bifunctional gnaD. The galactonate → KDGal conversion is catalyzed by the same gnaD enzyme that handles gluconate → KDG. KDGal is then cleaved by kdpgA (which handles both KDPG and KDGal substrates) to pyruvate + glyceraldehyde, feeding into the npED glyceraldehyde oxidation step. This pathway is characteristic of marine and soil organisms that encounter galactose from polysaccharide degradation (agar, carrageenan, pectin).",
       "edges": [
         {
           "from": "C00879",
           "to": "gnaD",
-          "required": true,
-          "marker": false
+          "required": true
         },
         {
           "from": "gnaD",
           "to": "C01216",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C01216",
           "to": "kdpgA",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "kdpgA",
           "to": "C00022",
-          "required": true,
-          "marker": false
+          "required": true
         }
       ],
       "input": [
@@ -1023,10 +963,13 @@
         "C00022"
       ],
       "scoring": {
-        "min_fraction": 1,
-        "marker_mode": "any"
+        "min_fraction": 1
       },
-      "verified": false
+      "verified": false,
+      "markers": [
+        "gnaD",
+        "kdpgA"
+      ]
     }
   },
   "verified": false,

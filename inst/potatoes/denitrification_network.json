@@ -3,18 +3,26 @@
   "id": "denitrification_network",
   "name": "Denitrification Pathway",
   "source": "GATOR v1, KEGG M00529",
-  "tags": ["nitrogen", "anaerobic", "respiration"],
+  "tags": [
+    "nitrogen",
+    "anaerobic",
+    "respiration"
+  ],
   "notes": "Denitrification pathways using nitrogen oxides as terminal electron acceptors. Follows Stein 2016 nomenclature: Step 5 (NO3- → NO2-), Step 6A (NO2- → NO), Step 6B (NO → N2O), Step 6C (N2O → N2). Note: Step 5 is shared with DNRA, anammox, and nitrification. n-DAMO pathway (direct NO → N2 via nitric oxide dismutase in Candidatus Methylomirabilis oxyfera) is not included. Step 5 can be performed by either membrane-bound (narGHI) or periplasmic (napAB) nitrate reductase.",
-
   "genes": [
     {
       "id": "narG",
       "name": "nitrate reductase / nitrite oxidoreductase, alpha subunit",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K00370"]
+        "kofam": [
+          "K00370"
+        ]
       },
-      "ec": ["1.7.5.1", "1.7.99.-"],
+      "ec": [
+        "1.7.5.1",
+        "1.7.99.-"
+      ],
       "notes": "Membrane-bound nitrate reductase alpha subunit. Also involved in nitrification (reverse reaction)."
     },
     {
@@ -22,9 +30,14 @@
       "name": "nitrate reductase / nitrite oxidoreductase, beta subunit",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K00371"]
+        "kofam": [
+          "K00371"
+        ]
       },
-      "ec": ["1.7.5.1", "1.7.99.-"],
+      "ec": [
+        "1.7.5.1",
+        "1.7.99.-"
+      ],
       "notes": "Membrane-bound nitrate reductase beta subunit."
     },
     {
@@ -32,16 +45,25 @@
       "name": "nitrate reductase gamma subunit",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K00374"]
+        "kofam": [
+          "K00374"
+        ]
       },
-      "ec": ["1.7.5.1", "1.7.99.-"],
+      "ec": [
+        "1.7.5.1",
+        "1.7.99.-"
+      ],
       "notes": "Membrane-bound nitrate reductase gamma subunit."
     },
     {
       "id": "narGHI",
       "name": "membrane-bound nitrate reductase complex",
       "type": "complex",
-      "components": ["narG", "narH", "narI"],
+      "components": [
+        "narG",
+        "narH",
+        "narI"
+      ],
       "notes": "Three-subunit membrane-bound nitrate reductase. Alternative to periplasmic napAB system."
     },
     {
@@ -49,9 +71,13 @@
       "name": "nitrate reductase (cytochrome)",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K02567"]
+        "kofam": [
+          "K02567"
+        ]
       },
-      "ec": ["1.9.6.1"],
+      "ec": [
+        "1.9.6.1"
+      ],
       "notes": "Periplasmic nitrate reductase catalytic subunit. Alternative to narGHI."
     },
     {
@@ -59,16 +85,23 @@
       "name": "nitrate reductase (cytochrome), electron transfer subunit",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K02568"]
+        "kofam": [
+          "K02568"
+        ]
       },
-      "ec": ["1.9.6.1"],
+      "ec": [
+        "1.9.6.1"
+      ],
       "notes": "Periplasmic nitrate reductase electron transfer subunit."
     },
     {
       "id": "napAB",
       "name": "periplasmic nitrate reductase complex",
       "type": "complex",
-      "components": ["napA", "napB"],
+      "components": [
+        "napA",
+        "napB"
+      ],
       "notes": "Two-subunit periplasmic nitrate reductase. Alternative to membrane-bound narGHI system."
     },
     {
@@ -76,9 +109,13 @@
       "name": "nitrite reductase (NO-forming)",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K00368"]
+        "kofam": [
+          "K00368"
+        ]
       },
-      "ec": ["1.7.2.1"],
+      "ec": [
+        "1.7.2.1"
+      ],
       "notes": "Copper-containing nitrite reductase. Alternative to nirS. Diagnostic marker for denitrification."
     },
     {
@@ -86,9 +123,14 @@
       "name": "nitrite reductase (NO-forming) / hydroxylamine reductase",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K15864"]
+        "kofam": [
+          "K15864"
+        ]
       },
-      "ec": ["1.7.2.1", "1.7.99.1"],
+      "ec": [
+        "1.7.2.1",
+        "1.7.99.1"
+      ],
       "notes": "Cytochrome cd1 nitrite reductase. Alternative to nirK. Diagnostic marker for denitrification."
     },
     {
@@ -96,9 +138,13 @@
       "name": "nitric oxide reductase subunit B",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K04561"]
+        "kofam": [
+          "K04561"
+        ]
       },
-      "ec": ["1.7.2.5"],
+      "ec": [
+        "1.7.2.5"
+      ],
       "notes": "Catalytic subunit of nitric oxide reductase."
     },
     {
@@ -106,7 +152,9 @@
       "name": "nitric oxide reductase subunit C",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K02305"]
+        "kofam": [
+          "K02305"
+        ]
       },
       "notes": "Electron transfer subunit of nitric oxide reductase."
     },
@@ -114,7 +162,10 @@
       "id": "norBC",
       "name": "nitric oxide reductase complex",
       "type": "complex",
-      "components": ["norB", "norC"],
+      "components": [
+        "norB",
+        "norC"
+      ],
       "notes": "Two-subunit NO reductase. Reduces NO to N2O."
     },
     {
@@ -122,13 +173,16 @@
       "name": "nitrous-oxide reductase",
       "type": "enzyme",
       "databases": {
-        "kofam": ["K00376"]
+        "kofam": [
+          "K00376"
+        ]
       },
-      "ec": ["1.7.2.4"],
+      "ec": [
+        "1.7.2.4"
+      ],
       "notes": "Reduces N2O to N2. Final step of complete denitrification. Organisms lacking nosZ release N2O (greenhouse gas)."
     }
   ],
-
   "compounds": [
     {
       "id": "C00244",
@@ -156,34 +210,98 @@
       "kegg_compound": "C00697"
     }
   ],
-
   "pathways": {
     "complete_denitrification": {
       "name": "Complete Denitrification (Steps 5+6A+6B+6C)",
       "type": "independent",
       "verified": true,
       "notes": "Full canonical denitrification: NO3- → NO2- → NO → N2O → N2. All four steps present. Relatively uncommon - most organisms have partial pathways. nirK/nirS are diagnostic markers.",
-      "markers": ["nirK", "nirS"],
-      "genes": ["narG", "narH", "narI", "napA", "napB", "nirK", "nirS", "norB", "norC", "nosZ"],
-      "input": ["C00244"],
-      "output": ["C00697"],
+      "markers": [
+        "nirK",
+        "nirS"
+      ],
+      "genes": [
+        "narG",
+        "narH",
+        "narI",
+        "napA",
+        "napB",
+        "nirK",
+        "nirS",
+        "norB",
+        "norC",
+        "nosZ"
+      ],
+      "input": [
+        "C00244"
+      ],
+      "output": [
+        "C00697"
+      ],
       "edges": [
-        {"from": "C00244", "to": "narGHI", "required": true, "marker": false},
-        {"from": "C00244", "to": "napAB", "required": true, "marker": false},
-        {"from": "narGHI", "to": "C00088", "required": true, "marker": false},
-        {"from": "napAB", "to": "C00088", "required": true, "marker": false},
-        {"from": "C00088", "to": "nirK", "required": true, "marker": false},
-        {"from": "C00088", "to": "nirS", "required": true, "marker": false},
-        {"from": "nirK", "to": "C00533", "required": true, "marker": false},
-        {"from": "nirS", "to": "C00533", "required": true, "marker": false},
-        {"from": "C00533", "to": "norBC", "required": true, "marker": false},
-        {"from": "norBC", "to": "C00887", "required": true, "marker": false},
-        {"from": "C00887", "to": "nosZ", "required": true, "marker": false},
-        {"from": "nosZ", "to": "C00697", "required": true, "marker": false}
+        {
+          "from": "C00244",
+          "to": "narGHI",
+          "required": true
+        },
+        {
+          "from": "C00244",
+          "to": "napAB",
+          "required": true
+        },
+        {
+          "from": "narGHI",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "napAB",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "C00088",
+          "to": "nirK",
+          "required": true
+        },
+        {
+          "from": "C00088",
+          "to": "nirS",
+          "required": true
+        },
+        {
+          "from": "nirK",
+          "to": "C00533",
+          "required": true
+        },
+        {
+          "from": "nirS",
+          "to": "C00533",
+          "required": true
+        },
+        {
+          "from": "C00533",
+          "to": "norBC",
+          "required": true
+        },
+        {
+          "from": "norBC",
+          "to": "C00887",
+          "required": true
+        },
+        {
+          "from": "C00887",
+          "to": "nosZ",
+          "required": true
+        },
+        {
+          "from": "nosZ",
+          "to": "C00697",
+          "required": true
+        }
       ],
       "scoring": {
         "max_gaps": 0,
-        "marker_mode": "any",
         "notes": "Requires complete route from nitrate to N2. Gap-based scoring ensures all steps present."
       }
     },
@@ -192,25 +310,81 @@
       "type": "independent",
       "verified": true,
       "notes": "NO3- → NO2- → NO → N2O (lacks nosZ). Very common. Releases N2O greenhouse gas. Major climate concern. nirK/nirS are diagnostic markers.",
-      "markers": ["nirK", "nirS"],
-      "genes": ["narG", "narH", "narI", "napA", "napB", "nirK", "nirS", "norB", "norC"],
-      "input": ["C00244"],
-      "output": ["C00887"],
+      "markers": [
+        "nirK",
+        "nirS"
+      ],
+      "genes": [
+        "narG",
+        "narH",
+        "narI",
+        "napA",
+        "napB",
+        "nirK",
+        "nirS",
+        "norB",
+        "norC"
+      ],
+      "input": [
+        "C00244"
+      ],
+      "output": [
+        "C00887"
+      ],
       "edges": [
-        {"from": "C00244", "to": "narGHI", "required": true, "marker": false},
-        {"from": "C00244", "to": "napAB", "required": true, "marker": false},
-        {"from": "narGHI", "to": "C00088", "required": true, "marker": false},
-        {"from": "napAB", "to": "C00088", "required": true, "marker": false},
-        {"from": "C00088", "to": "nirK", "required": true, "marker": false},
-        {"from": "C00088", "to": "nirS", "required": true, "marker": false},
-        {"from": "nirK", "to": "C00533", "required": true, "marker": false},
-        {"from": "nirS", "to": "C00533", "required": true, "marker": false},
-        {"from": "C00533", "to": "norBC", "required": true, "marker": false},
-        {"from": "norBC", "to": "C00887", "required": true, "marker": false}
+        {
+          "from": "C00244",
+          "to": "narGHI",
+          "required": true
+        },
+        {
+          "from": "C00244",
+          "to": "napAB",
+          "required": true
+        },
+        {
+          "from": "narGHI",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "napAB",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "C00088",
+          "to": "nirK",
+          "required": true
+        },
+        {
+          "from": "C00088",
+          "to": "nirS",
+          "required": true
+        },
+        {
+          "from": "nirK",
+          "to": "C00533",
+          "required": true
+        },
+        {
+          "from": "nirS",
+          "to": "C00533",
+          "required": true
+        },
+        {
+          "from": "C00533",
+          "to": "norBC",
+          "required": true
+        },
+        {
+          "from": "norBC",
+          "to": "C00887",
+          "required": true
+        }
       ],
       "scoring": {
         "max_gaps": 0,
-        "marker_mode": "any",
         "notes": "Requires complete route to N2O but specifically LACKS nosZ. Use presence pattern to distinguish from complete denitrifiers."
       }
     },
@@ -219,17 +393,32 @@
       "type": "independent",
       "verified": true,
       "notes": "N2O → N2. Organisms with just nosZ that consume environmental N2O. Ecologically important for climate mitigation. NOTE: Complete denitrifiers also score positive for this pathway (nested subset).",
-      "markers": ["nosZ"],
-      "genes": ["nosZ"],
-      "input": ["C00887"],
-      "output": ["C00697"],
+      "markers": [
+        "nosZ"
+      ],
+      "genes": [
+        "nosZ"
+      ],
+      "input": [
+        "C00887"
+      ],
+      "output": [
+        "C00697"
+      ],
       "edges": [
-        {"from": "C00887", "to": "nosZ", "required": true, "marker": false},
-        {"from": "nosZ", "to": "C00697", "required": true, "marker": false}
+        {
+          "from": "C00887",
+          "to": "nosZ",
+          "required": true
+        },
+        {
+          "from": "nosZ",
+          "to": "C00697",
+          "required": true
+        }
       ],
       "scoring": {
         "max_gaps": 0,
-        "marker_mode": "any",
         "notes": "Single gene pathway. Includes specialists (just nosZ) AND complete denitrifiers (have all genes). Check pathway membership table to distinguish."
       }
     },
@@ -238,23 +427,67 @@
       "type": "independent",
       "verified": true,
       "notes": "NO2- → NO → N2O → N2. Starts from nitrite instead of nitrate (lacks step 5 narGHI/napAB). Organisms rely on external nitrite or coupled with upstream NO3- reduction by other organisms. nirK/nirS are diagnostic markers.",
-      "markers": ["nirK", "nirS"],
-      "genes": ["nirK", "nirS", "norB", "norC", "nosZ"],
-      "input": ["C00088"],
-      "output": ["C00697"],
+      "markers": [
+        "nirK",
+        "nirS"
+      ],
+      "genes": [
+        "nirK",
+        "nirS",
+        "norB",
+        "norC",
+        "nosZ"
+      ],
+      "input": [
+        "C00088"
+      ],
+      "output": [
+        "C00697"
+      ],
       "edges": [
-        {"from": "C00088", "to": "nirK", "required": true, "marker": false},
-        {"from": "C00088", "to": "nirS", "required": true, "marker": false},
-        {"from": "nirK", "to": "C00533", "required": true, "marker": false},
-        {"from": "nirS", "to": "C00533", "required": true, "marker": false},
-        {"from": "C00533", "to": "norBC", "required": true, "marker": false},
-        {"from": "norBC", "to": "C00887", "required": true, "marker": false},
-        {"from": "C00887", "to": "nosZ", "required": true, "marker": false},
-        {"from": "nosZ", "to": "C00697", "required": true, "marker": false}
+        {
+          "from": "C00088",
+          "to": "nirK",
+          "required": true
+        },
+        {
+          "from": "C00088",
+          "to": "nirS",
+          "required": true
+        },
+        {
+          "from": "nirK",
+          "to": "C00533",
+          "required": true
+        },
+        {
+          "from": "nirS",
+          "to": "C00533",
+          "required": true
+        },
+        {
+          "from": "C00533",
+          "to": "norBC",
+          "required": true
+        },
+        {
+          "from": "norBC",
+          "to": "C00887",
+          "required": true
+        },
+        {
+          "from": "C00887",
+          "to": "nosZ",
+          "required": true
+        },
+        {
+          "from": "nosZ",
+          "to": "C00697",
+          "required": true
+        }
       ],
       "scoring": {
         "max_gaps": 0,
-        "marker_mode": "any",
         "notes": "Requires complete route from nitrite to N2. Specifically LACKS narGHI/napAB. Use presence pattern to distinguish from complete denitrifiers."
       }
     }

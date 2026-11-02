@@ -351,45 +351,44 @@
         {
           "from": "C00086",
           "to": "ureABC",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "ureABC",
           "to": "C00014",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "ureABC",
           "to": "C00011",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "C00086",
           "to": "ureAB_ureC",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "ureAB_ureC",
           "to": "C00014",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "ureAB_ureC",
           "to": "C00011",
-          "required": true,
-          "marker": true
+          "required": true
         }
       ],
       "scoring": {
         "min_fraction": 0.67,
-        "marker_mode": "any",
         "notes": "Requires catalytic core: (ureA + ureB + ureC) OR (ureAB + ureC). Accessory genes (ureDEFG) are not included in scoring - they are annotated/tracked but don't participate in compound flow."
-      }
+      },
+      "markers": [
+        "ureA",
+        "ureAB",
+        "ureB",
+        "ureC"
+      ]
     },
     "urea_amidolyase": {
       "name": "Urea Degradation - Urea Amidolyase",
@@ -408,62 +407,58 @@
           "from": "C00086",
           "to": "UC",
           "required": true,
-          "marker": true,
           "reaction": "R01399"
         },
         {
           "from": "UC",
           "to": "C01010",
           "required": true,
-          "marker": true,
           "reaction": "R01399"
         },
         {
           "from": "C01010",
           "to": "AH",
           "required": true,
-          "marker": true,
           "reaction": "R00653"
         },
         {
           "from": "AH",
           "to": "C00014",
           "required": true,
-          "marker": true,
           "reaction": "R00653"
         },
         {
           "from": "AH",
           "to": "C00011",
           "required": true,
-          "marker": true,
           "reaction": "R00653"
         },
         {
           "from": "C00086",
           "to": "UC_AH",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "UC_AH",
           "to": "C00014",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "UC_AH",
           "to": "C00011",
-          "required": true,
-          "marker": true
+          "required": true
         }
       ],
       "scoring": {
         "max_gaps": 1,
         "min_fraction": 0.67,
-        "marker_mode": "any",
         "notes": "Requires either (UC + AH) OR (UC_AH fusion). Gap-based scoring allows 1 missing gene (either UC or AH if fusion present)."
-      }
+      },
+      "markers": [
+        "AH",
+        "UC",
+        "UC_AH"
+      ]
     },
     "urea_transport_abc": {
       "name": "Urea Transport - ABC Transporter",
@@ -487,21 +482,21 @@
         {
           "from": "urea_external",
           "to": "urtABCDE",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "urtABCDE",
           "to": "urea_internal",
-          "required": true,
-          "marker": true
+          "required": true
         }
       ],
       "scoring": {
         "min_fraction": 1.0,
-        "marker_mode": "any",
         "notes": "Complex requires all 5 components (urtABCDE) working together. Substrate-binding protein (urtA) is the marker gene."
-      }
+      },
+      "markers": [
+        "urtA"
+      ]
     },
     "urea_transport_channel": {
       "name": "Urea Transport - Acid-Activated Channel",
@@ -518,21 +513,21 @@
         {
           "from": "urea_external",
           "to": "ureI",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "ureI",
           "to": "urea_internal",
-          "required": true,
-          "marker": true
+          "required": true
         }
       ],
       "scoring": {
         "min_fraction": 1.0,
-        "marker_mode": "any",
         "notes": "Single-gene pathway - requires ureI detection."
-      }
+      },
+      "markers": [
+        "ureI"
+      ]
     },
     "urea_transport_symporter": {
       "name": "Urea Transport - H+ Symporter",
@@ -549,21 +544,21 @@
         {
           "from": "urea_external",
           "to": "yut",
-          "required": true,
-          "marker": true
+          "required": true
         },
         {
           "from": "yut",
           "to": "urea_internal",
-          "required": true,
-          "marker": true
+          "required": true
         }
       ],
       "scoring": {
         "min_fraction": 1.0,
-        "marker_mode": "any",
         "notes": "Single-gene pathway - requires yut detection."
-      }
+      },
+      "markers": [
+        "yut"
+      ]
     }
   }
 }

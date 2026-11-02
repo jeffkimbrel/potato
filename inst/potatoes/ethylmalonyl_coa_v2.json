@@ -299,119 +299,102 @@
           "from": "C00024",
           "to": "atoB",
           "required": true,
-          "marker": false,
           "reaction": "R00238"
         },
         {
           "from": "atoB",
           "to": "C00332",
           "required": true,
-          "marker": false,
           "reaction": "R00238"
         },
         {
           "from": "C00332",
           "to": "phbB",
           "required": true,
-          "marker": false,
           "reaction": "R01977"
         },
         {
           "from": "phbB",
           "to": "C03561",
           "required": true,
-          "marker": false,
           "reaction": "R01977"
         },
         {
           "from": "C03561",
           "to": "croR",
           "required": true,
-          "marker": false,
           "reaction": "R03027"
         },
         {
           "from": "croR",
           "to": "C00877",
           "required": true,
-          "marker": false,
           "reaction": "R03027"
         },
         {
           "from": "C00877",
           "to": "ccr",
           "required": true,
-          "marker": true,
           "reaction": "R09291"
         },
         {
           "from": "ccr",
           "to": "C18026",
           "required": true,
-          "marker": true,
           "reaction": "R09291"
         },
         {
           "from": "C18026",
           "to": "mcee",
           "required": true,
-          "marker": false,
           "reaction": "R02765"
         },
         {
           "from": "mcee",
           "to": "C20238",
           "required": true,
-          "marker": false,
           "reaction": "R02765"
         },
         {
           "from": "C20238",
           "to": "ecm",
           "required": true,
-          "marker": true,
           "reaction": "R09292"
         },
         {
           "from": "ecm",
           "to": "C18324",
           "required": true,
-          "marker": true,
           "reaction": "R09292"
         },
         {
           "from": "C18324",
           "to": "mcd",
           "required": true,
-          "marker": false,
           "reaction": "R09293"
         },
         {
           "from": "mcd",
           "to": "C06028",
           "required": true,
-          "marker": false,
           "reaction": "R09293"
         },
         {
           "from": "C06028",
           "to": "mch",
           "required": true,
-          "marker": false,
           "reaction": "R05076"
         },
         {
           "from": "mch",
           "to": "C06027",
           "required": true,
-          "marker": false,
           "reaction": "R05076"
         },
         {
           "from": "C06027",
           "to": "mcl",
           "required": false,
-          "marker": true,
           "reaction": "R00934",
           "notes": "Cleavage: C06027 -> C00100 + C00048"
         },
@@ -419,21 +402,18 @@
           "from": "mcl",
           "to": "C00100",
           "required": false,
-          "marker": true,
           "reaction": "R00934"
         },
         {
           "from": "mcl",
           "to": "C00048",
           "required": false,
-          "marker": true,
           "reaction": "R00934"
         },
         {
           "from": "C00024",
           "to": "mcl",
           "required": false,
-          "marker": false,
           "reaction": "R00473",
           "notes": "Ligation: C00024 + C00048 -> C04348"
         },
@@ -441,77 +421,72 @@
           "from": "C00048",
           "to": "mcl",
           "required": false,
-          "marker": false,
           "reaction": "R00473"
         },
         {
           "from": "mcl",
           "to": "C04348",
           "required": false,
-          "marker": false,
           "reaction": "R00473"
         },
         {
           "from": "C04348",
           "to": "mcl2",
           "required": false,
-          "marker": true,
           "reaction": "R10612"
         },
         {
           "from": "mcl2",
           "to": "C00149",
           "required": false,
-          "marker": true,
           "reaction": "R10612"
         },
         {
           "from": "C00100",
           "to": "pccAB",
           "required": false,
-          "marker": false,
           "reaction": "R01859"
         },
         {
           "from": "pccAB",
           "to": "C00683",
           "required": false,
-          "marker": false,
           "reaction": "R01859"
         },
         {
           "from": "C00683",
           "to": "mcee",
           "required": false,
-          "marker": false,
           "reaction": "R09979"
         },
         {
           "from": "mcee",
           "to": "C01213",
           "required": false,
-          "marker": false,
           "reaction": "R09979"
         },
         {
           "from": "C01213",
           "to": "mutAB",
           "required": false,
-          "marker": false,
           "reaction": "R00833"
         },
         {
           "from": "mutAB",
           "to": "C00091",
           "required": false,
-          "marker": false,
           "reaction": "R00833"
         }
       ],
       "scoring": {
-        "min_fraction": 0.7,
-        "marker_mode": "any"
-      }
+        "min_fraction": 0.7
+      },
+      "markers": [
+        "ccr",
+        "ecm",
+        "mcl",
+        "mcl2"
+      ]
     }
   }
 }

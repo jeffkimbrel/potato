@@ -91,51 +91,48 @@
           "from": "C00311",
           "to": "aceA",
           "required": true,
-          "marker": true,
           "reaction": "R00479"
         },
         {
           "from": "aceA",
           "to": "C00042",
           "required": true,
-          "marker": true,
           "reaction": "R00479"
         },
         {
           "from": "aceA",
           "to": "C00048",
           "required": true,
-          "marker": true,
           "reaction": "R00479"
         },
         {
           "from": "C00024",
           "to": "aceB",
           "required": true,
-          "marker": true,
           "reaction": "R00472"
         },
         {
           "from": "C00048",
           "to": "aceB",
           "required": true,
-          "marker": true,
           "reaction": "R00472"
         },
         {
           "from": "aceB",
           "to": "C00149",
           "required": true,
-          "marker": true,
           "reaction": "R00472"
         }
       ],
       "scoring": {
         "min_fraction": 1.0,
         "max_gaps": 0,
-        "marker_mode": "all",
         "notes": "Both enzymes required for functional shunt"
-      }
+      },
+      "markers": [
+        "aceA",
+        "aceB"
+      ]
     }
   }
 }
