@@ -3,14 +3,13 @@
 #' Shows pathway flow with genes, compounds, and structure
 #'
 #' @param potato Potato S7 object, v2 potato object, or path to JSON
-#' @param compact Show compact one-line view (default: TRUE)
-#' @param show_compounds Include compound names in flow (default: TRUE, ignored if compact)
+#' @param show_compounds Include compound names in flow (default: TRUE)
 #' @param show_databases Show database annotations (kofam, blast, hmm, etc.) (default: FALSE)
 #' @param show_ec Show EC numbers (default: FALSE)
 #'
 #' @export
 
-print_potato <- function(potato, compact = TRUE, show_compounds = TRUE, show_databases = FALSE, show_ec = FALSE) {
+print_potato <- function(potato, show_compounds = TRUE, show_databases = FALSE, show_ec = FALSE) {
 
   # Load if path provided
   if (is.character(potato)) {

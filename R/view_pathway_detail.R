@@ -92,13 +92,18 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     # Check if this is a complex
     is_complex <- !is.null(gene$type) && gene$type == "complex"
 
+    # Check if this gene/complex appears in edges (= appears as node in graph)
+    pathway_edges <- pathway_info$edges
+    in_graph <- any(sapply(pathway_edges, function(e) {
+      e$from == gene$id || e$to == gene$id
+    }))
+
     if (is_complex) {
       # Complex entry - show components instead of databases
       component_str <- paste(gene$components, collapse = ", ")
       db_str <- paste0("<em>Complex components: ", component_str, "</em>")
 
       # Get pathway-specific attributes from edges
-      pathway_edges <- pathway_info$edges
       is_required <- any(sapply(pathway_edges, function(e) {
         (e$from == gene$id || e$to == gene$id) && !is.null(e$required) && e$required
       }))
@@ -129,7 +134,10 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
         reactions = "",
         databases = db_str,
         pathways = paste(pathway_display, collapse = ", "),
-        notes = gene$notes %||% ""
+        notes = gene$notes %||% "",
+        in_graph = in_graph,
+        is_complex = TRUE,
+        gene_type = "complex"
       )
     } else {
       # Regular gene entry
@@ -198,7 +206,10 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
         reactions = paste(reactions_formatted, collapse = ", "),
         databases = db_str,
         pathways = paste(pathway_display, collapse = ", "),
-        notes = gene$notes %||% ""
+        notes = gene$notes %||% "",
+        in_graph = in_graph,
+        is_complex = FALSE,
+        gene_type = gene$type %||% "enzyme"
       )
     }
   })
@@ -289,12 +300,27 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
   # Build gene table
   table_rows <- sapply(rows, function(row) {
+    # Style hierarchy:
+    # 1. Chaperones/accessory genes = green (regulatory/non-catalytic)
+    # 2. In graph (complexes/genes in edges) = blue and bold (functional units)
+    # 3. Components only = black normal (subunits)
+    if (row$gene_type == "chaperone") {
+      id_style <- "style='color: #28a745; font-weight: bold;'"
+      name_style <- "style='color: #28a745; font-weight: bold;'"
+    } else if (row$in_graph) {
+      id_style <- "style='color: #2196F3; font-weight: bold;'"
+      name_style <- "style='color: #2196F3; font-weight: bold;'"
+    } else {
+      id_style <- ""
+      name_style <- ""
+    }
+
     paste0(
       "<tr>",
-      "<td>", row$id, "</td>",
+      "<td ", id_style, ">", row$id, "</td>",
       "<td>", ifelse(row$required, "✓", ""), "</td>",
       "<td>", ifelse(row$marker, "✓", ""), "</td>",
-      "<td>", row$name, "</td>",
+      "<td ", name_style, ">", row$name, "</td>",
       "<td>", row$ec, "</td>",
       "<td>", row$reactions, "</td>",
       "<td>", row$databases, "</td>",
@@ -316,7 +342,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       return(paste0(compound$name, " [", node_id, "]"))
     }
     # It's a gene - return with blue color
-    return(paste0("<span style='color: #216ADE;'>", node_id, "</span>"))
+    return(paste0("<span style='color: #2196F3;'>", node_id, "</span>"))
   }
 
   # Build consolidated rows: compound → gene → compound

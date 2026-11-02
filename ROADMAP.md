@@ -47,6 +47,73 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 
 ---
 
+## V3 Schema Considerations (Future Breaking Changes)
+
+V2 schema is frozen. The following features would require V3 (breaking changes).
+
+### Negative Gene Selection / Exclusion Logic **[V3 CANDIDATE]**
+
+**Problem:** Cannot distinguish specialist pathways from complete pathways when one is nested in another.
+
+**Real-world case: Denitrification**
+- **N2O sink (specialist)**: has nosZ, **does NOT have** nirK/nirS/norBC
+- **Complete denitrifier**: has nosZ **AND** nirK/nirS/norBC
+
+Currently, both score positive for "N2O sink" pathway because they both have nosZ. No way to specify "must lack these genes."
+
+**Other use cases:**
+- Sulfur oxidizers that **don't** do sulfate reduction
+- Ammonia oxidizers that **don't** have complete nitrification  
+- "Has this gene but NOT that paralog"
+- Distinguishing partial vs complete metabolic modules
+
+**Potential V3 features:**
+
+**Option 1: Pathway-level exclusions**
+```json
+{
+  "pathways": {
+    "n2o_sink_specialist": {
+      "name": "N2O Sink (specialist, no upstream denitrification)",
+      "genes": ["nosZ"],
+      "exclude_genes": ["nirK", "nirS", "norB", "norC"],
+      "notes": "Has nosZ but lacks upstream denitrification genes"
+    }
+  }
+}
+```
+
+**Option 2: Edge-level exclusions**
+```json
+{
+  "edges": [
+    {"from": "N2O", "to": "nosZ", "required": true, "excluded": false},
+    {"from": "NO", "to": "nirK", "required": false, "excluded": true}
+  ]
+}
+```
+
+**Option 3: Boolean gene logic**
+```json
+{
+  "pathways": {
+    "n2o_sink_specialist": {
+      "gene_logic": "(nosZ) AND NOT (nirK OR nirS OR norB OR norC)"
+    }
+  }
+}
+```
+
+**Current workaround (V2):**
+- Keep nested pathways separate
+- Document in notes: "N2O sink includes specialists. Complete denitrifiers also score positive."
+- Users interpret presence patterns from multiple pathways
+- Pathway table in `view_pathway_detail()` shows which genes contribute to which pathways
+
+**Decision:** Defer to V3. V2 can represent the biology, users can interpret overlaps.
+
+---
+
 ## Data Integrity & Workflow
 
 ### Potato Splitting and Merging **[HIGH PRIORITY]**
@@ -750,6 +817,42 @@ ED network: transport + npED → gluconate available → FUNCTIONAL
 - [ ] Consider interactive toggle for complexity control
 
 **Example:** Nitrogen fixation with nifF (electron carrier) would show nifF as ghost node near nifHDK complex.
+
+---
+
+### Multi-Pathway Gene Context Visualization **[LOW PRIORITY]**
+
+**Problem:** When visualizing multi-pathway networks, the same gene may appear in different functional contexts across pathways:
+- Solo in one pathway (e.g., `geneA` referenced directly in edges)
+- Part of complex ABC in another pathway (edges reference `ABC` which contains `geneA`)
+- Part of different complex AB in third pathway (edges reference `AB` which also contains `geneA`)
+
+**Current behavior:**
+- Graph shows separate nodes: `geneA`, `ABC`, `AB`
+- Convex hulls correctly show which pathway uses which node
+- No visual indication that these nodes share component genes
+- ✅ **Validation warning** added (v0.14.4): warns when genes appear in different functional contexts
+
+**Visual line colors in use:**
+- **Red dashed**: Same gene, multiple reactions (e.g., mcee_R02765 vs mcee_R09979)
+- **Green dashed**: Alternative genes with same inputs/outputs (e.g., nirK vs nirS)
+- **Blue solid**: Regular pathway edges
+
+**Proposed solution:**
+- **Purple/magenta dashed lines**: Connect nodes that share one or more component genes
+- Example: Purple line from `ABC` → `geneA` → `AB` to show geneA is shared
+
+**Current status:**
+- No real-world examples encountered yet in existing potatoes
+- Validation catches and warns about these cases
+- Can implement when actual use case arises
+
+**Implementation when needed:**
+
+- [ ] Detect nodes (complexes or genes) that share component genes across pathways
+- [ ] Draw purple/magenta dashed lines between shared-component nodes
+- [ ] Add legend entry: "Shared component genes"
+- [ ] Consider tooltip showing which genes are shared
 
 ---
 

@@ -657,6 +657,82 @@ validate_multi_pathway <- function(data, strict) {
                                     paste(orphaned_compounds, collapse = ", ")))
   }
 
+  # Check for genes appearing in different functional contexts across pathways
+  # (solo in one pathway, complexed in another, or in different complexes)
+  if (!is.null(data$genes) && !is.null(data$pathways)) {
+    # Build map of which complexes contain which genes
+    complex_map <- list()
+    for (gene in data$genes) {
+      if (!is.null(gene$type) && gene$type == "complex" && !is.null(gene$components)) {
+        complex_map[[gene$id]] <- gene$components
+      }
+    }
+
+    # For each gene, track which node IDs reference it across pathways
+    gene_contexts <- list()
+    for (pathway_id in names(data$pathways)) {
+      pathway <- data$pathways[[pathway_id]]
+      if (!is.null(pathway$edges)) {
+        # Get all node IDs used in edges
+        edge_nodes <- unique(c(
+          sapply(pathway$edges, function(e) e$from),
+          sapply(pathway$edges, function(e) e$to)
+        ))
+
+        # For each edge node, determine which genes it represents
+        for (node_id in edge_nodes) {
+          if (node_id %in% names(complex_map)) {
+            # It's a complex - record each component
+            for (comp_id in complex_map[[node_id]]) {
+              if (is.null(gene_contexts[[comp_id]])) {
+                gene_contexts[[comp_id]] <- list()
+              }
+              gene_contexts[[comp_id]][[length(gene_contexts[[comp_id]]) + 1]] <- list(
+                node = node_id,
+                pathway = pathway_id,
+                is_complex = TRUE
+              )
+            }
+          } else if (node_id %in% gene_ids) {
+            # It's a solo gene
+            if (is.null(gene_contexts[[node_id]])) {
+              gene_contexts[[node_id]] <- list()
+            }
+            gene_contexts[[node_id]][[length(gene_contexts[[node_id]]) + 1]] <- list(
+              node = node_id,
+              pathway = pathway_id,
+              is_complex = FALSE
+            )
+          }
+        }
+      }
+    }
+
+    # Check for genes with multiple different contexts
+    for (gene_id in names(gene_contexts)) {
+      contexts <- gene_contexts[[gene_id]]
+      if (length(contexts) > 1) {
+        # Get unique node IDs
+        node_ids <- unique(sapply(contexts, function(c) c$node))
+        if (length(node_ids) > 1) {
+          # Gene appears in different functional contexts
+          context_descriptions <- sapply(node_ids, function(nid) {
+            if (nid == gene_id) {
+              "solo"
+            } else {
+              sprintf("complex %s", nid)
+            }
+          })
+          warnings <- c(warnings, sprintf(
+            "Gene '%s' appears in different functional contexts: %s. Multi-pathway visualizations may show disconnected nodes.",
+            gene_id,
+            paste(context_descriptions, collapse = ", ")
+          ))
+        }
+      }
+    }
+  }
+
   list(valid = length(errors) == 0, errors = errors, warnings = warnings)
 }
 
