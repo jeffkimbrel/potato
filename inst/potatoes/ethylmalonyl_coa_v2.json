@@ -486,6 +486,11 @@
         "ecm",
         "mcl",
         "mcl2"
+      ],
+      "tags": [
+        "carbon",
+        "glyoxylate",
+        "diagnostic"
       ]
     }
   }

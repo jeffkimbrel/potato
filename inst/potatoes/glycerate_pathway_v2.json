@@ -106,7 +106,7 @@
     "main": {
       "name": "Glycerate Pathway",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "Three-step pathway: glyoxylate → tartronate semialdehyde → D-glycerate → 2-phosphoglycerate. Final kinase step can use glxK (K00865) or gck (K11529) as alternatives.",
       "input": [
         "C00048"
@@ -178,6 +178,11 @@
       "markers": [
         "gcl",
         "glxR"
+      ],
+      "tags": [
+        "carbon",
+        "glyoxylate",
+        "diagnostic"
       ]
     }
   }

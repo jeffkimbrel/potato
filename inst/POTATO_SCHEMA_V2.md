@@ -1,8 +1,8 @@
 # POTATO V2 Schema Reference
 
 **Schema Version:** `v2` (frozen/stable)  
-**Package Version:** v0.14.4+  
-**Last Updated:** 2026-10-30
+**Package Version:** v0.14.5+  
+**Last Updated:** 2026-11-02
 
 This document defines the V2 schema for POTATO pathway definition files (potatoes). The V2 schema is frozen and stable - breaking changes would require V3.
 
@@ -165,6 +165,7 @@ Each potato can have multiple pathways (alternative variants, independent functi
     "type": "variant",
     "verified": false,
     "notes": "Pathway-specific biological context",
+    "tags": ["nitrogen", "anaerobic", "diagnostic"],
     
     "genes": ["geneA", "geneB", "geneC"],
     "markers": ["geneA", "geneB"],
@@ -175,8 +176,7 @@ Each potato can have multiple pathways (alternative variants, independent functi
     
     "scoring": {
       "min_fraction": 0.75,
-      "max_gaps": 0,
-      "marker_mode": "any"
+      "max_gaps": 0
     }
   }
 }
@@ -196,8 +196,9 @@ Each potato can have multiple pathways (alternative variants, independent functi
 
 - `notes` - Pathway-specific biological context
 - `kegg_module` - KEGG module ID if applicable
+- `tags` - Array of pathway-specific classification tags (e.g., ["nitrogen", "anaerobic", "diagnostic"])
 - `genes` - Explicit gene list (includes non-catalytic genes like chaperones). If omitted, genes inferred from edges.
-- `markers` - **NEW in v0.14.4**. Array of gene IDs that are diagnostic markers (see Marker Genes below)
+- `markers` - Array of gene IDs that are diagnostic markers (individual genes, NOT complexes)
 - `input` - Array of compound IDs defining pathway start (required for gap-based scoring)
 - `output` - Array of compound IDs defining pathway end (required for gap-based scoring)
 
@@ -205,14 +206,13 @@ Each potato can have multiple pathways (alternative variants, independent functi
 
 ## Edges (Bipartite Graph)
 
-Edges connect genes AND compounds in a bipartite graph. Attributes like `required` and `marker` live on edges, not genes.
+Edges connect genes AND compounds in a bipartite graph. The `required` attribute lives on edges (not genes) because same gene can be required in one pathway but optional in another.
 
 ```json
 {
   "from": "C00697",
   "to": "nifH",
   "required": true,
-  "marker": false,
   "reaction": "R05185"
 }
 ```
@@ -221,16 +221,17 @@ Edges connect genes AND compounds in a bipartite graph. Attributes like `require
 - `from` - **Required**. Gene ID or compound ID
 - `to` - **Required**. Gene ID or compound ID
 - `required` - **Required**. Boolean. Is this edge required for pathway functionality?
-- `marker` - **Required**. Boolean. Is this edge diagnostic? (see Marker Genes)
 - `reaction` - Optional. KEGG reaction ID
+
+**DEPRECATED:** `marker` field on edges (v0.14.5+). Use pathway-level `markers` array instead.
 
 **Important:**
 - Edges can connect: compound→gene, gene→compound, or gene→gene
-- Same gene can have different `required`/`marker` values in different pathways
+- Same gene can have different `required` values in different pathways
 - Edges can reference complex IDs (e.g., `"to": "nifHDK"`)
 - Empty edges array is valid for transport pathways with no internal reactions
 
-**Why edge-level attributes?** Same gene can act on different substrates in different pathways. Edge-level attributes capture this pathway-specific context.
+**Why edge-level `required`?** Same gene can act on different substrates in different pathways. Edge-level attributes capture this pathway-specific context.
 
 ---
 
@@ -238,43 +239,43 @@ Edges connect genes AND compounds in a bipartite graph. Attributes like `require
 
 **Marker genes** are diagnostic - their presence strongly indicates pathway presence.
 
-### Two Ways to Define Markers
+### Pathway-Level Markers (v0.14.5+)
 
-**Option 1: Pathway-level field** (v0.14.4+, recommended)
+**RECOMMENDED METHOD:** Define markers at pathway level:
 
 ```json
 "pathways": {
   "nitrogen_fixation": {
-    "markers": ["nifH", "vnfH"],
-    "scoring": {
-      "marker_mode": "any"
-    }
+    "markers": ["nifH", "vnfH"]
   }
 }
 ```
 
 Gene IDs must exist in pathway's `genes` array (explicit or inferred from edges).
 
-**Option 2: Edge-level attribute** (original method)
+**Guidelines:**
+- List individual genes (NOT complex IDs) - e.g., `["urtA"]` not `["urtABCDE"]`
+- For complexes: list most diagnostic component(s) - e.g., `["nirB"]` from nirBD complex
+- Markers = diagnostic genes only, not comprehensive lists
+- Use biological judgment: which genes are pathway-specific?
+
+### Edge-Level Marker Attribute (DEPRECATED)
 
 ```json
 "edges": [
-  {"from": "substrate", "to": "nifH", "marker": true}
+  {"from": "substrate", "to": "nifH", "marker": true}  // DEPRECATED - use pathway-level markers
 ]
 ```
 
-**Both methods work.** Pathway-level is cleaner when:
-- Marker genes are in complexes (can't mark individual components via edges)
-- Marker genes are non-catalytic (not in edges at all)
-- Multiple edges reference same marker (avoid repetition)
+**Status:** Edge-level `marker` attribute deprecated in v0.14.5. Validation warns if present. Use pathway-level `markers` array instead.
 
 ### Marker Mode
 
-`marker_mode` in scoring block controls how markers are evaluated:
-- `"any"` - Pathway present if ANY marker detected
-- `"all"` - Pathway present only if ALL markers detected
+`marker_mode` is a **runtime parameter** for `run_kofam()`, NOT a potato field:
+- `run_kofam(marker_mode = "any")` - Screen for pathway presence using markers only
+- `run_kofam(marker_mode = "all")` - Require all markers detected
 
-**Note:** Marker mode scoring is not yet fully implemented (infrastructure in place, logic pending).
+**Removed from schema (v0.14.5):** `marker_mode` field in potato scoring blocks. Validation warns if present.
 
 ---
 
@@ -286,8 +287,7 @@ Two scoring methods available (can use both simultaneously):
 
 ```json
 "scoring": {
-  "min_fraction": 0.75,
-  "marker_mode": "any"
+  "min_fraction": 0.75
 }
 ```
 
@@ -306,8 +306,7 @@ Two scoring methods available (can use both simultaneously):
 "input": ["C00697"],
 "output": ["C00014"],
 "scoring": {
-  "max_gaps": 0,
-  "marker_mode": "any"
+  "max_gaps": 0
 }
 ```
 
@@ -333,8 +332,7 @@ Two scoring methods available (can use both simultaneously):
 "output": ["C00014"],
 "scoring": {
   "min_fraction": 0.75,
-  "max_gaps": 1,
-  "marker_mode": "any"
+  "max_gaps": 1
 }
 ```
 
@@ -440,15 +438,14 @@ Pathway passes if **EITHER** method succeeds. Both metrics reported in results.
       "output": ["C00014"],
       
       "edges": [
-        {"from": "C00697", "to": "nifHDK", "required": false, "marker": false, "reaction": "R05185"},
-        {"from": "nifHDK", "to": "C00014", "required": false, "marker": false, "reaction": "R05185"},
-        {"from": "C00697", "to": "vnfHDKG", "required": false, "marker": false},
-        {"from": "vnfHDKG", "to": "C00014", "required": false, "marker": false}
+        {"from": "C00697", "to": "nifHDK", "required": false, "reaction": "R05185"},
+        {"from": "nifHDK", "to": "C00014", "required": false, "reaction": "R05185"},
+        {"from": "C00697", "to": "vnfHDKG", "required": false},
+        {"from": "vnfHDKG", "to": "C00014", "required": false}
       ],
       
       "scoring": {
         "max_gaps": 0,
-        "marker_mode": "any",
         "notes": "Gap-based finds complete Mo-nif OR V-nif route"
       }
     }
@@ -483,10 +480,14 @@ The `validate_potato()` function checks:
 - If `markers` field exists, gene IDs exist in pathway
 
 ### Scoring
-- `marker_mode` is `"any"` or `"all"`
-- If `marker_mode` present, markers defined (pathway-level or edge-level)
 - If `max_gaps` present, `input` and `output` required
 - `min_fraction` not between valid gene fractions (float precision trap)
+- `marker_mode` field deprecated (v0.14.5) - validation warns if present
+
+### Markers
+- Edge-level `marker` attribute deprecated (v0.14.5) - validation warns if present
+- Pathway-level `markers` array: gene IDs must exist in pathway's genes
+- Markers must be individual genes, NOT complex IDs
 
 ### Orphaned Entities
 - All defined genes used in at least one pathway (edges OR explicit `genes` array)
@@ -504,6 +505,10 @@ Features tied to specific package versions:
 - **v0.11.0+** - Simplified input/output (arrays of IDs, not verbose objects)
 - **v0.14.4+** - Pathway-level `markers` field
 - **v0.14.4+** - Complex components automatically marked as "used" in validation
+- **v0.14.5+** - Edge-level `marker` deprecated (use pathway-level `markers`)
+- **v0.14.5+** - `marker_mode` removed from potato schema (runtime parameter only)
+- **v0.14.5+** - Pathway-level and potato-level `tags` for filtering
+- **v0.14.5+** - Dark mode theme support for visualization (`view_pathway_detail`, interactive plots)
 
 Schema version stays `v2` across all these releases - only implementation features evolve.
 

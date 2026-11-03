@@ -50,7 +50,7 @@
     "main": {
       "name": "Glycolate Transport",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "Single permease transports glycolate from external to internal compartment.",
       "edges": [
         {
@@ -81,6 +81,10 @@
       "markers": [
         "lctP",
         "lldP"
+      ],
+      "tags": [
+        "transport",
+        "carbon"
       ]
     }
   }

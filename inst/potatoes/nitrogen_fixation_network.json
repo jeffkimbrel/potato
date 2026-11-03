@@ -143,7 +143,7 @@
     "nitrogen_fixation": {
       "name": "Nitrogen Fixation (Mo or V dependent)",
       "type": "variant",
-      "verified": true,
+      "verified": false,
       "notes": "Biological nitrogen fixation via two alternative nitrogenase systems: Mo-dependent (classical, most common) or V-dependent (used when Mo is scarce). Both reduce N2 to NH3. Either complete system indicates N2 fixation capability. Diagnostic markers: nifH (Mo-nif specific) and vnfH (V-nif specific).",
       "genes": [
         "nifH",
@@ -192,7 +192,13 @@
       "scoring": {
         "max_gaps": 0,
         "notes": "Gap-based scoring finds complete route from N2 to NH3. Either Mo-nif (nifH + nifDK) OR V-nif (vnfH + vnfDKG) constitutes complete pathway. No partial functionality."
-      }
+      },
+      "tags": [
+        "nitrogen",
+        "fixation",
+        "anaerobic",
+        "diagnostic"
+      ]
     }
   }
 }

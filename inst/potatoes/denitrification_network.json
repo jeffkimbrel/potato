@@ -214,7 +214,7 @@
     "complete_denitrification": {
       "name": "Complete Denitrification (Steps 5+6A+6B+6C)",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "Full canonical denitrification: NO3- → NO2- → NO → N2O → N2. All four steps present. Relatively uncommon - most organisms have partial pathways. nirK/nirS are diagnostic markers.",
       "markers": [
         "nirK",
@@ -303,12 +303,19 @@
       "scoring": {
         "max_gaps": 0,
         "notes": "Requires complete route from nitrate to N2. Gap-based scoring ensures all steps present."
-      }
+      },
+      "tags": [
+        "nitrogen",
+        "anaerobic",
+        "respiration",
+        "greenhouse_gas",
+        "diagnostic"
+      ]
     },
     "incomplete_denitrification": {
       "name": "Incomplete Denitrification (Steps 5+6A+6B, no 6C)",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "NO3- → NO2- → NO → N2O (lacks nosZ). Very common. Releases N2O greenhouse gas. Major climate concern. nirK/nirS are diagnostic markers.",
       "markers": [
         "nirK",
@@ -386,12 +393,20 @@
       "scoring": {
         "max_gaps": 0,
         "notes": "Requires complete route to N2O but specifically LACKS nosZ. Use presence pattern to distinguish from complete denitrifiers."
-      }
+      },
+      "tags": [
+        "nitrogen",
+        "anaerobic",
+        "respiration",
+        "greenhouse_gas",
+        "climate",
+        "diagnostic"
+      ]
     },
     "n2o_sink": {
       "name": "N2O Sink (Step 6C only)",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "N2O → N2. Organisms with just nosZ that consume environmental N2O. Ecologically important for climate mitigation. NOTE: Complete denitrifiers also score positive for this pathway (nested subset).",
       "markers": [
         "nosZ"
@@ -420,12 +435,18 @@
       "scoring": {
         "max_gaps": 0,
         "notes": "Single gene pathway. Includes specialists (just nosZ) AND complete denitrifiers (have all genes). Check pathway membership table to distinguish."
-      }
+      },
+      "tags": [
+        "nitrogen",
+        "climate",
+        "greenhouse_gas",
+        "diagnostic"
+      ]
     },
     "nitrite_denitrification": {
       "name": "Nitrite Denitrification (Steps 6A+6B+6C, no 5)",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "NO2- → NO → N2O → N2. Starts from nitrite instead of nitrate (lacks step 5 narGHI/napAB). Organisms rely on external nitrite or coupled with upstream NO3- reduction by other organisms. nirK/nirS are diagnostic markers.",
       "markers": [
         "nirK",
@@ -489,7 +510,13 @@
       "scoring": {
         "max_gaps": 0,
         "notes": "Requires complete route from nitrite to N2. Specifically LACKS narGHI/napAB. Use presence pattern to distinguish from complete denitrifiers."
-      }
+      },
+      "tags": [
+        "nitrogen",
+        "anaerobic",
+        "respiration",
+        "diagnostic"
+      ]
     }
   }
 }

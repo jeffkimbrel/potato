@@ -388,6 +388,11 @@
         "ureAB",
         "ureB",
         "ureC"
+      ],
+      "tags": [
+        "nitrogen",
+        "degradation",
+        "ubiquitous"
       ]
     },
     "urea_amidolyase": {
@@ -458,6 +463,11 @@
         "AH",
         "UC",
         "UC_AH"
+      ],
+      "tags": [
+        "nitrogen",
+        "degradation",
+        "diagnostic"
       ]
     },
     "urea_transport_abc": {
@@ -496,6 +506,10 @@
       },
       "markers": [
         "urtA"
+      ],
+      "tags": [
+        "transport",
+        "nitrogen"
       ]
     },
     "urea_transport_channel": {
@@ -527,6 +541,10 @@
       },
       "markers": [
         "ureI"
+      ],
+      "tags": [
+        "transport",
+        "nitrogen"
       ]
     },
     "urea_transport_symporter": {
@@ -558,6 +576,10 @@
       },
       "markers": [
         "yut"
+      ],
+      "tags": [
+        "transport",
+        "nitrogen"
       ]
     }
   }

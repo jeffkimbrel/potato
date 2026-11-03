@@ -406,8 +406,9 @@ plot_potato <- function(potato_or_graph, interactive = TRUE, layout = "fr") {
 #' @param g Graph from build_graph()
 #' @param layout Layout algorithm (e.g., "fr", "kk", "circle", "tree", "grid"). Default: "fr"
 #' @param height Height of the plot (default: "100vh")
+#' @param theme Visual theme: "light" (default) or "dark"
 #' @export
-plot_potato_interactive <- function(g, layout = "fr", height = "100vh") {
+plot_potato_interactive <- function(g, layout = "fr", height = "100vh", theme = "light") {
   if (!requireNamespace("visNetwork", quietly = TRUE)) {
     cli::cli_abort(c(
       "Package {.pkg visNetwork} is required for interactive plots",
@@ -491,6 +492,21 @@ plot_potato_interactive <- function(g, layout = "fr", height = "100vh") {
     }
   }
 
+  # Configure theme colors first (for hover tooltips)
+  if (theme == "dark") {
+    node_gene_color <- "#42a5f5"
+    node_compound_color <- "#757575"
+    node_border_color <- "#888888"
+    font_color <- "#e0e0e0"
+    background_color <- "#1e1e1e"
+  } else {
+    node_gene_color <- V2_COLORS$gene
+    node_compound_color <- V2_COLORS$compound
+    node_border_color <- V2_COLORS$border
+    font_color <- "#000000"
+    background_color <- "#ffffff"
+  }
+
   # Calculate layout positions
   layout_func <- switch(layout,
     "fr" = igraph::layout_with_fr,
@@ -534,8 +550,10 @@ plot_potato_interactive <- function(g, layout = "fr", height = "100vh") {
     if (node_type == "compound") {
       nodes_df$shape[i] <- "triangle"
       nodes_df$title[i] <- paste0(
-        "Compound: ", igraph::V(g)[node_name]$label, "<br>",
-        "ID: ", node_name
+        "<div style='background: ", background_color, "; color: ", font_color, "; padding: 8px; border: 1px solid ", node_border_color, ";'>",
+        "<strong>Compound:</strong> ", igraph::V(g)[node_name]$label, "<br>",
+        "<strong>ID:</strong> ", node_name,
+        "</div>"
       )
     } else {
       nodes_df$shape[i] <- "dot"
@@ -597,24 +615,29 @@ plot_potato_interactive <- function(g, layout = "fr", height = "100vh") {
         }
       }
 
-      nodes_df$title[i] <- paste(hover_parts, collapse = "<br>")
+      nodes_df$title[i] <- paste0(
+        "<div style='background: ", background_color, "; color: ", font_color, "; padding: 8px; border: 1px solid ", node_border_color, ";'>",
+        paste(hover_parts, collapse = "<br>"),
+        "</div>"
+      )
     }
   }
 
-  # Color nodes by type (using shared palette)
+  # Color nodes by type
   nodes_df$color.background <- ifelse(
     igraph::V(g)$type == "compound",
-    V2_COLORS$compound,  # Gray for compounds
-    V2_COLORS$gene       # Blue for genes
+    node_compound_color,  # Gray for compounds
+    node_gene_color       # Blue for genes
   )
-  nodes_df$color.border <- V2_COLORS$border
+  nodes_df$color.border <- node_border_color
   nodes_df$color.highlight.background <- nodes_df$color.background
-  nodes_df$color.highlight.border <- V2_COLORS$border
+  nodes_df$color.highlight.border <- node_border_color
+  nodes_df$font.color <- font_color
 
   # Build visNetwork
-  vis <- visNetwork::visNetwork(nodes_df, edges_df, height = height, width = "100%") %>%
+  vis <- visNetwork::visNetwork(nodes_df, edges_df, height = height, width = "100%", background = background_color) %>%
     visNetwork::visNodes(
-      font = list(size = 16),
+      font = list(size = 16, color = font_color),
       borderWidth = 2,
       shadow = FALSE
     ) %>%

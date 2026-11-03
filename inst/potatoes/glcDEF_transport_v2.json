@@ -91,7 +91,7 @@
     "main": {
       "name": "Glycolate Oxidase",
       "type": "independent",
-      "verified": true,
+      "verified": false,
       "notes": "Multi-subunit enzyme complex oxidizes glycolate to glyoxylate. Main reaction is R00475.",
       "genes": [
         "glcD",
@@ -118,6 +118,11 @@
       },
       "markers": [
         "glcD"
+      ],
+      "tags": [
+        "carbon",
+        "glyoxylate",
+        "diagnostic"
       ]
     }
   }

@@ -6,9 +6,10 @@
 #' @param potato Potato S7 object or path to JSON
 #' @param pathway For multi-pathway networks, which pathway to show (single pathway ID only)
 #' @param layout Layout algorithm for visualization: "xy" (curated coords), "fr", "kk", "sugiyama", "tree", "circle", "grid" (default: "fr")
+#' @param theme Visual theme: "light" (default) or "dark"
 #'
 #' @export
-view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
+view_pathway_detail <- function(potato, pathway = NULL, layout = "fr", theme = "light") {
 
   # Load if path provided (V2 only)
   if (is.character(potato)) {
@@ -42,6 +43,69 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   if (!is.null(pathway) && !pathway %in% available_pathways) {
     available <- paste(available_pathways, collapse = ", ")
     cli::cli_abort("Pathway '{pathway}' not found. Available: {available}")
+  }
+
+  # Configure theme colors
+  theme_colors <- if (theme == "dark") {
+    list(
+      bg = "#1e1e1e",
+      text = "#e0e0e0",
+      text_muted = "#999999",
+      heading = "#ffffff",
+      border = "#444444",
+      table_header_bg = "#2d2d2d",
+      table_row_hover = "#2a2a2a",
+      metadata_bg = "#252525",
+      metadata_border = "#4CAF50",
+      scoring_bg = "#2a2a2a",
+      verified_bg = "#1a3a2a",
+      verified_border = "#28a745",
+      verified_text = "#90ee90",
+      unverified_bg = "#3a3020",
+      unverified_border = "#ffc107",
+      unverified_text = "#ffd700",
+      error_text = "#ff6b6b",
+      warning_text = "#ffd700",
+      gene_blue = "#42a5f5",
+      gene_green = "#66bb6a",
+      gene_gray = "#757575",
+      compound_gray = "#888888",
+      link_blue = "#64b5f6",
+      tag_potato_bg = "#1565c0",
+      tag_potato_text = "#e3f2fd",
+      tag_pathway_bg = "#6a1b9a",
+      tag_pathway_text = "#f3e5f5"
+    )
+  } else {
+    list(
+      bg = "#ffffff",
+      text = "#000000",
+      text_muted = "#999999",
+      heading = "#333333",
+      border = "#dddddd",
+      table_header_bg = "#f2f2f2",
+      table_row_hover = "#f5f5f5",
+      metadata_bg = "#f9f9f9",
+      metadata_border = "#4CAF50",
+      scoring_bg = "#f0f0f0",
+      verified_bg = "#d4edda",
+      verified_border = "#28a745",
+      verified_text = "#155724",
+      unverified_bg = "#fff3cd",
+      unverified_border = "#ffc107",
+      unverified_text = "#856404",
+      error_text = "#721c24",
+      warning_text = "#856404",
+      gene_blue = "#2196F3",
+      gene_green = "#28a745",
+      gene_gray = "#999999",
+      compound_gray = "#666666",
+      link_blue = "#2196F3",
+      tag_potato_bg = "#e3f2fd",
+      tag_potato_text = "#000000",
+      tag_pathway_bg = "#f3e5f5",
+      tag_pathway_text = "#000000"
+    )
   }
 
   # Build rows (V2 schema)
@@ -179,7 +243,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
             rxn
           } else {
             # Not in pathway - gray
-            paste0("<span style='color: #999;'>", rxn, "</span>")
+            paste0("<span style='color: ", theme_colors$gene_gray, ";'>", rxn, "</span>")
           }
         })
       } else {
@@ -219,7 +283,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   tryCatch({
     # Create interactive plot with fixed height for embedding
     g <- build_graph(potato, pathway_id = pathway)
-    plot_widget <- plot_potato_interactive(g, layout = layout, height = "600px")
+    plot_widget <- plot_potato_interactive(g, layout = layout, height = "600px", theme = theme)
   }, error = function(e) {
     cli::cli_warn("Could not generate plot: {e$message}")
   })
@@ -256,8 +320,8 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   validation_msgs <- ""
   if (length(validation_result$errors) > 0 || length(validation_result$warnings) > 0) {
     msg_list <- c(
-      if (length(validation_result$errors) > 0) paste0("<li style='color: #721c24;'><strong>Error:</strong> ", validation_result$errors, "</li>"),
-      if (length(validation_result$warnings) > 0) paste0("<li style='color: #856404;'>", validation_result$warnings, "</li>")
+      if (length(validation_result$errors) > 0) paste0("<li style='color: ", theme_colors$error_text, ";'><strong>Error:</strong> ", validation_result$errors, "</li>"),
+      if (length(validation_result$warnings) > 0) paste0("<li style='color: ", theme_colors$warning_text, ";'>", validation_result$warnings, "</li>")
     )
     validation_msgs <- paste0(
       "<p style='margin-top: 10px; margin-bottom: 5px;'><strong>Validation:</strong></p>",
@@ -272,25 +336,55 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   # Build verification status banner
   verification_html <- if (verified) {
     paste0(
-      "<div style='background: #d4edda; padding: 15px; margin-bottom: 15px; border-left: 4px solid #28a745; color: #155724;'>",
+      "<div style='background: ", theme_colors$verified_bg, "; padding: 15px; margin-bottom: 15px; border-left: 4px solid ", theme_colors$verified_border, "; color: ", theme_colors$verified_text, ";'>",
       "<strong>✓ VERIFIED</strong> - This pathway has been manually verified.",
       validation_msgs,
       "</div>"
     )
   } else {
     paste0(
-      "<div style='background: #fff3cd; padding: 15px; margin-bottom: 15px; border-left: 4px solid #ffc107; color: #856404;'>",
+      "<div style='background: ", theme_colors$unverified_bg, "; padding: 15px; margin-bottom: 15px; border-left: 4px solid ", theme_colors$unverified_border, "; color: ", theme_colors$unverified_text, ";'>",
       "<strong>⚠ UNVERIFIED</strong> - This pathway has not been verified.",
       validation_msgs,
       "</div>"
     )
   }
 
+  # Format tags - potato tags (blue) + pathway-specific tags (purple, excluding duplicates)
+  potato_tag_list <- potato@tags %||% character(0)
+  pathway_tag_list <- pathway_info$tags %||% character(0)
+
+  # Filter pathway tags to only those NOT in potato tags
+  pathway_specific_tags <- setdiff(pathway_tag_list, potato_tag_list)
+
+  tags_html <- character(0)
+
+  # Add potato tags (blue)
+  if (length(potato_tag_list) > 0) {
+    tags_html <- c(tags_html, sapply(potato_tag_list, function(t) {
+      paste0("<span style='background: ", theme_colors$tag_potato_bg, "; color: ", theme_colors$tag_potato_text, "; padding: 3px 8px; margin: 2px; border-radius: 3px; font-size: 0.9em;'>", t, "</span>")
+    }))
+  }
+
+  # Add pathway-specific tags (purple)
+  if (length(pathway_specific_tags) > 0) {
+    tags_html <- c(tags_html, sapply(pathway_specific_tags, function(t) {
+      paste0("<span style='background: ", theme_colors$tag_pathway_bg, "; color: ", theme_colors$tag_pathway_text, "; padding: 3px 8px; margin: 2px; border-radius: 3px; font-size: 0.9em;'>", t, "</span>")
+    }))
+  }
+
+  tags_display <- if (length(tags_html) > 0) {
+    paste(tags_html, collapse = " ")
+  } else {
+    paste0("<span style='color: ", theme_colors$text_muted, ";'>None</span>")
+  }
+
   # Build metadata section
   metadata_html <- paste0(
     verification_html,
-    "<div style='background: #f9f9f9; padding: 15px; margin-bottom: 20px; border-left: 4px solid #4CAF50;'>",
+    "<div style='background: ", theme_colors$metadata_bg, "; padding: 15px; margin-bottom: 20px; border-left: 4px solid ", theme_colors$metadata_border, "; color: ", theme_colors$text, ";'>",
     "<p><strong>Source:</strong> ", source_info, "</p>",
+    "<p><strong>Tags:</strong> ", tags_display, "</p>",
     if (nchar(potato_notes) > 0) paste0("<p><strong>Potato Description:</strong> ", potato_notes, "</p>") else "",
     if (nchar(pathway_notes) > 0) paste0("<p><strong>Pathway Notes:</strong> ", pathway_notes, "</p>") else "",
     if (!is.null(input_info)) paste0("<p><strong>Input:</strong> ", input_info$display, "</p>") else "",
@@ -303,13 +397,13 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
     # Style hierarchy:
     # 1. Chaperones/accessory genes = green (regulatory/non-catalytic)
     # 2. In graph (complexes/genes in edges) = blue and bold (functional units)
-    # 3. Components only = black normal (subunits)
+    # 3. Components only = normal (subunits)
     if (row$gene_type == "chaperone") {
-      id_style <- "style='color: #28a745; font-weight: bold;'"
-      name_style <- "style='color: #28a745; font-weight: bold;'"
+      id_style <- paste0("style='color: ", theme_colors$gene_green, "; font-weight: bold;'")
+      name_style <- paste0("style='color: ", theme_colors$gene_green, "; font-weight: bold;'")
     } else if (row$in_graph) {
-      id_style <- "style='color: #2196F3; font-weight: bold;'"
-      name_style <- "style='color: #2196F3; font-weight: bold;'"
+      id_style <- paste0("style='color: ", theme_colors$gene_blue, "; font-weight: bold;'")
+      name_style <- paste0("style='color: ", theme_colors$gene_blue, "; font-weight: bold;'")
     } else {
       id_style <- ""
       name_style <- ""
@@ -342,7 +436,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       return(paste0(compound$name, " [", node_id, "]"))
     }
     # It's a gene - return with blue color
-    return(paste0("<span style='color: #2196F3;'>", node_id, "</span>"))
+    return(paste0("<span style='color: ", theme_colors$gene_blue, ";'>", node_id, "</span>"))
   }
 
   # Build consolidated rows: compound → gene → compound
@@ -457,7 +551,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
   edges_rows <- unique(edges_rows)
 
   edges_html <- paste0(
-    "<h3>Pathway Topology</h3>",
+    "<h3 style='color: ", theme_colors$heading, ";'>Pathway Topology</h3>",
     "<ul style='list-style-type: none; padding-left: 0;'>",
     paste(edges_rows, collapse = "\n"),
     "</ul>"
@@ -465,11 +559,10 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
 
   # Build scoring section
   scoring_html <- paste0(
-    "<h3>Scoring Parameters</h3>",
-    "<div style='background: #f0f0f0; padding: 10px; margin-bottom: 20px;'>",
+    "<h3 style='color: ", theme_colors$heading, ";'>Scoring Parameters</h3>",
+    "<div style='background: ", theme_colors$scoring_bg, "; padding: 10px; margin-bottom: 20px; color: ", theme_colors$text, ";'>",
     if (!is.null(scoring_info$min_fraction)) paste0("<p><strong>Min Fraction:</strong> ", scoring_info$min_fraction, "</p>") else "",
     if (!is.null(scoring_info$max_gaps)) paste0("<p><strong>Max Gaps:</strong> ", scoring_info$max_gaps, "</p>") else "",
-    "<p><strong>Marker Mode:</strong> ", scoring_info$marker_mode %||% "any", "</p>",
     "</div>"
   )
 
@@ -481,18 +574,19 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       htmltools::tags$head(
         htmltools::tags$meta(charset = "utf-8"),
         htmltools::tags$title(title),
-        htmltools::tags$style(htmltools::HTML("
-          body { font-family: sans-serif; margin: 20px; max-width: 1800px; }
+        htmltools::tags$style(htmltools::HTML(paste0("
+          body { font-family: sans-serif; margin: 20px; max-width: 1800px; background-color: ", theme_colors$bg, "; color: ", theme_colors$text, "; }
           table { border-collapse: collapse; width: 100%; margin-bottom: 20px; table-layout: auto; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; word-wrap: break-word; }
-          th { background-color: #f2f2f2; font-weight: bold; }
-          tr:hover { background-color: #f5f5f5; }
-          h2 { color: #333; }
-          h3 { color: #666; margin-top: 20px; }
+          th, td { border: 1px solid ", theme_colors$border, "; padding: 8px; text-align: left; vertical-align: top; word-wrap: break-word; }
+          th { background-color: ", theme_colors$table_header_bg, "; font-weight: bold; color: ", theme_colors$text, "; }
+          tr:hover { background-color: ", theme_colors$table_row_hover, "; }
+          h1 { color: ", theme_colors$heading, "; }
+          h2 { color: ", theme_colors$heading, "; }
+          h3 { color: ", theme_colors$heading, "; margin-top: 20px; }
           .top-container { display: flex; gap: 20px; margin-bottom: 30px; }
           .metadata-col { flex: 0 0 48%; }
           .viz-col { flex: 0 0 48%; }
-        "))
+        ")))
       ),
       htmltools::tags$body(
         htmltools::tags$h1(title),
@@ -507,7 +601,7 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
             htmltools::tags$div(style = "height: 500px;", plot_widget)
           )
         ),
-        htmltools::tags$h3("Genes"),
+        htmltools::tags$h3(style = paste0("color: ", theme_colors$heading, ";"), "Genes"),
         htmltools::HTML(paste0(
           "<table><tr>",
           "<th>Gene ID</th><th>Required</th><th>Marker</th>",
@@ -532,19 +626,20 @@ view_pathway_detail <- function(potato, pathway = NULL, layout = "fr") {
       "<meta charset='utf-8'>",
       "<title>", title, "</title>",
       "<style>",
-      "body { font-family: sans-serif; margin: 20px; max-width: 1600px; }",
+      "body { font-family: sans-serif; margin: 20px; max-width: 1600px; background-color: ", theme_colors$bg, "; color: ", theme_colors$text, "; }",
       "table { border-collapse: collapse; width: 100%; margin-bottom: 20px; table-layout: auto; }",
-      "th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; word-wrap: break-word; }",
-      "th { background-color: #f2f2f2; font-weight: bold; }",
-      "tr:hover { background-color: #f5f5f5; }",
-      "h2 { color: #333; }",
-      "h3 { color: #666; margin-top: 20px; }",
+      "th, td { border: 1px solid ", theme_colors$border, "; padding: 8px; text-align: left; vertical-align: top; word-wrap: break-word; }",
+      "th { background-color: ", theme_colors$table_header_bg, "; font-weight: bold; color: ", theme_colors$text, "; }",
+      "tr:hover { background-color: ", theme_colors$table_row_hover, "; }",
+      "h1 { color: ", theme_colors$heading, "; }",
+      "h2 { color: ", theme_colors$heading, "; }",
+      "h3 { color: ", theme_colors$heading, "; margin-top: 20px; }",
       "</style>",
       "</head>",
       "<body>",
       "<h1>", title, "</h1>",
       metadata_html,
-      "<h3>Genes</h3>",
+      "<h3 style='color: ", theme_colors$heading, ";'>Genes</h3>",
       "<table>",
       "<tr>",
       "<th>Gene ID</th>",

@@ -70,6 +70,8 @@ Below is a condensed overview. Refer to the full schema document for details.
       "name": "Pathway Name",
       "type": "variant",              // or "independent"
       "verified": false,              // ALWAYS false - NEVER set to true
+      "tags": ["nitrogen", "anaerobic", "diagnostic"],  // OPTIONAL: pathway-specific tags
+      "markers": ["geneA"],           // Diagnostic marker genes (individual genes, NOT complexes)
       "input": ["C00001"],            // RECOMMENDED: array of starting compound IDs
       "output": ["C00002"],           // RECOMMENDED: array of ending compound IDs
       "edges": [/* bipartite graph: genes + compounds */],
@@ -106,13 +108,20 @@ For transport pathways, use location qualifiers: "NH4_external", "NH4_internal"
 Edges connect genes AND compounds. Attributes live on edges (not genes) because same gene can have different roles in different pathways.
 
 ```json
-{"from": "C00031", "to": "geneA", "required": true, "marker": false, "reaction": "R00001"}
+{"from": "C00031", "to": "geneA", "required": true, "reaction": "R00001"}
 ```
+
+**NO marker on edges** - deprecated! Use pathway-level `markers` array instead.
 
 **OR branches:** When alternatives exist (nirK | nirS), all get `required: true` (means "at least one needed"):
 ```json
-{"from": "C00088", "to": "nirK", "required": true, "marker": true},
-{"from": "C00088", "to": "nirS", "required": true, "marker": true}
+{"from": "C00088", "to": "nirK", "required": true},
+{"from": "C00088", "to": "nirS", "required": true}
+```
+
+And then in pathway definition:
+```json
+"markers": ["nirK", "nirS"]
 ```
 
 **Empty edges allowed** for transport pathways with no internal reactions.
@@ -134,14 +143,62 @@ Edges connect genes AND compounds. Attributes live on edges (not genes) because 
 
 ### Marker Genes
 
-**Two ways to define markers:**
+**CRITICAL: Pathway-Level Markers Only (v0.14.5+)**
 
-1. **Pathway-level** (v0.14.4+, recommended): `"markers": ["nifH", "vnfH"]`
-2. **Edge-level**: `{"from": "X", "to": "nifH", "marker": true}`
+Markers are now ONLY defined at pathway level in a `markers` array:
 
-Use pathway-level when markers are in complexes or non-catalytic genes not in edges.
+```json
+"markers": ["nirK", "nirS"]
+```
 
-**Marker mode:** `"any"` (≥1 marker detected) or `"all"` (all markers detected)
+**Edge-level marker attributes are DEPRECATED** - validation will warn if present.
+
+**Marker Curation Guidelines:**
+
+- **Markers = diagnostic genes only**, not comprehensive lists
+- List individual genes (NOT complex IDs) - e.g., `["urtA"]` not `["urtABCDE"]`
+- For complexes: list most diagnostic component(s) - e.g., `["nirB"]` from nirBD complex
+- Use biological judgment: which genes are pathway-specific/diagnostic?
+- Check pathway notes for guidance (e.g., "glcD is the marker gene")
+
+**Examples:**
+- ✅ Good: `["nirK", "nirS"]` - diagnostic for denitrification
+- ✅ Good: `["nifH"]` - single diagnostic gene
+- ❌ Bad: All 10 pathway genes listed as markers
+- ❌ Bad: Complex ID `["ureABC"]` instead of components
+
+**Marker mode:** Runtime parameter for `run_kofam(marker_mode = "any")`, NOT a potato field
+
+### Tags (Potato-Level and Pathway-Level)
+
+**Potato-level tags** (broad classification):
+```json
+"tags": ["nitrogen", "metabolism", "respiration"]
+```
+
+**Pathway-level tags** (pathway-specific):
+```json
+"pathways": {
+  "complete_denitrification": {
+    "tags": ["nitrogen", "anaerobic", "respiration", "greenhouse_gas", "diagnostic"]
+  }
+}
+```
+
+**Tag categories to use:**
+- Element cycles: `nitrogen`, `carbon`, `phosphorus`, `sulfur`
+- Metabolism: `aerobic`, `anaerobic`, `fermentation`, `metabolism`
+- Function: `respiration`, `assimilation`, `biosynthesis`, `degradation`, `fixation`, `transport`
+- Specificity: `diagnostic` (unique markers), `ubiquitous` (widespread)
+- Environment: `marine`, `soil`, `extreme`, `gut`
+- Impact: `greenhouse_gas`, `climate`, `biogeochemical`, `phytohormone`
+- Pathway type: `glycolysis`, `glyoxylate`, `cycle`
+
+**Guidelines:**
+- Potato tags = broad categories shared by all pathways
+- Pathway tags = specific to that pathway's function/significance
+- Tags enable future filtering (e.g., run only nitrogen-cycle potatoes)
+- Avoid redundancy: pathway tags that duplicate potato tags are filtered in display
 
 ### Critical Rules
 
@@ -150,6 +207,9 @@ Use pathway-level when markers are in complexes or non-catalytic genes not in ed
 - **Database types:** Only `kofam`, `blast`, `hmm` (PFAM goes in `hmm`)
 - **Complexes in edges:** Reference complex ID (not components) for clean topology
 - **Pathway types:** `variant` (alternatives) or `independent` (different functions)
+- **Markers:** Pathway-level only (`"markers": ["geneA"]`), NOT on edges
+- **marker_mode:** REMOVED from potato schema (runtime parameter only, not a potato field)
+- **Tags:** Optional potato-level and pathway-level tags for filtering
 
 For complete field definitions, validation rules, and examples, see [inst/POTATO_SCHEMA_V2.md](../POTATO_SCHEMA_V2.md).
 
@@ -229,8 +289,8 @@ Each pathway defines its own topology and attributes:
     },
     
     "scoring": {
-      "min_fraction": 0.75,
-      "marker_mode": "any"
+          "min_fraction": 0.75
+      
     }
   }
 }
@@ -956,7 +1016,7 @@ Gene sheet:
   ],
   
   "scoring": {
-    "min_fraction": 0.75,
+        "min_fraction": 0.75
     "notes": "Default threshold - original GATOR v1 didn't specify thresholds"
   }
 }
@@ -1870,13 +1930,14 @@ Edges connect genes AND compounds:
 ```json
 {
   "edges": [
-    {"from": "C00048", "to": "gcl", "required": true, "marker": true, "reaction": "R00013"},
-    {"from": "gcl", "to": "C01146", "required": true, "marker": true, "reaction": "R00013"},
-    {"from": "C01146", "to": "glxR", "required": true, "marker": true, "reaction": "R10052"},
-    {"from": "glxR", "to": "C00258", "required": true, "marker": true, "reaction": "R10052"},
-    {"from": "C00258", "to": "glxK", "required": true, "marker": false, "reaction": "R08572"},
-    {"from": "glxK", "to": "C00631", "required": true, "marker": false, "reaction": "R08572"}
-  ]
+    {"from": "C00048", "to": "gcl", "required": true, "reaction": "R00013"},
+    {"from": "gcl", "to": "C01146", "required": true, "reaction": "R00013"},
+    {"from": "C01146", "to": "glxR", "required": true, "reaction": "R10052"},
+    {"from": "glxR", "to": "C00258", "required": true, "reaction": "R10052"},
+    {"from": "C00258", "to": "glxK", "required": true, "reaction": "R08572"},
+    {"from": "glxK", "to": "C00631", "required": true, "reaction": "R08572"}
+  ],
+  "markers": ["gcl", "glxR"]
 }
 ```
 
@@ -1887,8 +1948,7 @@ Edges connect genes AND compounds:
 ```json
 {
   "scoring": {
-    "max_gaps": 0,                    // 0 = complete path required (no missing genes)
-    "marker_mode": "any"
+    "max_gaps": 0                     // 0 = complete path required (no missing genes)
   }
 }
 ```
@@ -1953,19 +2013,20 @@ Edges connect genes AND compounds:
       "input": ["C00048"],
       "output": ["C00631"],
       
+      "markers": ["gcl", "glxR"],
+      
       "edges": [
-        {"from": "C00048", "to": "gcl", "required": true, "marker": true, "reaction": "R00013"},
-        {"from": "gcl", "to": "C01146", "required": true, "marker": true, "reaction": "R00013"},
-        {"from": "C01146", "to": "glxR", "required": true, "marker": true, "reaction": "R10052"},
-        {"from": "glxR", "to": "C00258", "required": true, "marker": true, "reaction": "R10052"},
-        {"from": "C00258", "to": "glxK", "required": true, "marker": false, "reaction": "R08572"},
-        {"from": "glxK", "to": "C00631", "required": true, "marker": false, "reaction": "R08572"}
+        {"from": "C00048", "to": "gcl", "required": true, "reaction": "R00013"},
+        {"from": "gcl", "to": "C01146", "required": true, "reaction": "R00013"},
+        {"from": "C01146", "to": "glxR", "required": true, "reaction": "R10052"},
+        {"from": "glxR", "to": "C00258", "required": true, "reaction": "R10052"},
+        {"from": "C00258", "to": "glxK", "required": true, "reaction": "R08572"},
+        {"from": "glxK", "to": "C00631", "required": true, "reaction": "R08572"}
       ],
       
       "scoring": {
         "min_fraction": 1.0,            // Can use both methods
-        "max_gaps": 0,                  // Gap-based: complete path required
-        "marker_mode": "all"
+        "max_gaps": 0                   // Gap-based: complete path required
       }
     }
   }
@@ -2563,7 +2624,7 @@ Potato JSON has `notes` fields at multiple levels. **Use them extensively** to d
     }
   ],
   "scoring": {
-    "min_fraction": 0.75,
+        "min_fraction": 0.75
     "notes": "CBB cycle requires most genes, but some have redundant paralogs. 75% threshold balances sensitivity and specificity. Key marker is rbcL - if absent, likely false positive."
   }
 }

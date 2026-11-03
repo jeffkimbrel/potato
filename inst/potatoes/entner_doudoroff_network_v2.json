@@ -566,10 +566,15 @@
       "scoring": {
         "min_fraction": 0.8
       },
-      "verified": true,
+      "verified": false,
       "markers": [
         "edd",
         "eda"
+      ],
+      "tags": [
+        "carbon",
+        "glycolysis",
+        "diagnostic"
       ]
     },
     "non_phosphorylative": {
@@ -713,10 +718,16 @@
         "max_gaps": 2,
         "notes": "Dual scoring: fraction-based (75% genes) OR gap-based (≤2 missing genes in best path from glucose to glycerate-2P). Tests complex resolution (cutABC)."
       },
-      "verified": true,
+      "verified": false,
       "markers": [
         "gnaD",
         "kdgA"
+      ],
+      "tags": [
+        "carbon",
+        "glycolysis",
+        "diagnostic",
+        "extreme"
       ]
     },
     "sp_gluconate": {
@@ -819,6 +830,11 @@
       "markers": [
         "gnaD",
         "kdgK"
+      ],
+      "tags": [
+        "carbon",
+        "glycolysis",
+        "diagnostic"
       ]
     },
     "sp_galactonate": {
@@ -910,6 +926,12 @@
       "verified": false,
       "markers": [
         "sskdgK"
+      ],
+      "tags": [
+        "carbon",
+        "glycolysis",
+        "diagnostic",
+        "extreme"
       ]
     },
     "gluconate_transport": {
@@ -927,7 +949,10 @@
       "scoring": {
         "min_fraction": 1
       },
-      "verified": false
+      "verified": false,
+      "tags": [
+        "transport"
+      ]
     },
     "galactose_catabolism": {
       "name": "Galactose Catabolism (ED Entry)",
@@ -969,6 +994,11 @@
       "markers": [
         "gnaD",
         "kdpgA"
+      ],
+      "tags": [
+        "carbon",
+        "degradation",
+        "marine"
       ]
     }
   },

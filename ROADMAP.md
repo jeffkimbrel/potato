@@ -1,15 +1,22 @@
 # POTATO - Development Roadmap
 
-**Current Version:** v0.10.2-dev (2026-08-14)
+**Current Version:** v0.14.5-dev (2026-11-02)
 
-**Status:** V2 schema complete. Full annotation pipeline (kofam/BLAST/HMM) → scoring (all/essential genes) → visualization (interactive/static) → provenance tracking
+**Status:** V2 schema complete. Full annotation pipeline (kofam/BLAST/HMM) → scoring (all/essential genes) → visualization (interactive/static with dark mode) → provenance tracking. Pathway-level markers and tags implemented.
+
+**Recent additions (v0.14.5, 2026-11):**
+- Pathway-level `markers` arrays (edge-level marker deprecated)
+- Pathway-level and potato-level `tags` for filtering
+- Dark mode theme support for `view_pathway_detail()` and interactive plots
+- Removed `marker_mode` from potato schema (runtime parameter only)
 
 **Up Next:**
 
 1. Gap-based scoring implementation in `score_pathways()` - DAG traversal logic
-2. Potato splitting and merging functions - split multi-pathway networks into separate files, merge separate potatoes into networks
-3. Potato locking - prevent modification when results exist
-4. Incremental annotation - merge results from multiple runs
+2. Marker mode scoring logic - use pathway-level markers for presence detection
+3. Potato splitting and merging functions - split multi-pathway networks into separate files, merge separate potatoes into networks
+4. Potato locking - prevent modification when results exist
+5. Incremental annotation - merge results from multiple runs
 
 ---
 
@@ -38,12 +45,15 @@ POTATO (Pathway annOTATOr) annotates genome collections (MAGs) against curated m
 - `type`: "enzyme", "transport", "chaperone", or "complex"
 - Complexes: use `components` array (not `databases`), all components must exist as genes
 - `pathways`: One or more pathways with topology
-- `edges`: Connect genes/compounds (or complexes), carry `required`/`marker`
+- `edges`: Connect genes/compounds (or complexes), carry `required` attribute
+- Edge-level `marker`: DEPRECATED (v0.14.5) - use pathway-level `markers` array instead
 - `verified`: Always `false` for new pathways (only humans verify)
 - Pathway types: `variant` (alternatives) or `independent` (different functions)
 - `input`/`output`: Mandatory for gap-based scoring, optional for fraction-based
-- Marker genes: Pathway-level `markers` field (v0.14.4+) OR edge-level `marker` attributes
+- Marker genes: Pathway-level `markers` array (individual gene IDs, NOT complexes)
+- Tags: Potato-level and pathway-level `tags` arrays for filtering
 - Scoring methods: Fraction-based (`min_fraction`) and/or gap-based (`max_gaps`)
+- `marker_mode`: REMOVED from schema (v0.14.5) - runtime parameter only
 
 ---
 
@@ -341,9 +351,9 @@ Result: `mo_nif` pathway uses 0.9 threshold, all other pathways unchanged
 "output": ["C00631"],
 "scoring": {
   "min_fraction": 1.0,  // fraction-based threshold
-  "max_gaps": 0,        // gap-based threshold (both can be present)
-  "marker_mode": "any"
+  "max_gaps": 0        // gap-based threshold (both can be present)
 }
+// NOTE: marker_mode removed from schema (v0.14.5) - now runtime parameter only
 ```
 
 **Benefits:**
@@ -556,15 +566,16 @@ Add pathway-level `markers` field:
 }
 ```
 
-**Implementation:**
+**Implementation:** ✅ COMPLETED (v0.14.5, 2026-11)
 
-- [ ] Add `markers` field to V2 schema (optional, array of gene IDs)
-- [ ] Update `score_pathways()` to use pathway-level markers for `marker_mode` scoring
+- [x] Add `markers` field to V2 schema (optional, array of gene IDs)
+- [x] Update validation to check marker gene IDs exist in pathway
+- [x] Visualization: `view_pathway_detail()` shows checkmark in marker column for listed genes
+- [x] Edge-level `marker` attribute deprecated (validation warns if present)
+- [x] `marker_mode` removed from potato schema (now runtime parameter only for `run_kofam()`)
+- [ ] Update `score_pathways()` to use pathway-level markers for `marker_mode` scoring (logic pending)
 - [ ] `marker_mode: "any"` = pathway present if ANY marker detected
 - [ ] `marker_mode: "all"` = pathway present only if ALL markers detected
-- [ ] Validate: marker gene IDs must exist in pathway's `genes` array
-- [ ] Visualization: `view_pathway_detail()` shows checkmark in marker column for listed genes
-- [ ] Maintain backward compatibility: if no pathway-level `markers` field, fall back to edge-level `marker` attributes
 
 **Benefits:**
 - Clearer biological meaning (these genes ARE markers, period)
