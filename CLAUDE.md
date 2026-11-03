@@ -19,6 +19,34 @@ building and interpretation
 
 ------------------------------------------------------------------------
 
+## ⚠️ CRITICAL: Verified Pathway Protection
+
+**MANDATORY RULE FOR ALL AGENTS:**
+
+When working with potato JSON files, **ALWAYS check `"verified": true`
+status BEFORE making ANY changes**.
+
+**If a pathway has `"verified": true`:** 1. **STOP IMMEDIATELY** - Do
+not make edits 2. **ALERT THE USER** - Explain what changes you were
+about to make 3. **REQUEST EXPLICIT APPROVAL** - “This pathway is
+verified. Making these changes will reset verified status to false and
+require re-validation. Do you want to proceed?” 4. **ONLY PROCEED** if
+user explicitly approves 5. **RESET STATUS** - Set `"verified": false`
+after making changes
+
+**Why this is critical:** Verified pathways represent validated
+biological knowledge. Any change (genes, edges, markers, schema)
+invalidates that work and requires expert re-review.
+
+**Example scenarios requiring approval:** - Schema migrations (V1→V2,
+marker standardization) - Adding/removing genes or edges - Changing
+markers or scoring parameters - Fixing typos in gene names or notes
+
+**No exceptions.** Even “minor” schema changes require resetting
+verification status.
+
+------------------------------------------------------------------------
+
 ## Important Files
 
 - **[ROADMAP.md](https://jeffkimbrel.github.io/potato/ROADMAP.md)** -
@@ -185,6 +213,8 @@ pathways:
       "kegg_module": "M00123",
       "verified": false,  // ALWAYS false unless manually validated
       "notes": "Pathway-specific notes",
+      "tags": ["nitrogen", "anaerobic", "respiration", "diagnostic"],  // OPTIONAL: pathway-level classification tags
+      "markers": ["geneA"],  // OPTIONAL: diagnostic marker genes (detected = confident pathway identification)
       
       "genes": ["geneA", "geneB", "chaperone1"],  // OPTIONAL: explicit gene list (includes non-catalytic genes)
       "input": ["C00031"],
@@ -195,29 +225,25 @@ pathways:
           "from": "C00031",
           "to": "geneA",
           "required": true,
-          "marker": true,
           "reaction": "R00001"
         },
         {
           "from": "geneA",
           "to": "C00118",
           "required": true,
-          "marker": true,
           "reaction": "R00001"
         },
         {
           "from": "C00118",
           "to": "geneB",
           "required": false,
-          "marker": false,
           "reaction": "R00002"
         }
       ],
       
       "scoring": {
         "min_fraction": 0.75,
-        "max_gaps": 1,
-        "marker_mode": "any"
+        "max_gaps": 1
       }
     }
   }
@@ -236,21 +262,42 @@ in network plot - Scoring checks ALL components detected (not yet
 implemented) - Example: `ureA + ureB + ureC` from GATOR becomes ureABC
 complex - `compounds`: Global compound definitions - `pathways`: One or
 more pathways, each with its own topology - `edges`: Connect
-genes/compounds (or complexes), carry `required`/`marker` attributes -
-`verified`: **CRITICAL** - Per-pathway field, always `false` for new
-pathways. **NEVER set to true**. Only humans verify. - **NEVER EDIT
-VERIFIED PATHWAYS**: If `"verified": true`, DO NOT make edits without
-explicit user approval.
+genes/compounds (or complexes), carry `required` attribute - Edge-level
+`marker` attribute: **DEPRECATED (v0.14.5)** - use pathway-level
+`markers` array instead - `verified`: **CRITICAL** - Per-pathway field,
+always `false` for new pathways. **NEVER set to true**. Only humans
+verify. - **MANDATORY: NEVER EDIT VERIFIED PATHWAYS WITHOUT USER
+APPROVAL** - **If `"verified": true`:** 1. **STOP** - Do not make any
+edits 2. **ALERT USER** - Show what changes would be made and explicitly
+ask for approval 3. **WARN** - Explain that editing will reset
+`verified` to `false` (pathway must be re-verified) 4. **ONLY PROCEED**
+if user explicitly approves 5. **RESET STATUS** - Set
+`"verified": false` after making any changes - **Why this matters:**
+Verified pathways have been manually validated. Any change (schema,
+genes, edges, markers) invalidates that validation work and requires
+re-review.
 
 **Important Notes:** - **No step numbers** - Genes are counted directly,
 no sequential steps - **No node IDs** - Edges reference gene/compound
-IDs directly (or complex IDs for multi-component units) -
-**required/marker on edges** - Not on genes, because same gene can have
-different roles in different pathways (different substrates, different
-pathway context) - **Empty edges allowed** - Transport pathways and
-other special cases can have `edges: []` (valid as of v0.11.1) -
-**Optional genes array** - Pathways can explicitly list genes (including
-non-catalytic genes like chaperones, regulators) via
+IDs directly (or complex IDs for multi-component units) - **Marker
+genes** - Pathway-level `markers` array lists diagnostic gene IDs
+(individual genes, NOT complexes). Annotation detects genes, so markers
+must be individual genes even if those genes are components of complexes
+in edges. - **Marker mode (future)**: Runtime parameter
+`run_kofam(marker_only=TRUE)` will screen for pathway presence using
+just marker genes. Ignores complexes - detecting nifH alone sufficient
+to call nitrogen fixation present. - **Complexes in markers**: If edge
+references a complex (e.g., nirBD), markers should list the most
+diagnostic component (e.g., nirB for nirBD complex) or all components if
+all are diagnostic (nirB, nirD). For transport complexes, list just the
+most specific component (e.g., urtA for urtABCDE). - **NO marker_mode in
+potatoes**: marker_mode was removed from potato schema - it’s a runtime
+parameter, not a potato field. Validation will warn if present. -
+**required on edges** - Edge-level attribute indicating if edge is
+required for pathway completion - **Empty edges allowed** - Transport
+pathways and other special cases can have `edges: []` (valid as of
+v0.11.1) - **Optional genes array** - Pathways can explicitly list genes
+(including non-catalytic genes like chaperones, regulators) via
 `"genes": ["geneA", "geneB"]`. If omitted, genes are inferred from
 edges. For complexes, list components (not complex ID). - **Standard
 database types only:** `kofam`, `blast`, `hmm` (no custom names) -
@@ -262,7 +309,16 @@ transporters, use location qualifiers in compound IDs (“NH4_external”,
 “NH4_internal”). **Mandatory for gap-based scoring, optional for
 fraction-based.** - **Pathway types:** - `variant` - Alternative routes
 to same outcome (Mo-nif vs V-nif) - `independent` - Different functions,
-shared metabolic space (TCA vs glyoxylate shunt) - **Scoring
+shared metabolic space (TCA vs glyoxylate shunt) - **Tags
+(pathway-level):** Optional classification tags for filtering pathways
+(future feature: users can run subsets) - Element cycles: `nitrogen`,
+`carbon`, `phosphorus`, `sulfur` - Metabolism: `aerobic`, `anaerobic`,
+`fermentation` - Function: `respiration`, `assimilation`,
+`biosynthesis`, `degradation`, `fixation`, `transport` - Specificity:
+`diagnostic` (unique markers), `ubiquitous` (widespread) - Environment:
+`marine`, `soil`, `extreme` (thermophile/halophile), `gut` - Impact:
+`greenhouse_gas`, `climate`, `biogeochemical`, `phytohormone` -
+Metabolism type: `glycolysis`, `glyoxylate`, `cycle` - **Scoring
 methods:** - `min_fraction`: Fraction-based scoring (detected genes /
 total genes ≥ threshold) - `max_gaps`: Gap-based scoring (# missing
 genes in best path from input→output ≤ threshold, requires
@@ -393,12 +449,13 @@ Same gene can have different roles in different pathways
 outcome (Mo vs V nitrogenase, ED variants) - `"type": "independent"` -
 Different purpose, shares metabolic space (TCA vs glyoxylate shunt)
 
-**3. Edges Carry Context** - `required`, `marker` on edges (not genes) -
-Edges connect genes and compounds - Same gene can be required/marker in
-one pathway, optional/non-marker in another - **Why pathway-specific:**
-Same gene can act on different substrates in different pathways -
-Example: bifunctional enzymes have different roles depending on
-metabolic context - Edge-level attributes allow this flexibility
+**3. Edges Carry Context** - `required` on edges (not genes) - Edges
+connect genes and compounds - Same gene can be required in one pathway,
+optional in another - **Why pathway-specific:** Same gene can act on
+different substrates in different pathways - Example: bifunctional
+enzymes have different roles depending on metabolic context - Edge-level
+attributes allow this flexibility - **Marker genes:** Now pathway-level
+only (`markers` array), not on edges (deprecated in v0.14.5)
 
 **4. No Step Numbers** - V2 scoring counts genes detected, not
 sequential steps - Simpler than V1, still effective for presence/absence
@@ -441,9 +498,10 @@ By putting complexes in edges:
 
 ``` json
 "edges": [
-  {"from": "C00086", "to": "ureABC", "required": true, "marker": true},
-  {"from": "C00086", "to": "ureAB_ureC", "required": true, "marker": true}
-]
+  {"from": "C00086", "to": "ureABC", "required": true},
+  {"from": "C00086", "to": "ureAB_ureC", "required": true}
+],
+"markers": ["ureA", "ureB", "ureC"]  // List components, not complex IDs
 ```
 
 The logic is unambiguous: “Either ureABC required OR ureAB_ureC required

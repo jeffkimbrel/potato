@@ -1,20 +1,30 @@
 # POTATO - Development Roadmap
 
-**Current Version:** v0.10.2-dev (2026-08-14)
+**Current Version:** v0.14.5-dev (2026-11-02)
 
 **Status:** V2 schema complete. Full annotation pipeline
 (kofam/BLAST/HMM) → scoring (all/essential genes) → visualization
-(interactive/static) → provenance tracking
+(interactive/static with dark mode) → provenance tracking. Pathway-level
+markers and tags implemented.
+
+**Recent additions (v0.14.5, 2026-11):** - Pathway-level `markers`
+arrays (edge-level marker deprecated) - Pathway-level and potato-level
+`tags` for filtering - Dark mode theme support for
+[`view_pathway_detail()`](https://jeffkimbrel.github.io/potato/reference/view_pathway_detail.md)
+and interactive plots - Removed `marker_mode` from potato schema
+(runtime parameter only)
 
 **Up Next:**
 
 1.  Gap-based scoring implementation in
     [`score_pathways()`](https://jeffkimbrel.github.io/potato/reference/score_pathways.md) -
     DAG traversal logic
-2.  Potato splitting and merging functions - split multi-pathway
+2.  Marker mode scoring logic - use pathway-level markers for presence
+    detection
+3.  Potato splitting and merging functions - split multi-pathway
     networks into separate files, merge separate potatoes into networks
-3.  Potato locking - prevent modification when results exist
-4.  Incremental annotation - merge results from multiple runs
+4.  Potato locking - prevent modification when results exist
+5.  Incremental annotation - merge results from multiple runs
 
 ------------------------------------------------------------------------
 
@@ -53,13 +63,91 @@ OR complex definitions - `type`: “enzyme”, “transport”, “chaperone”,
 “complex” - Complexes: use `components` array (not `databases`), all
 components must exist as genes - `pathways`: One or more pathways with
 topology - `edges`: Connect genes/compounds (or complexes), carry
-`required`/`marker` - `verified`: Always `false` for new pathways (only
-humans verify) - Pathway types: `variant` (alternatives) or
-`independent` (different functions) - `input`/`output`: Mandatory for
-gap-based scoring, optional for fraction-based - Marker genes:
-Pathway-level `markers` field (v0.14.4+) OR edge-level `marker`
-attributes - Scoring methods: Fraction-based (`min_fraction`) and/or
-gap-based (`max_gaps`)
+`required` attribute - Edge-level `marker`: DEPRECATED (v0.14.5) - use
+pathway-level `markers` array instead - `verified`: Always `false` for
+new pathways (only humans verify) - Pathway types: `variant`
+(alternatives) or `independent` (different functions) -
+`input`/`output`: Mandatory for gap-based scoring, optional for
+fraction-based - Marker genes: Pathway-level `markers` array (individual
+gene IDs, NOT complexes) - Tags: Potato-level and pathway-level `tags`
+arrays for filtering - Scoring methods: Fraction-based (`min_fraction`)
+and/or gap-based (`max_gaps`) - `marker_mode`: REMOVED from schema
+(v0.14.5) - runtime parameter only
+
+------------------------------------------------------------------------
+
+## V3 Schema Considerations (Future Breaking Changes)
+
+V2 schema is frozen. The following features would require V3 (breaking
+changes).
+
+### Negative Gene Selection / Exclusion Logic **\[V3 CANDIDATE\]**
+
+**Problem:** Cannot distinguish specialist pathways from complete
+pathways when one is nested in another.
+
+**Real-world case: Denitrification** - **N2O sink (specialist)**: has
+nosZ, **does NOT have** nirK/nirS/norBC - **Complete denitrifier**: has
+nosZ **AND** nirK/nirS/norBC
+
+Currently, both score positive for “N2O sink” pathway because they both
+have nosZ. No way to specify “must lack these genes.”
+
+**Other use cases:** - Sulfur oxidizers that **don’t** do sulfate
+reduction - Ammonia oxidizers that **don’t** have complete
+nitrification  
+- “Has this gene but NOT that paralog” - Distinguishing partial vs
+complete metabolic modules
+
+**Potential V3 features:**
+
+**Option 1: Pathway-level exclusions**
+
+``` json
+{
+  "pathways": {
+    "n2o_sink_specialist": {
+      "name": "N2O Sink (specialist, no upstream denitrification)",
+      "genes": ["nosZ"],
+      "exclude_genes": ["nirK", "nirS", "norB", "norC"],
+      "notes": "Has nosZ but lacks upstream denitrification genes"
+    }
+  }
+}
+```
+
+**Option 2: Edge-level exclusions**
+
+``` json
+{
+  "edges": [
+    {"from": "N2O", "to": "nosZ", "required": true, "excluded": false},
+    {"from": "NO", "to": "nirK", "required": false, "excluded": true}
+  ]
+}
+```
+
+**Option 3: Boolean gene logic**
+
+``` json
+{
+  "pathways": {
+    "n2o_sink_specialist": {
+      "gene_logic": "(nosZ) AND NOT (nirK OR nirS OR norB OR norC)"
+    }
+  }
+}
+```
+
+**Current workaround (V2):** - Keep nested pathways separate - Document
+in notes: “N2O sink includes specialists. Complete denitrifiers also
+score positive.” - Users interpret presence patterns from multiple
+pathways - Pathway table in
+[`view_pathway_detail()`](https://jeffkimbrel.github.io/potato/reference/view_pathway_detail.md)
+shows which genes contribute to which pathways
+
+**Decision:** Defer to V3. V2 can represent the biology, users can
+interpret overlaps.
 
 ------------------------------------------------------------------------
 
@@ -316,9 +404,9 @@ fraction-only potatoes
 "output": ["C00631"],
 "scoring": {
   "min_fraction": 1.0,  // fraction-based threshold
-  "max_gaps": 0,        // gap-based threshold (both can be present)
-  "marker_mode": "any"
+  "max_gaps": 0        // gap-based threshold (both can be present)
 }
+// NOTE: marker_mode removed from schema (v0.14.5) - now runtime parameter only
 ```
 
 **Benefits:** - Biologically meaningful (“allow 1 missing gene”) -
@@ -573,26 +661,28 @@ Add pathway-level `markers` field:
 }
 ```
 
-**Implementation:**
+**Implementation:** ✅ COMPLETED (v0.14.5, 2026-11)
 
 Add `markers` field to V2 schema (optional, array of gene IDs)
 
-Update
-[`score_pathways()`](https://jeffkimbrel.github.io/potato/reference/score_pathways.md)
-to use pathway-level markers for `marker_mode` scoring
-
-`marker_mode: "any"` = pathway present if ANY marker detected
-
-`marker_mode: "all"` = pathway present only if ALL markers detected
-
-Validate: marker gene IDs must exist in pathway’s `genes` array
+Update validation to check marker gene IDs exist in pathway
 
 Visualization:
 [`view_pathway_detail()`](https://jeffkimbrel.github.io/potato/reference/view_pathway_detail.md)
 shows checkmark in marker column for listed genes
 
-Maintain backward compatibility: if no pathway-level `markers` field,
-fall back to edge-level `marker` attributes
+Edge-level `marker` attribute deprecated (validation warns if present)
+
+`marker_mode` removed from potato schema (now runtime parameter only for
+[`run_kofam()`](https://jeffkimbrel.github.io/potato/reference/run_kofam.md))
+
+Update
+[`score_pathways()`](https://jeffkimbrel.github.io/potato/reference/score_pathways.md)
+to use pathway-level markers for `marker_mode` scoring (logic pending)
+
+`marker_mode: "any"` = pathway present if ANY marker detected
+
+`marker_mode: "all"` = pathway present only if ALL markers detected
 
 **Benefits:** - Clearer biological meaning (these genes ARE markers,
 period) - Works with complexes (mark components directly) - Enables
@@ -894,6 +984,47 @@ Consider interactive toggle for complexity control
 
 **Example:** Nitrogen fixation with nifF (electron carrier) would show
 nifF as ghost node near nifHDK complex.
+
+------------------------------------------------------------------------
+
+### Multi-Pathway Gene Context Visualization **\[LOW PRIORITY\]**
+
+**Problem:** When visualizing multi-pathway networks, the same gene may
+appear in different functional contexts across pathways: - Solo in one
+pathway (e.g., `geneA` referenced directly in edges) - Part of complex
+ABC in another pathway (edges reference `ABC` which contains `geneA`) -
+Part of different complex AB in third pathway (edges reference `AB`
+which also contains `geneA`)
+
+**Current behavior:** - Graph shows separate nodes: `geneA`, `ABC`,
+`AB` - Convex hulls correctly show which pathway uses which node - No
+visual indication that these nodes share component genes - ✅
+**Validation warning** added (v0.14.4): warns when genes appear in
+different functional contexts
+
+**Visual line colors in use:** - **Red dashed**: Same gene, multiple
+reactions (e.g., mcee_R02765 vs mcee_R09979) - **Green dashed**:
+Alternative genes with same inputs/outputs (e.g., nirK vs nirS) - **Blue
+solid**: Regular pathway edges
+
+**Proposed solution:** - **Purple/magenta dashed lines**: Connect nodes
+that share one or more component genes - Example: Purple line from `ABC`
+→ `geneA` → `AB` to show geneA is shared
+
+**Current status:** - No real-world examples encountered yet in existing
+potatoes - Validation catches and warns about these cases - Can
+implement when actual use case arises
+
+**Implementation when needed:**
+
+Detect nodes (complexes or genes) that share component genes across
+pathways
+
+Draw purple/magenta dashed lines between shared-component nodes
+
+Add legend entry: “Shared component genes”
+
+Consider tooltip showing which genes are shared
 
 ------------------------------------------------------------------------
 
