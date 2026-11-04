@@ -1,0 +1,218 @@
+{
+  "schema_version": "v2",
+  "id": "assimilatory_nitrate_reduction",
+  "name": "Assimilatory Nitrate Reduction",
+  "source": "GATOR v1, KEGG M00531",
+  "tags": [
+    "nitrogen",
+    "assimilation",
+    "biosynthesis"
+  ],
+  "notes": "Assimilatory pathway for nitrogen acquisition: nitrate → nitrite → ammonia. Used for biosynthesis (amino acids, nucleotides), not respiration. Distinguished from dissimilatory reduction by enzyme types and cellular location.",
+  "genes": [
+    {
+      "id": "narB",
+      "name": "ferredoxin-nitrate reductase",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00367"
+        ]
+      },
+      "ec": [
+        "1.7.7.2"
+      ],
+      "notes": "Assimilatory nitrate reductase using ferredoxin. Alternative to NR and nasAB."
+    },
+    {
+      "id": "NR",
+      "name": "nitrate reductase (NAD(P)H)",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K10534"
+        ]
+      },
+      "ec": [
+        "1.7.1.1",
+        "1.7.1.2",
+        "1.7.1.3"
+      ],
+      "notes": "NAD(P)H-dependent nitrate reductase. Alternative to narB and nasAB."
+    },
+    {
+      "id": "nasA",
+      "name": "assimilatory nitrate reductase catalytic subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00372"
+        ]
+      },
+      "ec": [
+        "1.7.99.-",
+        "1.7.99.4"
+      ],
+      "notes": "Catalytic subunit of two-component nitrate reductase."
+    },
+    {
+      "id": "nasB",
+      "name": "assimilatory nitrate reductase electron transfer subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00360"
+        ]
+      },
+      "ec": [
+        "1.7.99.4"
+      ],
+      "notes": "Electron transfer subunit of two-component nitrate reductase."
+    },
+    {
+      "id": "nasAB",
+      "name": "two-component assimilatory nitrate reductase",
+      "type": "complex",
+      "components": [
+        "nasA",
+        "nasB"
+      ],
+      "notes": "Two-subunit assimilatory nitrate reductase. Alternative to single-subunit narB and NR."
+    },
+    {
+      "id": "NIT-6",
+      "name": "nitrite reductase (NAD(P)H)",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K17877"
+        ]
+      },
+      "ec": [
+        "1.7.1.4"
+      ],
+      "notes": "NAD(P)H-dependent nitrite reductase. Alternative to nirA."
+    },
+    {
+      "id": "nirA",
+      "name": "ferredoxin-nitrite reductase",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00366"
+        ]
+      },
+      "ec": [
+        "1.7.7.1"
+      ],
+      "notes": "Ferredoxin-dependent nitrite reductase. Alternative to NIT-6."
+    }
+  ],
+  "compounds": [
+    {
+      "id": "C00244",
+      "name": "Nitrate",
+      "kegg_compound": "C00244"
+    },
+    {
+      "id": "C00088",
+      "name": "Nitrite",
+      "kegg_compound": "C00088"
+    },
+    {
+      "id": "C00014",
+      "name": "Ammonia",
+      "kegg_compound": "C00014"
+    }
+  ],
+  "pathways": {
+    "assimilatory_nitrate": {
+      "name": "Assimilatory Nitrate Reduction",
+      "type": "independent",
+      "verified": false,
+      "notes": "Two-step pathway for nitrogen assimilation. Step 1: nitrate → nitrite (narB, NR, or nasAB). Step 2: nitrite → ammonia (NIT-6 or nirA). All organisms need nitrogen for biosynthesis.",
+      "genes": [
+        "narB",
+        "NR",
+        "nasA",
+        "nasB",
+        "NIT-6",
+        "nirA"
+      ],
+      "input": [
+        "C00244"
+      ],
+      "output": [
+        "C00014"
+      ],
+      "edges": [
+        {
+          "from": "C00244",
+          "to": "narB",
+          "required": true,
+          "notes": "Ferredoxin-dependent alternative"
+        },
+        {
+          "from": "C00244",
+          "to": "NR",
+          "required": true,
+          "notes": "NAD(P)H-dependent alternative"
+        },
+        {
+          "from": "C00244",
+          "to": "nasAB",
+          "required": true,
+          "notes": "Two-component alternative"
+        },
+        {
+          "from": "narB",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "NR",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "nasAB",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "C00088",
+          "to": "NIT-6",
+          "required": true,
+          "notes": "NAD(P)H-dependent alternative"
+        },
+        {
+          "from": "C00088",
+          "to": "nirA",
+          "required": true,
+          "notes": "Ferredoxin-dependent alternative"
+        },
+        {
+          "from": "NIT-6",
+          "to": "C00014",
+          "required": true
+        },
+        {
+          "from": "nirA",
+          "to": "C00014",
+          "required": true
+        }
+      ],
+      "scoring": {
+        "min_fraction": 0.5,
+        "max_gaps": 1,
+        "notes": "Both steps required but many alternatives exist. Lower threshold since pathway is widespread with diverse enzyme variants."
+      },
+      "tags": [
+        "nitrogen",
+        "assimilation",
+        "biosynthesis",
+        "ubiquitous"
+      ]
+    }
+  }
+}

@@ -1,0 +1,287 @@
+{
+  "schema_version": "v2",
+  "id": "dissimilatory_nitrate_reduction",
+  "name": "Dissimilatory Nitrate Reduction to Ammonium (DNRA)",
+  "source": "GATOR v1, KEGG M00530",
+  "tags": [
+    "nitrogen",
+    "anaerobic",
+    "respiration"
+  ],
+  "notes": "Dissimilatory nitrate reduction pathway: nitrate → nitrite → ammonia. Alternative to denitrification - conserves nitrogen as NH3 rather than releasing N2. Uses same nitrate reductases as denitrification (narGHI or napAB) but different nitrite reductases (nirBD or nrfAH).",
+  "genes": [
+    {
+      "id": "narG",
+      "name": "nitrate reductase / nitrite oxidoreductase, alpha subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00370"
+        ]
+      },
+      "ec": [
+        "1.7.5.1",
+        "1.7.99.-"
+      ],
+      "notes": "Membrane-bound nitrate reductase alpha subunit. Shared with denitrification."
+    },
+    {
+      "id": "narH",
+      "name": "nitrate reductase / nitrite oxidoreductase, beta subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00371"
+        ]
+      },
+      "ec": [
+        "1.7.5.1",
+        "1.7.99.-"
+      ],
+      "notes": "Membrane-bound nitrate reductase beta subunit."
+    },
+    {
+      "id": "narI",
+      "name": "nitrate reductase gamma subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00374"
+        ]
+      },
+      "ec": [
+        "1.7.5.1",
+        "1.7.99.-"
+      ],
+      "notes": "Membrane-bound nitrate reductase gamma subunit."
+    },
+    {
+      "id": "narGHI",
+      "name": "membrane-bound nitrate reductase complex",
+      "type": "complex",
+      "components": [
+        "narG",
+        "narH",
+        "narI"
+      ],
+      "notes": "Three-subunit membrane-bound nitrate reductase."
+    },
+    {
+      "id": "napA",
+      "name": "nitrate reductase (cytochrome)",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K02567"
+        ]
+      },
+      "ec": [
+        "1.9.6.1"
+      ],
+      "notes": "Periplasmic nitrate reductase catalytic subunit."
+    },
+    {
+      "id": "napB",
+      "name": "nitrate reductase (cytochrome), electron transfer subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K02568"
+        ]
+      },
+      "ec": [
+        "1.9.6.1"
+      ],
+      "notes": "Periplasmic nitrate reductase electron transfer subunit."
+    },
+    {
+      "id": "napAB",
+      "name": "periplasmic nitrate reductase complex",
+      "type": "complex",
+      "components": [
+        "napA",
+        "napB"
+      ],
+      "notes": "Two-subunit periplasmic nitrate reductase."
+    },
+    {
+      "id": "nirB",
+      "name": "nitrite reductase (NADH) large subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00362"
+        ]
+      },
+      "ec": [
+        "1.7.1.15"
+      ],
+      "notes": "NADH-dependent nitrite reductase large subunit. Reduces nitrite to ammonia. Alternative to nrfAH."
+    },
+    {
+      "id": "nirD",
+      "name": "nitrite reductase (NADH) small subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K00363"
+        ]
+      },
+      "ec": [
+        "1.7.1.15"
+      ],
+      "notes": "NADH-dependent nitrite reductase small subunit."
+    },
+    {
+      "id": "nirBD",
+      "name": "NADH-dependent nitrite reductase complex",
+      "type": "complex",
+      "components": [
+        "nirB",
+        "nirD"
+      ],
+      "notes": "Two-subunit NADH-dependent nitrite reductase. Reduces NO2- to NH3."
+    },
+    {
+      "id": "nrfA",
+      "name": "nitrite reductase (cytochrome c-552)",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K03385"
+        ]
+      },
+      "ec": [
+        "1.7.2.2"
+      ],
+      "notes": "Cytochrome c nitrite reductase catalytic subunit. Alternative to nirBD. Diagnostic for DNRA."
+    },
+    {
+      "id": "nrfH",
+      "name": "cytochrome c nitrite reductase small subunit",
+      "type": "enzyme",
+      "databases": {
+        "kofam": [
+          "K15876"
+        ]
+      },
+      "notes": "Cytochrome c nitrite reductase electron transfer subunit."
+    },
+    {
+      "id": "nrfAH",
+      "name": "cytochrome c nitrite reductase complex",
+      "type": "complex",
+      "components": [
+        "nrfA",
+        "nrfH"
+      ],
+      "notes": "Two-subunit cytochrome c nitrite reductase. Reduces NO2- to NH3. Alternative to nirBD."
+    }
+  ],
+  "compounds": [
+    {
+      "id": "C00244",
+      "name": "Nitrate",
+      "kegg_compound": "C00244"
+    },
+    {
+      "id": "C00088",
+      "name": "Nitrite",
+      "kegg_compound": "C00088"
+    },
+    {
+      "id": "C00014",
+      "name": "Ammonia",
+      "kegg_compound": "C00014"
+    }
+  ],
+  "pathways": {
+    "dnra": {
+      "name": "Dissimilatory Nitrate Reduction to Ammonium",
+      "type": "independent",
+      "verified": false,
+      "notes": "Two-step pathway reducing nitrate to ammonia via nitrite. Competes with denitrification in anaerobic environments. Distinguished from denitrification by nitrite reductase type (nirBD or nrfAH vs nirK/nirS).",
+      "markers": [
+        "nirB",
+        "nirD",
+        "nrfA",
+        "nrfH"
+      ],
+      "genes": [
+        "narG",
+        "narH",
+        "narI",
+        "napA",
+        "napB",
+        "nirB",
+        "nirD",
+        "nrfA",
+        "nrfH"
+      ],
+      "input": [
+        "C00244"
+      ],
+      "output": [
+        "C00014"
+      ],
+      "edges": [
+        {
+          "from": "C00244",
+          "to": "narGHI",
+          "required": true,
+          "notes": "Membrane-bound alternative"
+        },
+        {
+          "from": "C00244",
+          "to": "napAB",
+          "required": true,
+          "notes": "Periplasmic alternative"
+        },
+        {
+          "from": "narGHI",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "napAB",
+          "to": "C00088",
+          "required": true
+        },
+        {
+          "from": "C00088",
+          "to": "nirBD",
+          "required": true,
+          "notes": "NADH-dependent alternative"
+        },
+        {
+          "from": "C00088",
+          "to": "nrfAH",
+          "required": true,
+          "notes": "Cytochrome c alternative"
+        },
+        {
+          "from": "nirBD",
+          "to": "C00014",
+          "required": true
+        },
+        {
+          "from": "nrfAH",
+          "to": "C00014",
+          "required": true
+        }
+      ],
+      "scoring": {
+        "min_fraction": 0.75,
+        "max_gaps": 0,
+        "notes": "Both steps required for DNRA. Presence of nirBD or nrfAH (not nirK/nirS) distinguishes from denitrification."
+      },
+      "tags": [
+        "nitrogen",
+        "anaerobic",
+        "respiration",
+        "biogeochemical",
+        "diagnostic"
+      ]
+    }
+  }
+}
